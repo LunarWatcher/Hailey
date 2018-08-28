@@ -91,3 +91,5 @@ proguard/
 # Project specific
 config.properties
 database.json
+
+!gradle-wrapper.jar
