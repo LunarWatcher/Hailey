@@ -52,82 +52,18 @@ class PruneCommand(private val bot: HaileyBot) : Command {
         }
         val deletionCount = count + 1
 
-        val who = if (data.size == 2) {
-            try {
-                val uid = ConversionUtils.parseUser(data[1])
-                if(uid == -2L) {
-                    if (data[1].equals("bots", true)) {
-                        "bots"
-                    } else
-                        null
-                }else
-                    message.guild.getUserByID(uid)
-            } catch (e: Exception) {
-                if (data[1].equals("bots", true)) {
-                    "bots"
-                } else
-                    null
-            }
-        } else null
+        val reason = if (data.size == 2) data[1]  else "None"
 
-        val reason = if (who == null && data.size == 2) data[1] else if (data.size == 2 && who != null) {
-            val reformattedData = rawMessage.split(" ", limit = 3);
-            if (reformattedData.size == 3)
-                reformattedData[2]
-            else "None"
-        } else "None"
+        val title = "Bulk deletion"
 
-        val title = if (who != null) {
-            "Bulk deletion of user messages (WARNING: limited by the cache)"
-        } else "Bulk deletion"
 
-        val deletedCount = if (who != null && who is IUser) {
-            val uid = who.longID
-            val messageHistory = message.channel.getMessageHistory()
-            var deleted = 0;
-            for (msg in messageHistory) {
-                if(deleted >= count)
-                    break;
-                if (msg.author.longID == uid && !msg.isDeleted) {
-                    msg.delete()
-                    deleted++;
-                    logger.info("Message deletion: ${msg.longID} - ${msg.content} - ${msg.author}")
-                }
-            }
-            message.reply("deleted $deleted messages. \uD83D\uDC3A")
-                    ?.scheduleDeletion(10000);
-            deleted;
-        }else if(who != null && who is String){
-            val messageHistory = message.channel.getMessageHistory()
-            if(who == "bots") {
-                var deleted = 0;
-                for (msg in messageHistory) {
-                    if(deleted >= count)
-                        break;
-                    if (msg.author.isBot && !msg.isDeleted){
-                        msg.delete()
-                        deleted++;
-                        logger.info("Message deletion: ${msg.longID} - ${msg.content} - ${msg.author}")
-                    }
-                }
-
-                message.reply("deleted $deleted messages. \uD83D\uDC3A")
-                        ?.scheduleDeletion(10000);
-                message.delete()
-                deleted;
-            }else{
-                message.reply("you used an invalid mode: $who")
-                return;
-            }
-        }else {
             val messageHistory = message.channel.getMessageHistory(deletionCount)
             messageHistory.bulkDelete()
             message.reply("deleted ${messageHistory.size - 1} messages. \uD83D\uDC3A")
                     ?.scheduleDeletion(10000);
-            messageHistory.size - 1
-        }
+            val deletedCount = messageHistory.size - 1
+
         val description = """**Message count:** $deletedCount
-            **Deletion mode:** ${if (who != null && who is IUser) "User (" + who.name + "#" + who.discriminator + ")" else if (who != null && who == "bots") "Bot messages" else "Count"}
             **Channel:** ${message.channel}
             **Deleter:** ${message.author.name}#${message.author.discriminator} (UID ${message.author.longID})
             **Reason:** $reason

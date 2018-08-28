@@ -12,7 +12,7 @@ private val random = Random(System.currentTimeMillis())
 
 fun <T> List<T>.randomItem() = this[random.nextInt(this.size)];
 
-fun String.messageFormat(vararg objects: Any) : String = MessageFormat.format(this, *objects)
+fun String.messageFormat(vararg objects: Any) : String = MessageFormat.format(this.replace("'", "''"), *objects)
 
 fun IMessage.canUserRunAdminCommand(bot: HaileyBot) : Boolean =
         author.getPermissionsForGuild(guild).contains(Permissions.ADMINISTRATOR) ||

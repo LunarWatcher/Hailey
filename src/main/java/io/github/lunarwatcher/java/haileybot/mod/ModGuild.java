@@ -120,7 +120,7 @@ public class ModGuild {
                         .sendMessage(ExtensionsKt.messageFormat(joinMessage,
                                 event.getUser().getName() + "#" + event.getUser().getDiscriminator(),
                                 event.getGuild().getName(),
-                                event.getGuild().getUsers().size()));
+                                Integer.toString(event.getGuild().getUsers().size())));
             }
         }catch(Exception e){
             e.printStackTrace();
@@ -134,7 +134,7 @@ public class ModGuild {
                         ExtensionsKt.messageFormat(joinDM,
                                 event.getUser().getName() + "#" + event.getUser().getDiscriminator(),
                                 event.getGuild().getName(),
-                                event.getGuild().getUsers().size()));
+                                Integer.toString(event.getGuild().getUsers().size())));
         }
     }
 
