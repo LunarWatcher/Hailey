@@ -5,6 +5,7 @@ import io.github.lunarwatcher.java.haileybot.commands.Commands;
 import io.github.lunarwatcher.java.haileybot.commands.Moderator;
 import io.github.lunarwatcher.java.haileybot.commands.RegexWatcher;
 import io.github.lunarwatcher.java.haileybot.commands.SelfAssigner;
+import io.github.lunarwatcher.java.haileybot.data.Config;
 import io.github.lunarwatcher.java.haileybot.data.Database;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class HaileyBot {
 
     private static List<Long> botAdmins;
 
-    private Properties config;
+    private Config config;
 
     static {
         botAdmins = new ArrayList<>();
@@ -65,12 +66,13 @@ public class HaileyBot {
         }
 
         try {
-            config = new Properties();
+            Properties config = new Properties();
             config.load(new FileInputStream("config.properties"));
+            this.config = new Config(config);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        final String token = config.get("token").toString();
+        final String token = config.getToken();
         client = new ClientBuilder()
                 .withToken(token)
                 .withRecommendedShardCount()
@@ -171,6 +173,7 @@ public class HaileyBot {
     @EventSubscriber
     public void onMessageDeletedEvent(MessageDeleteEvent event){
         moderator.messageDeleted(event);
+
     }
 
 
@@ -226,5 +229,9 @@ public class HaileyBot {
 
     public BlacklistStorage getBlacklistStorage(){
         return blacklistStorage;
+    }
+
+    public Config getConfig(){
+        return config;
     }
 }

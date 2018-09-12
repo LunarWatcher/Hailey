@@ -69,7 +69,7 @@ public class Commands {
         funCommands.add(new ShootCommand());
 
         metaCommands.add(new HelpCommand(bot));
-        metaCommands.add(new AboutCommand());
+        metaCommands.add(new AboutCommand(bot));
         metaCommands.add(new ErrorLogsCommand(bot));
         metaCommands.add(new ServerInfoCommand(bot));
         metaCommands.add(new ModFeaturesCommand());

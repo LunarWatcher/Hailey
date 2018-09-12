@@ -27,8 +27,10 @@ public class Moderator {
     public static final String JOIN_MESSAGE = "join_message";
     public static final String LEAVE_MESSAGE = "leave_message";
     public static final String JOIN_DM = "join_dm";
+    public static final String DELETION_WATCHER = "deletion_watcher";
 
-    private static final String features = combine(INVITE_FEATURE, WELCOME_LOGGING, AUDIT_FEATURE, LEAVE_LOGGING, JOIN_MESSAGE, LEAVE_MESSAGE, JOIN_DM);
+    private static final String features = combine(INVITE_FEATURE, WELCOME_LOGGING, AUDIT_FEATURE, LEAVE_LOGGING,
+            JOIN_MESSAGE, LEAVE_MESSAGE, JOIN_DM, DELETION_WATCHER);
 
     private HaileyBot bot;
     private Map<Long, ModGuild> enabledGuilds;

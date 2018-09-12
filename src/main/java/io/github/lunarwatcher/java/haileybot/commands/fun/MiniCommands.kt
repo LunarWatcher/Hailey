@@ -3,6 +3,7 @@ package io.github.lunarwatcher.java.haileybot.commands.`fun`
 import com.vdurmont.emoji.Emoji
 import com.vdurmont.emoji.EmojiLoader
 import com.vdurmont.emoji.EmojiParser
+import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.utils.messageFormat
 import io.github.lunarwatcher.java.haileybot.utils.randomItem
@@ -42,57 +43,14 @@ abstract class ActionCommand(val replies: List<String>, val emojis: List<String>
             onEmptyMessage.invoke(message);
             return;
         }
-        val theOtherOne = if(rawMessage.contains(genericPingRegex)){
-            val pings = genericPingRegex.findAll(rawMessage);
 
-            val stringIds = pings.map { it.groupValues[1] }.toList()
-
-            if(stringIds.isEmpty()){
-                rawMessage
-            }else if(stringIds.size == 1) {
-                val id = stringIds[0].toLongOrNull()
-                if (id != null){
-                    if (id == message.author.longID || id == message.client.ourUser.longID) {
-                        onMessage(message, "", commandName)
-                        return;
-                    } else
-                        message.client.getUserByID(id)?.getDisplayName(message.guild) ?: rawMessage
-                }else
-                    rawMessage
-            }else {
-                val res = StringBuilder()
-                var index = -1;
-                var skipped = 0;
-                for (ping in stringIds) {
-                    index++;
-
-                    val id = ping.toLongOrNull()
-                    if (id != null) {
-                        if (id == message.author.longID || id == message.client.ourUser.longID) {
-                            skipped++;
-                            if(skipped == stringIds.size){
-                                onMessage(message, "", commandName)
-                                return;
-                            }
-                            continue;
-                        } else
-                            res.append(message.client.getUserByID(id)?.getDisplayName(message.guild) + "").append(
-                                    if(index == stringIds.size - 2) ", and " else if(index == stringIds.size - 1) "" else ", "
-                            )
-                    }
-
-                }
-                res.toString()
-            }
-
-        } else
-            rawMessage
-
-        message.channel.sendMessage("**${message.author.getDisplayName(message.guild)}** " + replies.randomItem().messageFormat(theOtherOne))
-    }
-
-    companion object {
-        val genericPingRegex = "<@!?(\\d+)>".toRegex()
+        val result = message.mentions
+                .filter { it.longID != message.client.ourUser.longID }
+                .map{
+                    it.name
+                }.toHashSet()
+                .joinToString(", ")
+        message.channel.sendMessage("**${message.author.getDisplayName(message.guild)}** " + replies.randomItem()?.messageFormat(result) + " ${emojis.randomItem() ?: ""}")
     }
 
 }
@@ -104,11 +62,6 @@ class ShootCommand : ActionCommand(replies, listOf(), { message ->
     override fun getAliases(): MutableList<String>? = null;
     override fun getHelp(): String? = "Shoots someone!!"
     override fun getDescription(): String? = help
-    override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
-
-        super.onMessage(message,rawMessage, commandName)
-    }
-
 
     companion object {
 
@@ -124,3 +77,26 @@ class ShootCommand : ActionCommand(replies, listOf(), { message ->
         )
     }
 }
+
+class HugCommand : ActionCommand(replies, listOf(), { message ->
+    message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)))
+            .addReaction(ReactionEmoji.of("\uD83C\uDDF7"));
+}){
+    override fun getName(): String = "hug"
+    override fun getAliases(): MutableList<String>? = null;
+    override fun getHelp(): String? = "Hugs someone <3"
+    override fun getDescription(): String? = help
+
+    companion object {
+
+        const val self = "**{0}** hugs themselves? Nope! *hugs **{0}***"
+        val replies = listOf(
+                "hugs **{0}**",
+                "covers **{0}** in fluff <3",
+                "warms **{0}** with hugs",
+                "cuddles **{0}**"
+        )
+    }
+}
+
+
