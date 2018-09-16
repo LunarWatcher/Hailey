@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Moderator {
+    public static final String KEY = "moderator";
     private static final Logger logger = LoggerFactory.getLogger(Moderator.class);
 
     public static final String INVITE_FEATURE = "invite_spam_blocking";
@@ -56,11 +57,11 @@ public class Moderator {
             data.put(Long.toString(modGuild.getKey()), modGuild.getValue().getDataAsMap());
         }
 
-        bot.getDatabase().put("moderator", data);
+        bot.getDatabase().put(KEY, data);
     }
 
     public void load(){
-        Map<String, Object> data = bot.getDatabase().getMap("moderator");
+        Map<String, Object> data = bot.getDatabase().getMap(KEY);
         if (data == null)
             return;
         for(Map.Entry<String, Object> entry : data.entrySet()){
@@ -80,6 +81,11 @@ public class Moderator {
     // Events
 
     public void userJoined(UserJoinEvent event){
+        try {
+            bot.getAssigner().onUserJoined(event);
+        }catch(NullPointerException e){
+            //Ignore
+        }
         ModGuild guild = enabledGuilds.get(event.getGuild().getLongID());
         if(guild == null)
             return;
@@ -148,6 +154,11 @@ public class Moderator {
     @Nullable
     public ModGuild getGuild(long id){
         return enabledGuilds.get(id);
+    }
+
+    @Nullable
+    public ModGuild getGuild(IGuild guild){
+        return getGuild(guild.getLongID());
     }
 
     public static String getFeatures(){

@@ -2,6 +2,7 @@ package io.github.lunarwatcher.java.haileybot.commands.roles
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
+import sx.blah.discord.api.internal.json.objects.EmbedObject
 import sx.blah.discord.handle.impl.obj.Embed
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
@@ -37,22 +38,49 @@ class ListRolesCommand(private val bot: HaileyBot) : Command {
             return;
         }
 
-        var current = ""
 
+        var current = ""
+        var currentEmbed = EmbedBuilder()
+                .withColor(message.author.getColorForGuild(message.guild))
+
+        currentEmbed.totalVisibleCharacters
         for(i in 0 until selfAssignable.size){
             val role = selfAssignable[i];
 
             val appendix = role + if(i != selfAssignable.size - 1){
                 ", "
             } else "."
-            if(appendix.length + current.length >= 1024){
-                sendEmbed(message, current)
+            if(appendix.length + current.length >= 1000){
+                val field = Embed.EmbedField("Roles", current, false)
+
+                val currentChars = currentEmbed.totalVisibleCharacters
+                if(currentChars + current.length >= 6000) {
+                    message.author.orCreatePMChannel.sendMessage(currentEmbed.build())
+                    currentEmbed = EmbedBuilder()
+                            .withColor(message.author.getColorForGuild(message.guild))
+                }
+                currentEmbed.appendField(field)
                 current = "";
             }
             current += appendix
         }
 
+
         if(current != ""){
+            if(currentEmbed.totalVisibleCharacters != 0){
+                val field = Embed.EmbedField("Roles", current, false)
+
+                val currentChars = currentEmbed.totalVisibleCharacters
+                if(currentChars + current.length >= 6000) {
+                    message.author.orCreatePMChannel.sendMessage(currentEmbed.build())
+
+                }else {
+                    currentEmbed.appendField(field)
+                    message.author.orCreatePMChannel.sendMessage(currentEmbed.build());
+                    return;
+                }
+            }
+
             sendEmbed(message, current);
         }
 

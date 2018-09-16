@@ -1,7 +1,8 @@
-package io.github.lunarwatcher.java.haileybot.commands.roles;
+package io.github.lunarwatcher.java.haileybot.commands.roles.auto;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;
+import io.github.lunarwatcher.java.haileybot.data.Constants;
 import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,19 +11,27 @@ import sx.blah.discord.handle.obj.IPrivateChannel;
 import sx.blah.discord.handle.obj.IRole;
 import sx.blah.discord.handle.obj.Permissions;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class RemoveAssignableRoleCommand implements Command {
+public class RemoveAutoAssignCommand implements Command {
+    private static final List<String> aliases = new ArrayList<>();
+
+    static {
+        aliases.add("remove-auto-assignable");
+        aliases.add("autoassign");
+    }
+
+
     private HaileyBot bot;
 
-    public RemoveAssignableRoleCommand(HaileyBot bot) {
+    public RemoveAutoAssignCommand(HaileyBot bot) {
         this.bot = bot;
     }
 
     @Override
     public String getName() {
-        return "removeAssignable";
+        return "removeAutoAssignable";
     }
 
     @Override
@@ -32,7 +41,7 @@ public class RemoveAssignableRoleCommand implements Command {
 
     @Override
     public @Nullable String getHelp() {
-        return "Removes an assignable role.";
+        return "Removes an auto-assignable role.";
     }
 
     @Override
@@ -52,7 +61,7 @@ public class RemoveAssignableRoleCommand implements Command {
         }
 
         if(rawMessage.isEmpty()){
-            message.getChannel().sendMessage("Which role do you want to remove from being self-assignable?");
+            message.getChannel().sendMessage("Which role do you want to remove from being auto-assignable?");
             return;
         }
 
@@ -62,20 +71,22 @@ public class RemoveAssignableRoleCommand implements Command {
 
         List<IRole> roles = bot.getAssigner().getRolesForGuild(message.getGuild().getLongID());
         if(roles == null){
-            message.getChannel().sendMessage("No self-assignable roles are registered.");
+            message.getChannel().sendMessage("No auto-assignable roles are registered.");
             return;
         }
         for(IRole role : roles) {
             if (role.getName().equals(rawMessage)) {
-                boolean result = bot.getAssigner().removeRole(message.getGuild().getLongID(), role);
+                boolean result = bot.getAssigner().removeAutoRole(message.getGuild().getLongID(), role);
                 if (result)
-                    message.getChannel().sendMessage("Successfully removed the role `" + rawMessage + "` as self-assignable.");
+                    message.getChannel().sendMessage("Successfully removed the role `" + rawMessage + "` as auto-assignable.");
                 else
-                    message.getChannel().sendMessage("Failed to remove the role `" + rawMessage + "` as self-assignable.");
+                    message.getChannel().sendMessage("Failed to remove the role `" + rawMessage + "` as auto-assignable.");
                 return;
             }
         }
         message.getChannel().sendMessage("I couldn't find that role. Note that roles are case-sensitive.");
 
     }
+
+
 }

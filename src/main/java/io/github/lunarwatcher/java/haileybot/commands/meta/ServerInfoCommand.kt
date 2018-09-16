@@ -13,6 +13,7 @@ import sx.blah.discord.handle.obj.IPresence
 import sx.blah.discord.handle.obj.IPrivateChannel
 import sx.blah.discord.util.EmbedBuilder
 import java.awt.Color
+import java.util.*
 
 class ServerInfoCommand(private val bot: HaileyBot) : Command {
 
@@ -64,8 +65,7 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
         val users = message.guild.users;
         val bots = users.filter { it.isBot }.size
         val members = users.size - bots;
-//
-//        val guildRoles = message.guild?.roles?.filter { !it.isEveryoneRole }
+
         val content = "**Owner:** ${guild.owner.name} (${guild.owner.longID})\n" +
                 "**Server created at:** ${dateFormatter.format(guild.creationDate)}\n" +
                 "**Members:** ${guild.totalMemberCount} ($members members, $bots bots)\n" + "\n" +
@@ -75,15 +75,31 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
 
 
 
-        val roleInfo = bot.assigner.getRolesForGuild(message.guild.longID)?.joinToString(", ") { it.name } ?: "No self-assignable roles"
+        val roleInfo = bot.assigner
+                .getRolesForGuild(message.guild.longID)
+                ?.joinToString(", ") { it.name } ?: "No self-assignable roles"
+
+        val autoInfo = bot.assigner
+                .getAutoRolesForGuild(message.guild)
+                ?.joinToString(", "){it.name} ?: "No auto-assign roles"
+
+        val selfAssignable = bot.assigner.getRolesForGuild(message.guild)?.size ?: 0
+        val autoAssignable = bot.assigner.getRolesForGuild(message.guild)?.size ?: 0
+
         val serverInfo = EmbedBuilder()
                 .withTitle("Server info for **${guild.name}**")
-                .withColor(Color(.5f, 0f, .2f))
+                .withColor(getRandomColor())
                 .withAuthorIcon(guild.iconURL)
                 .withAuthorName("Hailey")
-                .appendField(Embed.EmbedField("Self-assignable roles (${ bot.assigner.getRolesForGuild(message.guild.longID)?.map { it.name }?.size ?: 0})",
-                        if(roleInfo.isEmpty() || roleInfo.isBlank()) "No self-assignable roles" else if (roleInfo.length > 1200) "Too many roles to display. Use `${Constants.TRIGGER}roles` to see self-assignable roles." else roleInfo,
+                .appendField(Embed.EmbedField("Self- and auto-assignable roles:",
+                        "There are $selfAssignable self-assignable roles, and $autoAssignable roles that get automatically assigned." +
+                        (if (roleInfo.length > 1200)
+                            "Too many roles to display. Use `${Constants.TRIGGER}roles` to see self-assignable roles."
+                        else roleInfo) + "\n" +
+                                (if(autoInfo.length > 1200) "Too many roles to display."
+                        else autoInfo),
                         true))
+
                 .appendField(Embed.EmbedField("Info", content, true))
                 .build()
         message.channel.sendMessage(serverInfo)
@@ -99,4 +115,13 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
         }
 
     }
+}
+
+val random = Random(System.currentTimeMillis());
+fun getRandomColor() : Color {
+    val r = random.nextFloat();
+    val g = random.nextFloat();
+    val b = random.nextFloat();
+
+    return Color(r, g, b, 1f);
 }

@@ -4,7 +4,8 @@ import io.github.lunarwatcher.java.haileybot.botmeta.BlacklistStorage;
 import io.github.lunarwatcher.java.haileybot.commands.Commands;
 import io.github.lunarwatcher.java.haileybot.commands.Moderator;
 import io.github.lunarwatcher.java.haileybot.commands.RegexWatcher;
-import io.github.lunarwatcher.java.haileybot.commands.SelfAssigner;
+import io.github.lunarwatcher.java.haileybot.commands.RoleAssignmentManager;
+import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
 import io.github.lunarwatcher.java.haileybot.data.Config;
 import io.github.lunarwatcher.java.haileybot.data.Database;
 import org.slf4j.Logger;
@@ -12,8 +13,6 @@ import org.slf4j.LoggerFactory;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.api.events.EventSubscriber;
-import sx.blah.discord.handle.audit.ActionType;
-import sx.blah.discord.handle.audit.entry.AuditLogEntry;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
 import sx.blah.discord.handle.impl.events.guild.GuildCreateEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageDeleteEvent;
@@ -22,7 +21,6 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 import sx.blah.discord.handle.impl.events.guild.member.UserBanEvent;
 import sx.blah.discord.handle.impl.events.guild.member.UserJoinEvent;
 import sx.blah.discord.handle.impl.events.guild.member.UserLeaveEvent;
-import sx.blah.discord.handle.impl.events.guild.role.RoleCreateEvent;
 import sx.blah.discord.handle.impl.events.guild.role.RoleDeleteEvent;
 import sx.blah.discord.handle.impl.events.shard.DisconnectedEvent;
 import sx.blah.discord.handle.obj.ActivityType;
@@ -46,7 +44,7 @@ public class HaileyBot {
     private Commands commands;
     private Moderator moderator;
     private RegexWatcher matcher;
-    private SelfAssigner assigner;
+    private RoleAssignmentManager assigner;
     private BlacklistStorage blacklistStorage;
 
     private static List<Long> botAdmins;
@@ -61,6 +59,7 @@ public class HaileyBot {
 
 
     public HaileyBot() {
+        ModUtils.initialize(this);
         try {
             database = new Database(Paths.get("database.json"));
             blacklistStorage = new BlacklistStorage(database);
@@ -109,30 +108,36 @@ public class HaileyBot {
         matcher = new RegexWatcher(this);
         commands = new Commands(this);
         moderator = new Moderator(this);
-        assigner = new SelfAssigner(this);
+        assigner = new RoleAssignmentManager(this);
     }
 
 
     @EventSubscriber
     public void onRoleDeleteEvent(RoleDeleteEvent event){
-        List<IRole> roles = assigner.getRolesForGuild(event.getGuild().getLongID());
-        if(roles != null && roles.stream().anyMatch(r -> r.getLongID() == event.getRole().getLongID())){
+        List<IRole> selfAssignable = assigner.getRolesForGuild(event.getGuild().getLongID());
+        if(selfAssignable != null && selfAssignable.stream().anyMatch(r -> r.getLongID() == event.getRole().getLongID())){
             assigner.removeRole(event.getGuild().getLongID(), event.getRole());
             if(moderator.isGuildEnabled(event.getGuild())){
                 //noinspection ConstantConditions
                 moderator.getGuild(event.getGuild().getLongID()).audit("A self-assignable role was deleted. Removed from self-assign: " + event.getRole().getName());
             }
+
+        }
+
+        List<IRole> autoAssignable = assigner.getRolesForGuild(event.getGuild().getLongID());
+        if(autoAssignable != null && autoAssignable.stream().anyMatch(r -> r.getLongID() == event.getRole().getLongID())){
+            assigner.removeAutoRole(event.getGuild().getLongID(), event.getRole());
+            if(moderator.isGuildEnabled(event.getGuild())){
+                //noinspection ConstantConditions
+                moderator.getGuild(event.getGuild().getLongID()).audit("An auto-assignable role was deleted. Removed from auto-assign: " + event.getRole().getName());
+            }
+
         }
     }
 
     @EventSubscriber
     public void onUserJoinEvent(UserJoinEvent event){
-        try {
-            moderator.userJoined(event);
-        }catch(Exception e){
-            e.printStackTrace();
-            CrashHandler.error(e);
-        }
+        moderator.userJoined(event);
     }
 
     @EventSubscriber
@@ -232,7 +237,7 @@ public class HaileyBot {
         return client;
     }
 
-    public SelfAssigner getAssigner(){
+    public RoleAssignmentManager getAssigner(){
         return assigner;
     }
 

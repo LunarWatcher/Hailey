@@ -13,6 +13,10 @@ import io.github.lunarwatcher.java.haileybot.commands.mod.general.ModerationComm
 import io.github.lunarwatcher.java.haileybot.commands.mod.humaninterface.*;
 import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
 import io.github.lunarwatcher.java.haileybot.commands.roles.*;
+import io.github.lunarwatcher.java.haileybot.commands.roles.self.AddAssignableRoleCommand;
+import io.github.lunarwatcher.java.haileybot.commands.roles.self.AssignCommand;
+import io.github.lunarwatcher.java.haileybot.commands.roles.self.RemoveAssignableRoleCommand;
+import io.github.lunarwatcher.java.haileybot.commands.roles.self.UnassignCommand;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +85,7 @@ public class Commands {
         funCommands.add(new KissCommand());
 
         funCommands.add(new LickCommand());
+        funCommands.add(new BoopCommand());
 
         // Meta commands
 

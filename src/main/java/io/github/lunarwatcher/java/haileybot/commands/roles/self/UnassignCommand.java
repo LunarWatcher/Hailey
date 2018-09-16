@@ -1,4 +1,4 @@
-package io.github.lunarwatcher.java.haileybot.commands.roles;
+package io.github.lunarwatcher.java.haileybot.commands.roles.self;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;

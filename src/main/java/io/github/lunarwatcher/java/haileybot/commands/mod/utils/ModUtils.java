@@ -1,16 +1,43 @@
 package io.github.lunarwatcher.java.haileybot.commands.mod.utils;
 
+import io.github.lunarwatcher.java.haileybot.HaileyBot;
+import io.github.lunarwatcher.java.haileybot.data.Constants;
+import io.github.lunarwatcher.java.haileybot.mod.ModGuild;
 import io.github.lunarwatcher.java.haileybot.utils.Factory2;
 import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils;
+import sx.blah.discord.api.internal.json.objects.EmbedObject;
+import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.handle.obj.Permissions;
+import sx.blah.discord.util.EmbedBuilder;
 
 import java.util.List;
 
 public class ModUtils {
+    private static ModUtils instance;
+
+    private HaileyBot bot;
+
+    private ModUtils (HaileyBot bot){
+        this.bot = bot;
+    }
+
+    public static void initialize(HaileyBot bot){
+        instance = new ModUtils(bot);
+    }
+
+    public static synchronized ModUtils getInstance(){
+        if(instance == null)
+            throw new NullPointerException();
+        return instance;
+    }
     public static void onMessageRun(IMessage message, String rawMessage, Permissions permission,
                                         Factory2<Boolean, InternalDataForwarder, IMessage> handleUser){
+        if(getInstance().bot.getModerator().getGuild(message.getGuild()) == null){
+            message.reply("this isn't a mod-enabled guild. Please run `" + Constants.TRIGGER + "enableMod` to access this feature.");
+            return;
+        }
         if(!message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).contains(permission)
                 && !message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).contains(Permissions.ADMINISTRATOR)){
             message.reply("I do not have the appropriate permissions to do that.");
@@ -26,9 +53,10 @@ public class ModUtils {
             message.reply("the permission is null. As a security precausion, this command cannot be used");
             return;
         }
-        if(message == null || handleUser == null || rawMessage == null)
+        if(handleUser == null || rawMessage == null)
             throw new NullPointerException();
         List<IUser> mentions = message.getMentions();
+        String reason = rawMessage.replaceAll("<@!?\\d+>", "").trim();
         if(mentions.size() == 0){
             try{
                 Long uid = ConversionUtils.parseUser(rawMessage);
@@ -39,7 +67,7 @@ public class ModUtils {
                     return;
                 }
 
-                boolean result = safeAccept(handleUser, new InternalDataForwarder(user, uid), message);
+                boolean result = safeAccept(handleUser, new InternalDataForwarder(user, uid, reason), message);
                 handleResult(result, message);
             }catch(Exception e){
                 message.reply("specify who to ban with either a mention, or their UID");
@@ -59,7 +87,11 @@ public class ModUtils {
                 message.reply("You can't ban/kick yourself.");
                 return;
             }
-            boolean result = safeAccept(handleUser, new InternalDataForwarder(user, user.getLongID()), message);
+
+
+            if(reason.length() == 0)
+                reason = "No reason.";
+            boolean result = safeAccept(handleUser, new InternalDataForwarder(user, user.getLongID(), reason), message);
             handleResult(result, message);
         }
     }
@@ -72,6 +104,7 @@ public class ModUtils {
     }
 
     private static boolean safeAccept(Factory2<Boolean, InternalDataForwarder, IMessage> fun, InternalDataForwarder data, IMessage message){
+
         try{
             return fun.accept(data, message);
         }catch(Exception e){
@@ -91,6 +124,7 @@ public class ModUtils {
             }
         }else
             message.getGuild().banUser(user.user);
+        audit(message.getGuild(), createEmbedLog("Ban", user, message.getAuthor()));
         return true;
     }
 
@@ -100,6 +134,7 @@ public class ModUtils {
             return false;
         }
         message.getGuild().kickUser(user.user);
+        audit(message.getGuild(), createEmbedLog("Kick", user, message.getAuthor()));
         return true;
     }
 
@@ -109,7 +144,34 @@ public class ModUtils {
             return false;
         }
         message.getGuild().pardonUser(user.id);
+        audit(message.getGuild(), createEmbedLog("Unban", user, message.getAuthor()));
+
         return true;
+    }
+
+    private static EmbedObject createEmbedLog(String mode, InternalDataForwarder forwarder, IUser handler){
+        return new EmbedBuilder()
+                .withTitle(mode)
+                .withDesc("**User taken action against:** " + forwarder.getName() + " (UID: " + forwarder.getId() + ")\n")
+                .appendDesc("**Moderator:** " + handler.getName() + "#" + handler.getDiscriminator() + " (UID " + handler.getLongID() + ")\n")
+                .appendDesc("**Reason:** " + forwarder.reason)
+                .build();
+    }
+
+    private static void audit(IGuild guild, String message){
+        ModGuild modGuild = getInstance().bot.getModerator().getGuild(guild);
+        if(modGuild == null)
+            return;
+
+        modGuild.audit(message);
+    }
+
+    private static void audit(IGuild guild, EmbedObject message){
+        ModGuild modGuild = getInstance().bot.getModerator().getGuild(guild);
+        if(modGuild == null)
+            return;
+
+        modGuild.audit(message);
     }
 
     /**
@@ -119,10 +181,12 @@ public class ModUtils {
     public static final class InternalDataForwarder{
         private IUser user;
         private Long id;
+        private String reason;
 
-        public InternalDataForwarder(IUser user, Long id){
+        public InternalDataForwarder(IUser user, Long id, String reason){
             this.user = user;
             this.id = id;
+            this.reason = reason;
         }
 
         public boolean useLong(){
@@ -131,6 +195,19 @@ public class ModUtils {
 
         public boolean hasUID(){
             return id != 0;
+        }
+
+        public String getName(){
+            if(user == null) return "Unknown username.";
+            return user.getName() + "#" + user.getDiscriminator();
+        }
+
+        public long getId(){
+            if(id == 0 && user == null)
+                return 0;
+            else if(id == 0)
+                return user.getLongID();
+            return id;
         }
     }
 

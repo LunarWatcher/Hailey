@@ -1,10 +1,12 @@
 package io.github.lunarwatcher.java.haileybot.commands;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
+import io.github.lunarwatcher.java.haileybot.commands.roles.auto.AutoAssignCommand;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sx.blah.discord.api.IDiscordClient;
+import sx.blah.discord.handle.impl.events.guild.member.UserJoinEvent;
 import sx.blah.discord.handle.obj.*;
 
 import java.util.ArrayList;
@@ -13,15 +15,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class SelfAssigner {
-    private static final Logger logger = LoggerFactory.getLogger(SelfAssigner.class);
+public class RoleAssignmentManager {
+    private static final Logger logger = LoggerFactory.getLogger(RoleAssignmentManager.class);
 
-    private static final String KEY = "self-assign";
+    private static final String KEY_SELF = "self-assign";
+    private static final String KEY_AUTO = "auto-assign";
 
     private HaileyBot bot;
     private Map<Long, List<IRole>> assignableRoles;
+    private Map<Long, List<IRole>> autoRoles;
 
-    public SelfAssigner(HaileyBot bot) {
+    public RoleAssignmentManager(HaileyBot bot) {
         this.bot = bot;
         assignableRoles = new HashMap<>();
 
@@ -29,28 +33,39 @@ public class SelfAssigner {
     }
 
     private void load(){
-        Map<String, Object> rawData = bot.getDatabase().getMap(KEY);
+        assignableRoles = parseRoles(KEY_SELF);
+        autoRoles = parseRoles(KEY_AUTO);
+        logger.info("Loaded the role assignment manager.");
 
+    }
+
+    private Map<Long, List<IRole>> parseRoles(String key){
+        Map<String, Object> rawData = bot.getDatabase().getMap(key);
+        IDiscordClient client = bot.getClient();
         if(rawData != null){
+            Map<Long, List<IRole>> mappedRoles = new HashMap<>();
             outer:for(Map.Entry<String, Object> entry : rawData.entrySet()){
                 try {
                     long guild = Long.parseLong(entry.getKey());
                     List<Long> roles = (List<Long>) entry.getValue();
 
-                    assignableRoles.computeIfAbsent(guild, k -> new ArrayList<>());
-                    IDiscordClient client = bot.getClient();
+                    mappedRoles.computeIfAbsent(guild, k -> new ArrayList<>());
+
 
                     for(Long roleId : roles){
                         IGuild iGuild = client.getGuildByID(guild);
                         if(iGuild == null){
                             continue outer;
                         }
-                        List<IRole> rolesWithId = iGuild.getRoles().stream().filter(role -> role.getLongID() == roleId).collect(Collectors.toList());
+                        List<IRole> rolesWithId = iGuild.getRoles().stream()
+                                .filter(role -> role.getLongID() == roleId)
+                                .collect(Collectors.toList());
                         if(rolesWithId.size() == 0){
                             logger.warn("Failed to find role with ID " + roleId + " at guild " + guild);
                             continue;
                         }else {
-                            assignableRoles.get(guild).addAll(rolesWithId);
+                            mappedRoles.get(guild)
+                                    .addAll(rolesWithId);
                         }
                     }
 
@@ -58,7 +73,9 @@ public class SelfAssigner {
                     e.printStackTrace();
                 }
             }
-        }
+
+            return mappedRoles;
+        } else return new HashMap<>();
     }
 
     public void save(){
@@ -67,7 +84,7 @@ public class SelfAssigner {
             formattedRoles.computeIfAbsent(k, s -> new ArrayList<>());
             formattedRoles.get(k).addAll(v.stream().map(IIDLinkedObject::getLongID).collect(Collectors.toList()));
         });
-        bot.getDatabase().put(KEY, formattedRoles);
+        bot.getDatabase().put(KEY_SELF, formattedRoles);
     }
 
     public boolean addRole(long guild, IRole role){
@@ -82,6 +99,22 @@ public class SelfAssigner {
         if(assignableRoles.get(guild) == null || !assignableRoles.get(guild).contains(role))
             return false;
         assignableRoles.get(guild).remove(role);
+        return true;
+    }
+
+
+    public boolean addAutoRole(long guild, IRole role) {
+        if(autoRoles.get(guild) != null && autoRoles.get(guild).contains(role))
+            return false;
+        assignableRoles.computeIfAbsent(guild, k -> new ArrayList<>());
+        assignableRoles.get(guild).add(role);
+        return true;
+    }
+
+    public boolean removeAutoRole(long guild, IRole role){
+        if(autoRoles.get(guild) == null || !autoRoles.get(guild).contains(role))
+            return false;
+        autoRoles.get(guild).remove(role);
         return true;
     }
 
@@ -149,8 +182,39 @@ public class SelfAssigner {
 
     }
 
+    public void onUserJoined(UserJoinEvent event){
+        IUser user = event.getUser();
+        long guild = event.getGuild().getLongID();
+
+        if(autoRoles.containsKey(guild)){
+            List<IRole> roles = new ArrayList<>();
+            if(!roles.isEmpty()){
+                for(IRole role : roles){
+                    user.addRole(role);
+                }
+
+            }
+        }
+    }
+
     @Nullable
     public List<IRole> getRolesForGuild(long guild){
         return assignableRoles.get(guild);
     }
+
+    @Nullable
+    public List<IRole> getRolesForGuild(IGuild guild){
+        return getRolesForGuild(guild.getLongID());
+    }
+
+    @Nullable
+    public List<IRole> getAutoRolesForGuild(long guild){
+        return autoRoles.get(guild);
+    }
+
+    @Nullable
+    public List<IRole> getAutoRolesForGuild(IGuild guild){
+        return getRolesForGuild(guild.getLongID());
+    }
+
 }

@@ -47,9 +47,13 @@ abstract class ActionCommand(val replies: List<String>, val emojis: List<String>
         val result = message.mentions
                 .filter { it.longID != message.client.ourUser.longID }
                 .map{
-                    it.name
+                    it.getDisplayName(message.guild)
                 }.toHashSet()
                 .joinToString(", ")
+        if(result.isBlank() || result.isEmpty()){
+            onEmptyMessage.invoke(message)
+            return;
+        }
         message.channel.sendMessage("**${message.author.getDisplayName(message.guild)}** " + replies.randomItem()?.messageFormat(result) + " ${emojis.randomItem() ?: ""}")
     }
 
@@ -125,6 +129,22 @@ class KissCommand : ActionCommand(replies, listOf(), { message -> message.channe
                 "takes a deep breath, and kisses **{0}**",
                 "kisses **{0}**",
                 "gives **{0}** a quick smooch :kissing_heart:"
+        )
+    }
+}
+
+class BoopCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)))}){
+    override fun getName(): String = "boop";
+    override fun getAliases(): MutableList<String>? = null
+    override fun getHelp(): String? = "BOOP!"
+    override fun getDescription(): String? = help
+    companion object {
+        const val self = "boops the mirror"
+        val replies = listOf(
+                "sneaks up on **{0}**, and boops them",
+                "boops **{0}**",
+                "buys **{0}** a meal, and boops them",
+                "runs up to **{0}** and boops them <3"
         )
     }
 }
