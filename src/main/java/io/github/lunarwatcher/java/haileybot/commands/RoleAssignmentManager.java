@@ -220,7 +220,7 @@ public class RoleAssignmentManager {
 
     @Nullable
     public List<IRole> getAutoRolesForGuild(IGuild guild){
-        return getRolesForGuild(guild.getLongID());
+        return getAutoRolesForGuild(guild.getLongID());
     }
 
 }
