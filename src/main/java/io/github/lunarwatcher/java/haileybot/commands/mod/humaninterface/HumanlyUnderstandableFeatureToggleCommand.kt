@@ -47,7 +47,9 @@ abstract class HumanlyUnderstandableFeatureToggleCommand(private val cmdName: St
 }
 
 class SetJoinMessageCommand(bot: HaileyBot, toggleCommand: ModFeatureToggle)
-    : HumanlyUnderstandableFeatureToggleCommand("setJoinMessage", "Sets the join message, which is sent in a public channel when a new user joins",
+    : HumanlyUnderstandableFeatureToggleCommand("setJoinMessage", "Sets the join message, which is sent in a public channel when a new user joins. This method " +
+        "supports some arguments: <members> (raw number containing the amount of members. I.e. the 75th member to join will get the number `75` added where this is). <nthmember> adds `75th` instead, " +
+        "which is a tiny difference between teh two. There's also <user> (which adds the username with the discriminator), and <server>, which adds the server name.",
         "The command takes two arguments: `[#channel] [join message]` (without brackets).", listOf(),
         toggleCommand, bot, WELCOME_LOGGING, JOIN_MESSAGE);
 
@@ -59,7 +61,8 @@ class SetLeaveMessageCommand(bot: HaileyBot, toggleCommand: ModFeatureToggle)
 class SetJoinDMCommand(bot: HaileyBot, toggleCommand: ModFeatureToggle)
     : HumanlyUnderstandableFeatureToggleCommand("setJoinDm", "Sets the join DM, which is sent to new users when they join",
         "The command takes one argument: `[join message]` (without brackets). The message supports three varying arguments: " +
-                "<user> (for the username), <server> (for the server name), and <members> for how many members are in the server",
+                "<user> (for the username), <server> (for the server name), and <members> for how many members are in the server. Note that <members> is the raw number; " +
+                "if there are 74 members in the server, this adds `75` in the message to the 75th member to join. However, <nthmember> adds `75th` to the message for the 75th member",
         listOf(),
         toggleCommand, bot, JOIN_DM);
 
@@ -72,3 +75,8 @@ class SetAuditChannelFeature(bot: HaileyBot, toggleCommand: ModFeatureToggle)
     : HumanlyUnderstandableFeatureToggleCommand("setAuditChannel", "Sets the audit channel, which is where any moderation logs get posted.",
         "The command takes one argument: `[#channel]` (without brackets).", listOf(),
         toggleCommand, bot, AUDIT_FEATURE);
+
+class SetBanMonitoringFeature(bot: HaileyBot, toggleCommand: ModFeatureToggle)
+    : HumanlyUnderstandableFeatureToggleCommand("setBanMonitoring", "Enables/disables ban monitoring. Requires a boolean input",
+        "Takes one argument: `[boolean]` (without brackets. `enabled`/`disabled` is also accepted)",
+        listOf(), toggleCommand, bot, BAN_MONITORING_FEATURE)

@@ -5,13 +5,20 @@ import io.github.lunarwatcher.java.haileybot.mod.ModGuild;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sx.blah.discord.api.internal.json.objects.EmbedObject;
+import sx.blah.discord.handle.audit.ActionType;
+import sx.blah.discord.handle.audit.entry.AuditLogEntry;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageDeleteEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageEditEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.impl.events.guild.member.UserBanEvent;
 import sx.blah.discord.handle.impl.events.guild.member.UserJoinEvent;
 import sx.blah.discord.handle.impl.events.guild.member.UserLeaveEvent;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IPrivateChannel;
+import sx.blah.discord.handle.obj.IUser;
+import sx.blah.discord.handle.obj.Permissions;
+import sx.blah.discord.util.EmbedBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,8 +36,10 @@ public class Moderator {
     public static final String JOIN_DM = "join_dm";
     public static final String DELETION_WATCHER = "deletion_watcher";
 
+    public static final String BAN_MONITORING_FEATURE = "ban_monitoring";
+
     private static final String features = combine(INVITE_FEATURE, WELCOME_LOGGING, AUDIT_FEATURE, LEAVE_LOGGING,
-            JOIN_MESSAGE, LEAVE_MESSAGE, JOIN_DM, DELETION_WATCHER);
+            JOIN_MESSAGE, LEAVE_MESSAGE, JOIN_DM, DELETION_WATCHER, BAN_MONITORING_FEATURE);
 
     private HaileyBot bot;
     private Map<Long, ModGuild> enabledGuilds;
@@ -156,4 +165,51 @@ public class Moderator {
         return res.toString();
     }
 
+    public void userBanned(UserBanEvent event) {
+
+        ModGuild guild = enabledGuilds.get(event.getGuild().getLongID());
+        if(guild == null)
+            return;
+
+        if(guild.getBanMonitoring()) {
+
+            String usernameAndDiscriminator = event.getUser().getName() + "#" + event.getUser().getDiscriminator();
+            long uid = event.getUser().getLongID();
+            if (!event.getClient().getOurUser().getPermissionsForGuild(event.getGuild()).contains(Permissions.VIEW_AUDIT_LOG)
+                    || !event.getClient().getOurUser().getPermissionsForGuild(event.getGuild()).contains(Permissions.ADMINISTRATOR)) {
+                guild.audit("A user has been banned, but I'm missing the permissions necessary to see the details. ");
+                guild.audit(banEmbed(usernameAndDiscriminator, uid, "Unknown", "Unknown"));
+            }else {
+                AuditLogEntry entry = event.getGuild()
+                        .getAuditLog(ActionType.MEMBER_BAN_ADD)
+                        .getEntriesByTarget(event.getUser().getLongID())
+                        .get(0);
+                IUser responsible = entry.getResponsibleUser();
+
+                String banner = getUsername(responsible);
+                String reason = entry.getReason().orElse("No reason specified");
+
+                guild.audit(banEmbed(usernameAndDiscriminator, uid, banner, reason));
+            }
+        }
+
+    }
+
+    public static String getUsername(IUser user){
+        return user.getName() + "#" + user.getDiscriminator();
+    }
+
+    public static EmbedObject banEmbed(String usernameAndDiscriminator, Long uid, String banner, String reason){
+        return new EmbedBuilder()
+                .withTitle("User banned")
+                .withDesc(concenateDetails("Name", usernameAndDiscriminator))
+                .appendDesc(concenateDetails("UID", String.valueOf(uid)))
+                .appendDesc(concenateDetails("Banned by", banner))
+                .appendDesc(concenateDetails("Reason", reason))
+                .build();
+    }
+
+    public static String concenateDetails(String title, String content){
+        return "**" + title + "**: " + content + "\n";
+    }
 }

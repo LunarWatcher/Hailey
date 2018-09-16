@@ -19,6 +19,12 @@ fun IMessage.canUserRunAdminCommand(bot: HaileyBot) : Boolean =
                 this.canUserRunBotAdminCommand(bot) ||
                 author.longID == guild.ownerLongID
 
+fun IMessage.canUserRunAdminCommand(bot: HaileyBot, permission: Permissions) : Boolean
+        = canUserRunAdminCommand(bot) || author.getPermissionsForGuild(guild).contains(permission)
+
+fun IMessage.canUserRunAdminCommand(bot: HaileyBot, permissions: Array<Permissions>) : Boolean
+        = permissions.map { this.canUserRunAdminCommand(bot, it) }.any { it }
+
 fun IMessage.canUserRunBotAdminCommand(bot: HaileyBot) : Boolean = bot.botAdmins.contains(author.longID)
 fun IMessage.getModGuild(bot: HaileyBot) : ModGuild? = bot.moderator.getGuild(this.guild.longID)
 

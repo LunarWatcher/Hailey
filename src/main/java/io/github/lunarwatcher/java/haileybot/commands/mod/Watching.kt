@@ -1,12 +1,12 @@
 package io.github.lunarwatcher.java.haileybot.commands.mod
 
+import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
 import org.slf4j.LoggerFactory
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
-import sx.blah.discord.handle.obj.Permissions
 
 class WatchCommand(val bot: HaileyBot) : Command{
     override fun getName(): String = "watch"
@@ -148,4 +148,3 @@ class UnwatchCommand(val bot: HaileyBot) : Command {
     }
 
 }
-

@@ -79,8 +79,7 @@ class ShootCommand : ActionCommand(replies, listOf(), { message ->
 }
 
 class HugCommand : ActionCommand(replies, listOf(), { message ->
-    message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)))
-            .addReaction(ReactionEmoji.of("\uD83C\uDDF7"));
+    message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)));
 }){
     override fun getName(): String = "hug"
     override fun getAliases(): MutableList<String>? = null;
@@ -94,9 +93,38 @@ class HugCommand : ActionCommand(replies, listOf(), { message ->
                 "hugs **{0}**",
                 "covers **{0}** in fluff <3",
                 "warms **{0}** with hugs",
-                "cuddles **{0}**"
+                "cuddles **{0}**",
+                "hugs **{0}** tightly and refuses to let go"
         )
     }
 }
 
+class LickCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)))}){
+    override fun getName(): String = "lick"
+    override fun getHelp(): String? = "Licks someone :tongue:"
+    override fun getDescription(): String? = help;
+    override fun getAliases(): MutableList<String>? = null
+    companion object {
+        const val self = "licks themselves"
+        val replies = listOf(
+                "licks **{0}**",
+                "gives **{0}** some soft licks :tongue:",
+                "licks **{0}** gently"
+        )
+    }
+}
 
+class KissCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)))}){
+    override fun getName(): String = "kiss";
+    override fun getAliases(): MutableList<String>? = null
+    override fun getHelp(): String? = "Kisses someone :kissing_heart:"
+    override fun getDescription(): String? = help
+    companion object {
+        const val self = "kisses their own reflection"
+        val replies = listOf(
+                "takes a deep breath, and kisses **{0}**",
+                "kisses **{0}**",
+                "gives **{0}** a quick smooch :kissing_heart:"
+        )
+    }
+}

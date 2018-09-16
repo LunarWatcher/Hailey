@@ -6,17 +6,19 @@ import io.github.lunarwatcher.java.haileybot.botmeta.ListGuildsCommand;
 import io.github.lunarwatcher.java.haileybot.botmeta.UnblacklistGuildCommand;
 import io.github.lunarwatcher.java.haileybot.commands.bot.JoinCommand;
 import io.github.lunarwatcher.java.haileybot.commands.bot.ShutdownCommand;
-import io.github.lunarwatcher.java.haileybot.commands.fun.AliveCommand;
-import io.github.lunarwatcher.java.haileybot.commands.fun.ShootCommand;
+import io.github.lunarwatcher.java.haileybot.commands.fun.*;
 import io.github.lunarwatcher.java.haileybot.commands.meta.*;
 import io.github.lunarwatcher.java.haileybot.commands.mod.*;
+import io.github.lunarwatcher.java.haileybot.commands.mod.general.ModerationCommand;
 import io.github.lunarwatcher.java.haileybot.commands.mod.humaninterface.*;
+import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
 import io.github.lunarwatcher.java.haileybot.commands.roles.*;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IPrivateChannel;
+import sx.blah.discord.handle.obj.Permissions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,37 +58,59 @@ public class Commands {
         moderationCommands.add(new UnwatchCommand(bot));
         moderationCommands.add(new DisableModCommand(bot));
         moderationCommands.add(new EnableModCommand(bot));
-        moderationCommands.add(modFeatureToggle);
 
+        moderationCommands.add(modFeatureToggle);
         moderationCommands.add(new SetAuditChannelFeature(bot, modFeatureToggle));
         moderationCommands.add(new SetJoinDMCommand(bot, modFeatureToggle));
         moderationCommands.add(new SetJoinMessageCommand(bot, modFeatureToggle));
+
         moderationCommands.add(new SetLeaveMessageCommand(bot, modFeatureToggle));
         moderationCommands.add(new SetInviteSpamProtection(bot, modFeatureToggle));
+        moderationCommands.add(new SetBanMonitoringFeature(bot, modFeatureToggle));
         moderationCommands.add(new PruneCommand(bot));
+
+        moderationCommands.add(new ModerationCommand("ban", null, "Bans a user (@ mention or UID)", null, Permissions.BAN, ModUtils::banHandler));
+        moderationCommands.add(new ModerationCommand("unban", null, "Unbans a user (requires a UID)", null, Permissions.BAN, ModUtils::unbanHandler));
+        moderationCommands.add(new ModerationCommand("kick", null, "Kicks a user", null, Permissions.KICK, ModUtils::kickHandler));
+
+        // Fun commands
 
         funCommands.add(new AliveCommand());
         funCommands.add(new ShootCommand());
+        funCommands.add(new HugCommand());
+        funCommands.add(new KissCommand());
+
+        funCommands.add(new LickCommand());
+
+        // Meta commands
 
         metaCommands.add(new HelpCommand(bot));
         metaCommands.add(new AboutCommand(bot));
         metaCommands.add(new ErrorLogsCommand(bot));
         metaCommands.add(new ServerInfoCommand(bot));
+
         metaCommands.add(new ModFeaturesCommand());
         metaCommands.add(new UserInfoCommand(bot));
+
+        // Bot commands
 
         botCommands.add(new ShutdownCommand(bot));
         botCommands.add(new JoinCommand());
         botCommands.add(new BlacklistGuildCommand(bot));
         botCommands.add(new UnblacklistGuildCommand(bot));
+
         botCommands.add(new ListGuildsCommand(bot));
+
+        // Self-assign commands
 
         roleCommands.add(new AddAssignableRoleCommand(bot));
         roleCommands.add(new AssignCommand(bot));
         roleCommands.add(new UnassignCommand(bot));
         roleCommands.add(new ListRolesCommand(bot));
+
         roleCommands.add(new RemoveAssignableRoleCommand(bot));
 
+        // Commandset concat
 
         commandSets = new ArrayList<>();
         commandSets.add(moderationCommands);

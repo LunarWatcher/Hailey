@@ -12,11 +12,14 @@ import org.slf4j.LoggerFactory;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.api.events.EventSubscriber;
+import sx.blah.discord.handle.audit.ActionType;
+import sx.blah.discord.handle.audit.entry.AuditLogEntry;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
 import sx.blah.discord.handle.impl.events.guild.GuildCreateEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageDeleteEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageEditEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.impl.events.guild.member.UserBanEvent;
 import sx.blah.discord.handle.impl.events.guild.member.UserJoinEvent;
 import sx.blah.discord.handle.impl.events.guild.member.UserLeaveEvent;
 import sx.blah.discord.handle.impl.events.guild.role.RoleCreateEvent;
@@ -130,6 +133,12 @@ public class HaileyBot {
             e.printStackTrace();
             CrashHandler.error(e);
         }
+    }
+
+    @EventSubscriber
+    public void onUserBanEvent(UserBanEvent event){
+        moderator.userBanned(event);
+
     }
 
     @EventSubscriber

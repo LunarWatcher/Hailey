@@ -1,5 +1,6 @@
 package io.github.lunarwatcher.java.haileybot.mod;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.github.lunarwatcher.java.haileybot.CrashHandler;
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.data.RegexConstants;
@@ -17,12 +18,14 @@ import sx.blah.discord.handle.obj.IEmbed;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import static io.github.lunarwatcher.java.haileybot.commands.Moderator.*;
+import static io.github.lunarwatcher.java.haileybot.utils.NumberUtils.getNumberWithNth;
 import static io.github.lunarwatcher.java.haileybot.utils.TypeUtils.assertType;
 
 public class ModGuild {
@@ -30,21 +33,29 @@ public class ModGuild {
     private static final String DEFAULT_LEAVE_MESSAGE = "What a shame to see you go, {0}!";
     private static final String DEFAULT_JOIN_MESSAGE = "Welcome to {1}, {0}!";
 
+    // General
     private long guild;
+
+    // Enabled/disabled features
     private boolean inviteSpamProtection;
+    private boolean banMonitoring;
+
+    // Metadata
     private long auditChannel = -1;
     private long welcomeChannel = -1;
     private long userLeaveChannel = -1;
     private int warnings;
 
+    // Joining and leaving
     private String joinMessage;
     private String leaveMessage;
     private String joinDM;
 
+    // Internal meta
     private HaileyBot bot;
 
     private List<Long> recentlyBanned = new SizeLimitedList<>(5);
-    private SizeLimitedList<IMessage> messages = new SizeLimitedList<>(20);
+    private SizeLimitedList<IMessage> messages = new SizeLimitedList<>(30);
     private SizeLimitedList<IUser> recentBans = new SizeLimitedList<>(3);
 
     public ModGuild(HaileyBot bot, long guild){
@@ -63,6 +74,7 @@ public class ModGuild {
             logger.warn("WARNING: Audit channel is null. Logging disabled.");
             logging = false;
         }
+
         try {
             user.getClient().getGuildByID(guild)
                     .banUser(user,7);
@@ -120,7 +132,8 @@ public class ModGuild {
                         .sendMessage(ExtensionsKt.messageFormat(joinMessage,
                                 event.getUser().getName() + "#" + event.getUser().getDiscriminator(),
                                 event.getGuild().getName(),
-                                Integer.toString(event.getGuild().getUsers().size())));
+                                Integer.toString(event.getGuild().getUsers().size()),
+                                getNumberWithNth(event.getGuild().getUsers().size())));
             }
         }catch(Exception e){
             e.printStackTrace();
@@ -170,13 +183,16 @@ public class ModGuild {
     private void nukeMessages(){
         if(recentBans.hasAny() && messages.hasAny()){
             logger.debug("{}, {}", recentBans, messages);
-            String ids = "";
+            List<String> ids = new ArrayList<>();
             for(IUser user : recentBans){
                 for(IMessage message : messages){
+                    if(message.isDeleted())
+                        continue;
+
                     if(Pattern.compile("(?i)" + user.getName().toLowerCase()).matcher(message.getContent()).find()
-                            || Pattern.compile("<@!?" + user.getStringID() + ">").matcher(message.getContent()).find()){
+                            || Pattern.compile("(?i)<@!?" + user.getStringID() + ">").matcher(message.getContent()).find()){
                         try {
-                            ids += message.getStringID();
+                            ids.add(message.getStringID());
                             message.delete();
                         }catch(Exception e){
                             logger.warn("Failed to delete message.");
@@ -188,7 +204,7 @@ public class ModGuild {
 
             }
 
-            if(!ids.trim().isEmpty()){
+            if(ids.size() != 0){
                 audit("Deleted messages. IDs: " + ids);
                 recentBans.clear();
                 messages.clear();
@@ -226,6 +242,7 @@ public class ModGuild {
     public Map<String, Object> getDataAsMap(){
         Map<String, Object> data = new HashMap<>();
         data.put(INVITE_FEATURE, inviteSpamProtection);
+        data.put(BAN_MONITORING_FEATURE, banMonitoring);
         if(auditChannel > 0)
             data.put(AUDIT_FEATURE, auditChannel);
 
@@ -248,9 +265,12 @@ public class ModGuild {
     public Map<String, Object> getDataAsReadableMap(){
         Map<String, Object> data = new HashMap<>();
         data.put("Invite spam protection", formatBoolean(inviteSpamProtection));
+        data.put("Ban monitoring", formatBoolean(banMonitoring));
+
         data.put("Audit channel", formatChannel(auditChannel));
         data.put("Welcome channel", formatChannel(welcomeChannel));
         data.put("Leave channel", formatChannel(userLeaveChannel));
+
         if(welcomeChannel > 0)
             data.put("Join greeting", formatString(joinMessage, true));
         if(userLeaveChannel > 0)
@@ -264,6 +284,8 @@ public class ModGuild {
         for(Map.Entry<String, Object> entry : data.entrySet()){
             if(entry.getKey().equals(INVITE_FEATURE))
                 inviteSpamProtection = (boolean) entry.getValue();
+            else if(entry.getKey().equalsIgnoreCase(BAN_MONITORING_FEATURE))
+                banMonitoring = (boolean) entry.getValue();
             else if(entry.getKey().equals(AUDIT_FEATURE))
                 auditChannel = Long.valueOf(entry.getValue().toString());
             else if(entry.getKey().equals(WELCOME_LOGGING))
@@ -273,13 +295,15 @@ public class ModGuild {
             else if(entry.getKey().equals(JOIN_MESSAGE))
                 joinMessage = entry.getValue().toString().replaceAll("(?i)<user>", "{0}")
                         .replaceAll("(?i)<server>", "{1}")
-                        .replaceAll("(?i)<members>", "{2}");
+                        .replaceAll("(?i)<members>", "{2}")
+                        .replaceAll("(?i)<nthmember>", "{3}");
             else if(entry.getKey().equalsIgnoreCase(LEAVE_MESSAGE))
                 leaveMessage = entry.getValue().toString().replaceAll("(?i)<user>", "{0}");
             else if(entry.getKey().equalsIgnoreCase(JOIN_DM))
                 joinDM = entry.getValue().toString().replaceAll("(?i)<user>", "{0}")
                         .replaceAll("(?i)<server>", "{1}")
-                        .replaceAll("(?i)<members>", "{2}");
+                        .replaceAll("(?i)<members>", "{2}")
+                        .replaceAll("(?i)<nthmember>", "{3}");
             else
                 logger.warn("Unknown key: " + entry.getKey() + ". Value: " + entry.getValue());
 
@@ -291,6 +315,10 @@ public class ModGuild {
             case INVITE_FEATURE:
                 assertType(data, Boolean.class);
                 inviteSpamProtection = (boolean) data;
+                break;
+            case BAN_MONITORING_FEATURE:
+                assertType(data, Boolean.class);
+                banMonitoring = (boolean) data;
                 break;
             case AUDIT_FEATURE:
                 assertType(data, Long.class);
@@ -310,7 +338,8 @@ public class ModGuild {
                 assertType(data, String.class);
                 joinMessage = ((String) data).replaceAll("(?i)<user>", "{0}")
                         .replaceAll("(?i)<server>", "{1}")
-                        .replaceAll("(?i)<members>", "{2}");
+                        .replaceAll("(?i)<members>", "{2}")
+                        .replaceAll("(?i)<nthmember>", "{3}");
                 break;
             case LEAVE_MESSAGE:
                 assertType(data, String.class);
@@ -320,7 +349,8 @@ public class ModGuild {
                 assertType(data, String.class);
                 joinDM = ((String) data).replaceAll("(?i)<user>", "{0}")
                         .replaceAll("(?i)<server>", "{1}")
-                        .replaceAll("(?i)<members>", "{2}");
+                        .replaceAll("(?i)<members>", "{2}")
+                        .replaceAll("(?i)<nthmember>", "{3}");
                 break;
             default:
                 throw new RuntimeException("");
@@ -343,4 +373,7 @@ public class ModGuild {
         return value == null ? "None " + (hasDefaults ? "(using defaults)" : "") : value;
     }
 
+    public boolean getBanMonitoring() {
+        return banMonitoring;
+    }
 }

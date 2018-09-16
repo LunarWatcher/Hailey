@@ -6,6 +6,7 @@ import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.commands.Moderator
 import io.github.lunarwatcher.java.haileybot.commands.Moderator.*
 import io.github.lunarwatcher.java.haileybot.data.Constants
+import io.github.lunarwatcher.java.haileybot.mod.ModGuild
 import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
 import org.slf4j.LoggerFactory
@@ -69,15 +70,19 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
 
         when (feature.toLowerCase()) {
             INVITE_FEATURE -> try {
-                val toggle = ConversionUtils.convertToBoolean(mode)
-                guild.set(INVITE_FEATURE, toggle)
+                val toggle = boolean(guild, INVITE_FEATURE, mode)
                 message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " invite spam protection")
             } catch (e: ClassCastException) {
                 message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled)")
             } catch (e: NullPointerException) {
                 message.channel.sendMessage("Caught an NPE.")
             }
-
+            BAN_MONITORING_FEATURE -> try{
+                val toggle = boolean(guild, BAN_MONITORING_FEATURE, mode);
+                message.channel.sendMessage((if(toggle) "Enabled" else "Disabled") + " ban monitoring.");
+            } catch(e: ClassCastException){
+                message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled).");
+            }
             AUDIT_FEATURE -> try {
                 val channel = if(mode.toLongOrNull() == null){
                     ConversionUtils.parseChannel(mode);
@@ -157,6 +162,11 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
         }
     }
 
+    fun boolean(guild: ModGuild, feature: String, raw: String): Boolean{
+	    val parsed: Boolean = ConversionUtils.convertToBoolean(raw);
+	    guild.set(feature, parsed);
+        return parsed;
+    }
     companion object {
         private val logger = LoggerFactory.getLogger(ModFeatureToggle::class.java)
     }

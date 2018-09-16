@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
 import sx.blah.discord.handle.obj.IUser
+import sx.blah.discord.handle.obj.Permissions
 import sx.blah.discord.util.EmbedBuilder
 
 class PruneCommand(private val bot: HaileyBot) : Command {
@@ -35,8 +36,8 @@ class PruneCommand(private val bot: HaileyBot) : Command {
             message.channel.sendMessage("This is a DM channel. No mod tools available.");
             return;
         }
-        if (!message.canUserRunAdminCommand(bot)) {
-            message.channel.sendMessage("You can't run that. You need to have the \"adminstrator\" permission to do that.");
+        if (!message.canUserRunAdminCommand(bot, Permissions.MANAGE_MESSAGES)) {
+            message.channel.sendMessage("You can't run that. You need to have the \"manage messages\" or \"administrator\" permission to do that.");
             return;
         }
         val guild = bot.moderator.getGuild(message.guild.longID)
