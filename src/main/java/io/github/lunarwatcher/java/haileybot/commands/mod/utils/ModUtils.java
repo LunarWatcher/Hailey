@@ -22,6 +22,9 @@ public class ModUtils {
                 message.reply("you don't have the necessary permissions to do that");
                 return;
             }
+        }else{
+            message.reply("the permission is null. As a security precausion, this command cannot be used");
+            return;
         }
         if(message == null || handleUser == null || rawMessage == null)
             throw new NullPointerException();
