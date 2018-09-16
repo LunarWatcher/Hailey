@@ -61,7 +61,7 @@ public class AddAssignableRoleCommand implements Command {
 
         }
 
-        List<IRole> roles = message.getClient().getRoles();
+        List<IRole> roles = message.getGuild().getRoles();
         for(IRole role : roles) {
             if (role.getName().equals(rawMessage)) {
                 boolean result = bot.getAssigner().addRole(message.getGuild().getLongID(), role);

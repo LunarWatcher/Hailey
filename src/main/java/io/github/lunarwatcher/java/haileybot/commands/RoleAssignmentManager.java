@@ -189,16 +189,15 @@ public class RoleAssignmentManager {
     }
 
     public void onUserJoined(UserJoinEvent event){
-        IUser user = event.getUser();
         long guild = event.getGuild().getLongID();
-
+        logger.info("{}", autoRoles);
         if(autoRoles.containsKey(guild)){
             List<IRole> roles = autoRoles.get(guild);
 
             if(roles != null
                     && !roles.isEmpty()){
                 for(IRole role : roles){
-                    user.addRole(role);
+                    event.getUser().addRole(role);
                 }
 
             }

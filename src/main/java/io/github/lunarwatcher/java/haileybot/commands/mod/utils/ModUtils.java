@@ -89,7 +89,7 @@ public class ModUtils {
             }
 
 
-            if(reason.length() == 0)
+            if(reason.length() == 0 || reason.replace(" ", "").length() == 0)
                 reason = "No reason.";
             boolean result = safeAccept(handleUser, new InternalDataForwarder(user, user.getLongID(), reason), message);
             handleResult(result, message);

@@ -68,7 +68,7 @@ public class AutoAssignCommand implements Command {
 
         }
 
-        List<IRole> roles = message.getClient().getRoles();
+        List<IRole> roles = message.getGuild().getRoles();
         for(IRole role : roles) {
             if (role.getName().equals(rawMessage)) {
                 boolean result = bot.getAssigner().addAutoRole(message.getGuild().getLongID(), role);
