@@ -40,6 +40,7 @@ public class RoleAssignmentManager {
     }
 
     private Map<Long, List<IRole>> parseRoles(String key){
+        logger.info("Now loading {}", key);
         Map<String, Object> rawData = bot.getDatabase().getMap(key);
         IDiscordClient client = bot.getClient();
         if(rawData != null){
@@ -79,12 +80,17 @@ public class RoleAssignmentManager {
     }
 
     public void save(){
+        saveSet(KEY_AUTO, autoRoles);
+        saveSet(KEY_SELF, assignableRoles);
+    }
+
+    private void saveSet(String key, Map<Long, List<IRole>> raw){
         Map<Long, List<Long>> formattedRoles = new HashMap<>();
-        assignableRoles.forEach((k, v) -> {
+        raw.forEach((k, v) -> {
             formattedRoles.computeIfAbsent(k, s -> new ArrayList<>());
             formattedRoles.get(k).addAll(v.stream().map(IIDLinkedObject::getLongID).collect(Collectors.toList()));
         });
-        bot.getDatabase().put(KEY_SELF, formattedRoles);
+        bot.getDatabase().put(key, formattedRoles);
     }
 
     public boolean addRole(long guild, IRole role){
@@ -106,8 +112,8 @@ public class RoleAssignmentManager {
     public boolean addAutoRole(long guild, IRole role) {
         if(autoRoles.get(guild) != null && autoRoles.get(guild).contains(role))
             return false;
-        assignableRoles.computeIfAbsent(guild, k -> new ArrayList<>());
-        assignableRoles.get(guild).add(role);
+        autoRoles.computeIfAbsent(guild, k -> new ArrayList<>());
+        autoRoles.get(guild).add(role);
         return true;
     }
 
