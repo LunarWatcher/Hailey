@@ -84,7 +84,7 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
                 ?.joinToString(", "){it.name} ?: "No auto-assign roles"
 
         val selfAssignable = bot.assigner.getRolesForGuild(message.guild)?.size ?: 0
-        val autoAssignable = bot.assigner.getRolesForGuild(message.guild)?.size ?: 0
+        val autoAssignable = bot.assigner.getAutoRolesForGuild(message.guild)?.size ?: 0
 
         val serverInfo = EmbedBuilder()
                 .withTitle("Server info for **${guild.name}**")
