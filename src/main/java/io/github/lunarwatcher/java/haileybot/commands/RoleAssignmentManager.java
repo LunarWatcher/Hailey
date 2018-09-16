@@ -193,8 +193,10 @@ public class RoleAssignmentManager {
         long guild = event.getGuild().getLongID();
 
         if(autoRoles.containsKey(guild)){
-            List<IRole> roles = new ArrayList<>();
-            if(!roles.isEmpty()){
+            List<IRole> roles = autoRoles.get(guild);
+
+            if(roles != null
+                    && !roles.isEmpty()){
                 for(IRole role : roles){
                     user.addRole(role);
                 }

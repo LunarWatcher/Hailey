@@ -82,7 +82,8 @@ public class Moderator {
 
     public void userJoined(UserJoinEvent event){
         try {
-            bot.getAssigner().onUserJoined(event);
+            bot.getAssigner()
+                    .onUserJoined(event);
         }catch(NullPointerException e){
             //Ignore
         }
