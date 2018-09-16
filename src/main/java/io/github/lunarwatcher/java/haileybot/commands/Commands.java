@@ -13,6 +13,8 @@ import io.github.lunarwatcher.java.haileybot.commands.mod.general.ModerationComm
 import io.github.lunarwatcher.java.haileybot.commands.mod.humaninterface.*;
 import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
 import io.github.lunarwatcher.java.haileybot.commands.roles.*;
+import io.github.lunarwatcher.java.haileybot.commands.roles.auto.AutoAssignCommand;
+import io.github.lunarwatcher.java.haileybot.commands.roles.auto.RemoveAutoAssignCommand;
 import io.github.lunarwatcher.java.haileybot.commands.roles.self.AddAssignableRoleCommand;
 import io.github.lunarwatcher.java.haileybot.commands.roles.self.AssignCommand;
 import io.github.lunarwatcher.java.haileybot.commands.roles.self.RemoveAssignableRoleCommand;
@@ -114,6 +116,8 @@ public class Commands {
         roleCommands.add(new ListRolesCommand(bot));
 
         roleCommands.add(new RemoveAssignableRoleCommand(bot));
+        roleCommands.add(new AutoAssignCommand(bot));
+        roleCommands.add(new RemoveAutoAssignCommand(bot));
 
         // Commandset concat
 
