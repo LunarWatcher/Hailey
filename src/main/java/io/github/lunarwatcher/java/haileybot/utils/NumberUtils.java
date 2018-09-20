@@ -1,5 +1,7 @@
 package io.github.lunarwatcher.java.haileybot.utils;
 
+import java.util.function.Consumer;
+
 public class NumberUtils {
     private static final String ONE = "st";
     private static final String TWO = "nd";

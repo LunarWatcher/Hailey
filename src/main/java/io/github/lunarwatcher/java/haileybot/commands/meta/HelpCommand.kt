@@ -2,8 +2,6 @@ package io.github.lunarwatcher.java.haileybot.commands.meta
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
-import io.github.lunarwatcher.java.haileybot.utils.Function3
-import sx.blah.discord.api.internal.json.objects.EmbedObject
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.util.EmbedBuilder
 import java.awt.Color

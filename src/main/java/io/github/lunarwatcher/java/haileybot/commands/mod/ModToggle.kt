@@ -44,6 +44,11 @@ class DisableModCommand(val bot: HaileyBot) : Command{
             message.channel.sendMessage("This is a DM channel. No mod tools available.");
             return;
         }
+
+        val limit: Int = 90
+        for(i in 0 until limit) {
+
+        }
         if (!message.canUserRunAdminCommand(bot)) {
             message.reply("You need to be a bot admin or have the administrator permission to do that.")
             return

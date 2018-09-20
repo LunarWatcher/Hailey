@@ -12,13 +12,14 @@ public class ConversionUtils {
     private static final Pattern USER_PATTERN = Pattern.compile("<@!?(\\d+)>");
 
     public static boolean convertToBoolean(String input){
+        String lower = input.toLowerCase();
         for(String t : yes){
-            if(t.equalsIgnoreCase(input)){
+            if(t.equals(lower)){
                 return true;
             }
         }
         for(String f : no){
-            if(f.equalsIgnoreCase(input))
+            if(f.equals(lower))
                 return false;
         }
         throw new ClassCastException();

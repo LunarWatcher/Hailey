@@ -54,9 +54,8 @@ public class ModGuild {
     // Internal meta
     private HaileyBot bot;
 
-    private List<Long> recentlyBanned = new SizeLimitedList<>(5);
+    private SizeLimitedList<IUser> recentlyBanned = new SizeLimitedList<>(5);
     private SizeLimitedList<IMessage> messages = new SizeLimitedList<>(30);
-    private SizeLimitedList<IUser> recentBans = new SizeLimitedList<>(3);
 
     public ModGuild(HaileyBot bot, long guild){
         this.bot = bot;
@@ -68,7 +67,9 @@ public class ModGuild {
     }
 
     public void banAndLog(IUser user, String reason){
-        this.recentlyBanned.add(user.getLongID());
+        this.recentlyBanned.add(user);
+
+
         boolean logging = true;
         if(auditChannel == -1){
             logger.warn("WARNING: Audit channel is null. Logging disabled.");
@@ -115,7 +116,7 @@ public class ModGuild {
         if(inviteSpamProtection){
             if(RegexConstants.INVITE_SPAM.matcher(event.getUser().getName()).find()){
                 banAndLog(event.getUser(), "Invite in username");
-                recentBans.add(event.getUser());
+                recentlyBanned.add(event.getUser());
                 nukeMessages();
                 return;
             }
@@ -152,7 +153,7 @@ public class ModGuild {
     }
 
     public void userLeft(UserLeaveEvent message){
-        if(recentlyBanned.contains(message.getUser().getLongID())){
+        if(recentlyBanned.contains(message)){
             return;
         }
 
@@ -181,10 +182,10 @@ public class ModGuild {
     }
 
     private void nukeMessages(){
-        if(recentBans.hasAny() && messages.hasAny()){
-            logger.debug("{}, {}", recentBans, messages);
+        if(recentlyBanned.hasAny() && messages.hasAny()){
+            logger.debug("{}, {}", recentlyBanned, messages);
             List<String> ids = new ArrayList<>();
-            for(IUser user : recentBans){
+            for(IUser user : recentlyBanned){
                 for(IMessage message : messages){
                     if(message.isDeleted())
                         continue;
@@ -203,10 +204,9 @@ public class ModGuild {
                 }
 
             }
-
             if(ids.size() != 0){
                 audit("Deleted messages. IDs: " + ids);
-                recentBans.clear();
+                recentlyBanned.clear();
                 messages.clear();
             }
 

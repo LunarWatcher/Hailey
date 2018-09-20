@@ -7,7 +7,9 @@ import io.github.lunarwatcher.java.haileybot.data.Constants.dateFormatter
 import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils
 import io.github.lunarwatcher.java.haileybot.utils.nl
 import sx.blah.discord.handle.obj.IMessage
+import sx.blah.discord.handle.obj.Permissions
 import sx.blah.discord.util.EmbedBuilder
+import java.security.Permission
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -51,8 +53,13 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
                 .appendln("**Created on:** $formattedCreationDate")
                 .appendln("**Bot:** ${if(bot) "Yes" else "No"}")
                 .appendln("**Presence:** $presence")
-                .appendln("**Roles (${roles.size}):** ${if(stringRoles.length > 1500) "(Too many to display :c)" else stringRoles}")
-                .nl().nl()
+                .appendln("**Roles (${roles.size}):** ${if(stringRoles.length > 1200) "(Too many to display :c)" else stringRoles}")
+                .nl(2)
+
+        val permissions = user.getPermissionsForGuild(message.guild).map { it.name.replace("_", " ") }
+
+        builder.appendln("Permissions: ${ permissions.joinToString(", ") }")
+                .nl(2);
 
         builder.appendln("***Bot data:***");
         builder.appendln("**Regex watches**: ${watches.size}");

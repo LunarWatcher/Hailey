@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.audit.ActionType;
 import sx.blah.discord.handle.audit.entry.AuditLogEntry;
+import sx.blah.discord.handle.audit.entry.TargetedEntry;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageDeleteEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageEditEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
@@ -20,7 +21,9 @@ import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.handle.obj.Permissions;
 import sx.blah.discord.util.EmbedBuilder;
 
+import javax.swing.text.html.parser.Entity;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Moderator {
@@ -184,27 +187,68 @@ public class Moderator {
             return;
 
         if(guild.getBanMonitoring()) {
-
             String usernameAndDiscriminator = event.getUser().getName() + "#" + event.getUser().getDiscriminator();
             long uid = event.getUser().getLongID();
             if (!event.getClient().getOurUser().getPermissionsForGuild(event.getGuild()).contains(Permissions.VIEW_AUDIT_LOG)
                     || !event.getClient().getOurUser().getPermissionsForGuild(event.getGuild()).contains(Permissions.ADMINISTRATOR)) {
-                guild.audit("A user has been banned, but I'm missing the permissions necessary to see the details. ");
-                guild.audit(banEmbed(usernameAndDiscriminator, uid, "Unknown", "Unknown"));
+                fail(usernameAndDiscriminator, uid, guild);
             }else {
-                AuditLogEntry entry = event.getGuild()
-                        .getAuditLog(ActionType.MEMBER_BAN_ADD)
-                        .getEntriesByTarget(event.getUser().getLongID())
-                        .get(0);
-                IUser responsible = entry.getResponsibleUser();
+                launchAsyncAuditBanLogTask(usernameAndDiscriminator, event, guild);
+            }
+        }
 
+    }
+
+    private void fail(String usernameAndDiscriminator, long uid, ModGuild guild){
+        guild.audit("A user has been banned, but I either don't have permission to see the details, or can't get an entry after 25 minutes.");
+        guild.audit(banEmbed(usernameAndDiscriminator, uid, "Unknown", "Unknown"));
+    }
+
+    private void launchAsyncAuditBanLogTask(final String usernameAndDiscriminator, UserBanEvent event, final ModGuild guild){
+        final long uid = event.getUser().getLongID();
+
+        new Thread(() -> {
+            int attempt = 0;
+
+            while(!Thread.currentThread().isInterrupted()){
+                try{
+                    for(int i = 0; i < 5; i++) {
+                        if(Thread.currentThread().isInterrupted())
+                            break;
+                        Thread.sleep(60000);
+                    }
+                }catch(InterruptedException e){
+                    // Ignore
+                }
+                attempt++;
+                List<TargetedEntry> entries = event.getGuild()
+                        .getAuditLog(ActionType.MEMBER_BAN_ADD)
+                        .getEntriesByTarget(event.getUser().getLongID());
+
+                if(entries.size() == 0){
+                    continue;
+                }
+                AuditLogEntry entry = entries.get(0);
+
+                IUser responsible = entry.getResponsibleUser();
+                if(responsible.getLongID() == bot.getClient().getOurUser().getLongID()){
+                    // If the banner is the bot, it's guranteed the bot has sent a message about the ban.
+                    // if not, that's a bug.
+                    break;
+                }
                 String banner = getUsername(responsible);
                 String reason = entry.getReason().orElse("No reason specified");
 
                 guild.audit(banEmbed(usernameAndDiscriminator, uid, banner, reason));
-            }
-        }
 
+                if(attempt > 5){
+                    fail(usernameAndDiscriminator, uid, guild);
+                    break;
+                }
+
+
+            }
+        }).start();
     }
 
     public static String getUsername(IUser user){
