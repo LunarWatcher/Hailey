@@ -121,8 +121,6 @@ class ListWatches(val bot: HaileyBot) : Command {
         }
         val embed = EmbedBuilder()
                 .withColor(getRandomColor())
-        val builder = StringBuilder()
-
         for ((k, v) in watchesByGuild) {
             val string = "```${v.flatMap { it.regex }.joinToString("\n")}```"
             val len = string.length
