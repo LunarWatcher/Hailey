@@ -100,7 +100,7 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
                         true))
                 .appendField(Embed.EmbedField("Verification level", ConversionUtils.parseVerificationLevel(message.guild.verificationLevel), true))
                 .appendField(Embed.EmbedField("Location", message.guild.region.name, true))
-                .appendField(Embed.EmbedField("Channels", "${message.guild.channels.size} channels in ${message.guild.categories.size}. ${message.guild.voiceChannels.size} voice channels.", true))
+                .appendField(Embed.EmbedField("Channels", "${message.guild.channels.size} channels in ${message.guild.categories.size} categories. ${message.guild.voiceChannels.size} voice channels.", true))
                 .appendField(Embed.EmbedField("Info", content, false))
 
                 .build()
