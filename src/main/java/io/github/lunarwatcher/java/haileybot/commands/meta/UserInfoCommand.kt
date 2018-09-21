@@ -46,14 +46,14 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
 
 
         val uidEmbed = Embed.EmbedField("User ID", user.stringID, true)
-        val nicknameEmbed = Embed.EmbedField("Server nickname", user.getNicknameForGuild(message.guild), true)
+        val nicknameEmbed = Embed.EmbedField("Server nickname", nick, true)
         val botStatusEmbed = Embed.EmbedField("Bot", if (bot) "Yes" else "No", true)
         val accountCreationEmbed = Embed.EmbedField("Creation date", formattedCreationDate, false)
         val presenceEmbed = Embed.EmbedField("Presence", presence, false)
         val activityEmbed = Embed.EmbedField("Activity", activity, false)
         val roleEmbed = Embed.EmbedField("Roles (${roles.size})", if (stringRoles.length > 1200) "(Too many to display :c)" else stringRoles, false)
         val permissionEmbed = Embed.EmbedField("Permissions", permissions.joinToString(", "), false)
-
+        val watchesEmbed = Embed.EmbedField("Watches", watches.size.toString(), false)
         val embed = EmbedBuilder()
                 .withTitle("User info")
                 .withAuthorName(username)
