@@ -11,7 +11,6 @@ import sx.blah.discord.handle.obj.IRole;
 import sx.blah.discord.handle.obj.Permissions;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class RemoveAssignableRoleCommand implements Command {
     private HaileyBot bot;
@@ -42,30 +41,30 @@ public class RemoveAssignableRoleCommand implements Command {
 
     @Override
     public void onMessage(@NotNull IMessage message, String rawMessage, String commandName) {
-        if(message.getChannel() instanceof IPrivateChannel){
+        if (message.getChannel() instanceof IPrivateChannel) {
             message.getChannel().sendMessage("This is a DM channel. No mod tools available.");
             return;
         }
-        if(!ExtensionsKt.canUserRunAdminCommand(message, bot)){
+        if (!ExtensionsKt.canUserRunAdminCommand(message, bot)) {
             message.getChannel().sendMessage("You can't do that.");
             return;
         }
 
-        if(rawMessage.isEmpty()){
+        if (rawMessage.isEmpty()) {
             message.getChannel().sendMessage("Which role do you want to remove from being self-assignable?");
             return;
         }
 
-        if(message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).stream().noneMatch((it) -> it == Permissions.MANAGE_ROLES || it == Permissions.ADMINISTRATOR)){
+        if (message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).stream().noneMatch((it) -> it == Permissions.MANAGE_ROLES || it == Permissions.ADMINISTRATOR)) {
             message.getChannel().sendMessage("WARNING: I don't have the \"manage roles\" or the \"administrator\" permission (I need one of them to assign roles).");
         }
 
         List<IRole> roles = bot.getAssigner().getRolesForGuild(message.getGuild().getLongID());
-        if(roles == null){
+        if (roles == null) {
             message.getChannel().sendMessage("No self-assignable roles are registered.");
             return;
         }
-        for(IRole role : roles) {
+        for (IRole role : roles) {
             if (role.getName().equals(rawMessage)) {
                 boolean result = bot.getAssigner().removeRole(message.getGuild().getLongID(), role);
                 if (result)

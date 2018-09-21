@@ -35,6 +35,6 @@ public class JoinCommand implements Command {
 
     @Override
     public void onMessage(@NotNull IMessage message, String rawMessage, String commandName) {
-        message.getChannel().sendMessage("Click this link to authorize me: https://discordapp.com/oauth2/authorize?client_id=" + message.getClient().getApplicationClientID() + "&scope=bot&permissions=8" );
+        message.getChannel().sendMessage("Click this link to authorize me: https://discordapp.com/oauth2/authorize?client_id=" + message.getClient().getApplicationClientID() + "&scope=bot&permissions=8");
     }
 }

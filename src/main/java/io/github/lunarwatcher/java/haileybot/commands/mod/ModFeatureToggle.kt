@@ -12,7 +12,6 @@ import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
 import org.slf4j.LoggerFactory
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
-import sx.blah.discord.handle.obj.Permissions
 
 /**
  * The primary feature toggle command. It's accessed by the
@@ -38,7 +37,7 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
     }
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
-        if(message.channel is IPrivateChannel){
+        if (message.channel is IPrivateChannel) {
             message.channel.sendMessage("This is a DM channel. No mod tools available.");
             return;
         }
@@ -77,17 +76,17 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
             } catch (e: NullPointerException) {
                 message.channel.sendMessage("Caught an NPE.")
             }
-            BAN_MONITORING_FEATURE -> try{
+            BAN_MONITORING_FEATURE -> try {
                 val toggle = boolean(guild, BAN_MONITORING_FEATURE, mode);
-                message.channel.sendMessage((if(toggle) "Enabled" else "Disabled") + " ban monitoring.");
-            } catch(e: ClassCastException){
+                message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " ban monitoring.");
+            } catch (e: ClassCastException) {
                 message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled).");
             }
             AUDIT_FEATURE -> try {
-                val channel = if(mode.toLongOrNull() == null){
+                val channel = if (mode.toLongOrNull() == null) {
                     ConversionUtils.parseChannel(mode);
-                }else mode.toLong()
-                if(channel == -2L){
+                } else mode.toLong()
+                if (channel == -2L) {
                     message.channel.sendMessage("Failed to parse channel.");
                     return;
                 }
@@ -100,10 +99,10 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
                 message.channel.sendMessage("Failed to convert channel to a long ID.")
             }
             WELCOME_LOGGING -> try {
-                val channel = if(mode.toLongOrNull() == null){
+                val channel = if (mode.toLongOrNull() == null) {
                     ConversionUtils.parseChannel(mode);
-                }else mode.toLong()
-                if(channel == -2L){
+                } else mode.toLong()
+                if (channel == -2L) {
                     message.channel.sendMessage("Failed to parse channel.");
                     return;
                 }
@@ -116,10 +115,10 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
                 message.channel.sendMessage("Failed to convert channel to a long ID.")
             }
             LEAVE_LOGGING -> try {
-                val channel = if(mode.toLongOrNull() == null){
+                val channel = if (mode.toLongOrNull() == null) {
                     ConversionUtils.parseChannel(mode);
-                }else mode.toLong()
-                if(channel == -2L){
+                } else mode.toLong()
+                if (channel == -2L) {
                     message.channel.sendMessage("Failed to parse channel.");
                     return;
                 }
@@ -132,28 +131,28 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
             } catch (e: ClassCastException) {
                 message.channel.sendMessage("Failed to convert channel to a long ID.")
             }
-            JOIN_MESSAGE -> try{
+            JOIN_MESSAGE -> try {
 
                 guild.set(JOIN_MESSAGE, mode)
                 message.channel.sendMessage("Set join message to: \"$mode\"")
-            }catch(e: Exception){
+            } catch (e: Exception) {
                 CrashHandler.error(e);
                 message.channel.sendMessage("Something went wrong. Check the logs.");
             }
 
-            LEAVE_MESSAGE -> try{
+            LEAVE_MESSAGE -> try {
 
                 guild.set(LEAVE_MESSAGE, mode)
                 message.channel.sendMessage("Set leave message to: \"$mode\"")
-            }catch(e: Exception){
+            } catch (e: Exception) {
                 CrashHandler.error(e);
                 message.channel.sendMessage("Something went wrong. Check the logs.");
             }
 
-            JOIN_DM -> try{
+            JOIN_DM -> try {
                 guild.set(JOIN_DM, mode)
                 message.channel.sendMessage("Set join DM to: \"$mode\"")
-            }catch(e: Exception){
+            } catch (e: Exception) {
                 CrashHandler.error(e);
                 message.channel.sendMessage("Something went wrong. Check the logs.");
             }
@@ -162,11 +161,12 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
         }
     }
 
-    fun boolean(guild: ModGuild, feature: String, raw: String): Boolean{
-	    val parsed: Boolean = ConversionUtils.convertToBoolean(raw);
-	    guild.set(feature, parsed);
+    fun boolean(guild: ModGuild, feature: String, raw: String): Boolean {
+        val parsed: Boolean = ConversionUtils.convertToBoolean(raw);
+        guild.set(feature, parsed);
         return parsed;
     }
+
     companion object {
         private val logger = LoggerFactory.getLogger(ModFeatureToggle::class.java)
     }

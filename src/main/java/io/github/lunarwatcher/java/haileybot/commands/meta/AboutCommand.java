@@ -4,17 +4,12 @@ import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;
 import io.github.lunarwatcher.java.haileybot.data.Config;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
-import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils;
 import org.jetbrains.annotations.NotNull;
-import sx.blah.discord.api.internal.json.objects.EmbedObject;
-import sx.blah.discord.handle.impl.obj.Embed;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.util.EmbedBuilder;
 
 import java.awt.*;
 import java.util.List;
-import java.util.Properties;
-import java.util.stream.Collectors;
 
 public class AboutCommand implements Command {
     private HaileyBot bot;

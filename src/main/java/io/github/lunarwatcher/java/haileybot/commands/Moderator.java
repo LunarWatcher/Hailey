@@ -21,7 +21,6 @@ import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.handle.obj.Permissions;
 import sx.blah.discord.util.EmbedBuilder;
 
-import javax.swing.text.html.parser.Entity;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,27 +53,27 @@ public class Moderator {
         load();
     }
 
-    public void save(){
+    public void save() {
         Map<String, Map<String, Object>> data = new HashMap<>();
-        for(Map.Entry<Long, ModGuild> modGuild : enabledGuilds.entrySet()){
+        for (Map.Entry<Long, ModGuild> modGuild : enabledGuilds.entrySet()) {
             data.put(Long.toString(modGuild.getKey()), modGuild.getValue().getDataAsMap());
         }
 
         bot.getDatabase().put(KEY, data);
     }
 
-    public void load(){
+    public void load() {
         Map<String, Object> data = bot.getDatabase().getMap(KEY);
         if (data == null)
             return;
-        for(Map.Entry<String, Object> entry : data.entrySet()){
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
             long id = Long.parseLong(entry.getKey());
             try {
                 Map<String, Object> dat = (Map<String, Object>) entry.getValue();
                 ModGuild guild = new ModGuild(bot, id);
                 guild.loadFromMap(dat);
                 enabledGuilds.put(id, guild);
-            }catch(ClassCastException e){
+            } catch (ClassCastException e) {
                 e.printStackTrace();
             }
 
@@ -83,25 +82,25 @@ public class Moderator {
 
     // Events
 
-    public void userJoined(UserJoinEvent event){
+    public void userJoined(UserJoinEvent event) {
         try {
             bot.getAssigner()
                     .onUserJoined(event);
-        }catch(NullPointerException e){
+        } catch (NullPointerException e) {
             //Ignore
         }
         ModGuild guild = enabledGuilds.get(event.getGuild().getLongID());
-        if(guild == null)
+        if (guild == null)
             return;
         guild.userJoined(event);
 
     }
 
-    public boolean messageReceived(MessageReceivedEvent event){
-        if(event.getChannel() instanceof IPrivateChannel)
+    public boolean messageReceived(MessageReceivedEvent event) {
+        if (event.getChannel() instanceof IPrivateChannel)
             return false;
         ModGuild guild = enabledGuilds.get(event.getGuild().getLongID());
-        if(guild == null)
+        if (guild == null)
             return false;
         logger.info("Message received in {} (UID {}), channel {} . Author: {} (UID {}): \"{}\"",
                 event.getGuild().getName(), event.getGuild().getLongID(), event.getChannel().getName(),
@@ -110,70 +109,70 @@ public class Moderator {
         return false;
     }
 
-    public void messageEdited(MessageEditEvent event){
-        if(event.getChannel() instanceof IPrivateChannel)
+    public void messageEdited(MessageEditEvent event) {
+        if (event.getChannel() instanceof IPrivateChannel)
             return;
     }
 
-    public void messageFilter(MessageReceivedEvent event){
-        if(event.getChannel() instanceof IPrivateChannel)
+    public void messageFilter(MessageReceivedEvent event) {
+        if (event.getChannel() instanceof IPrivateChannel)
             return;
     }
 
 
-    public void userLeft(UserLeaveEvent event){
+    public void userLeft(UserLeaveEvent event) {
         ModGuild guild = enabledGuilds.get(event.getGuild().getLongID());
-        if(guild == null)
+        if (guild == null)
             return;
 
         guild.userLeft(event);
     }
 
-    public void messageDeleted(MessageDeleteEvent event){
-        if(event.getChannel() instanceof IPrivateChannel)
+    public void messageDeleted(MessageDeleteEvent event) {
+        if (event.getChannel() instanceof IPrivateChannel)
             return;
     }
 
     // Meta
 
-    public boolean registerGuild(IGuild guild){
-        if(enabledGuilds.containsKey(guild.getLongID()))
+    public boolean registerGuild(IGuild guild) {
+        if (enabledGuilds.containsKey(guild.getLongID()))
             return false;
 
         enabledGuilds.put(guild.getLongID(), new ModGuild(bot, guild.getLongID()));
         return true;
     }
 
-    public boolean removeGuild(IGuild guild){
-        if(!enabledGuilds.containsKey(guild.getLongID()))
+    public boolean removeGuild(IGuild guild) {
+        if (!enabledGuilds.containsKey(guild.getLongID()))
             return false;
         enabledGuilds.remove(guild.getLongID());
         return true;
     }
 
-    public boolean isGuildEnabled(IGuild guild){
+    public boolean isGuildEnabled(IGuild guild) {
         return enabledGuilds.containsKey(guild.getLongID());
     }
 
     @Nullable
-    public ModGuild getGuild(long id){
+    public ModGuild getGuild(long id) {
         return enabledGuilds.get(id);
     }
 
     @Nullable
-    public ModGuild getGuild(IGuild guild){
+    public ModGuild getGuild(IGuild guild) {
         return getGuild(guild.getLongID());
     }
 
-    public static String getFeatures(){
+    public static String getFeatures() {
         return features;
     }
 
-    private static String combine(String... args){
+    private static String combine(String... args) {
         StringBuilder res = new StringBuilder();
-        for(int i = 0; i < args.length; i++){
+        for (int i = 0; i < args.length; i++) {
             res.append(args[i]);
-            if(args.length != args.length - 1){
+            if (args.length != args.length - 1) {
                 res.append(", ");
             }
         }
@@ -183,41 +182,41 @@ public class Moderator {
     public void userBanned(UserBanEvent event) {
 
         ModGuild guild = enabledGuilds.get(event.getGuild().getLongID());
-        if(guild == null)
+        if (guild == null)
             return;
 
-        if(guild.getBanMonitoring()) {
+        if (guild.getBanMonitoring()) {
             String usernameAndDiscriminator = event.getUser().getName() + "#" + event.getUser().getDiscriminator();
             long uid = event.getUser().getLongID();
             if (!event.getClient().getOurUser().getPermissionsForGuild(event.getGuild()).contains(Permissions.VIEW_AUDIT_LOG)
                     || !event.getClient().getOurUser().getPermissionsForGuild(event.getGuild()).contains(Permissions.ADMINISTRATOR)) {
                 fail(usernameAndDiscriminator, uid, guild);
-            }else {
+            } else {
                 launchAsyncAuditBanLogTask(usernameAndDiscriminator, event, guild);
             }
         }
 
     }
 
-    private void fail(String usernameAndDiscriminator, long uid, ModGuild guild){
+    private void fail(String usernameAndDiscriminator, long uid, ModGuild guild) {
         guild.audit("A user has been banned, but I either don't have permission to see the details, or can't get an entry after 25 minutes.");
         guild.audit(banEmbed(usernameAndDiscriminator, uid, "Unknown", "Unknown"));
     }
 
-    private void launchAsyncAuditBanLogTask(final String usernameAndDiscriminator, UserBanEvent event, final ModGuild guild){
+    private void launchAsyncAuditBanLogTask(final String usernameAndDiscriminator, UserBanEvent event, final ModGuild guild) {
         final long uid = event.getUser().getLongID();
 
         new Thread(() -> {
             int attempt = 0;
 
-            while(!Thread.currentThread().isInterrupted()){
-                try{
-                    for(int i = 0; i < 5; i++) {
-                        if(Thread.currentThread().isInterrupted())
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    for (int i = 0; i < 5; i++) {
+                        if (Thread.currentThread().isInterrupted())
                             break;
                         Thread.sleep(60000);
                     }
-                }catch(InterruptedException e){
+                } catch (InterruptedException e) {
                     // Ignore
                 }
                 attempt++;
@@ -226,8 +225,8 @@ public class Moderator {
                         .getEntriesByTarget(event.getUser().getLongID());
 
 
-                if(entries.size() == 0){
-                    if(attempt >= 5){
+                if (entries.size() == 0) {
+                    if (attempt >= 5) {
                         fail(usernameAndDiscriminator, uid, guild);
                         break;
                     }
@@ -236,7 +235,7 @@ public class Moderator {
                 AuditLogEntry entry = entries.get(0);
 
                 IUser responsible = entry.getResponsibleUser();
-                if(responsible.getLongID() == bot.getClient().getOurUser().getLongID()){
+                if (responsible.getLongID() == bot.getClient().getOurUser().getLongID()) {
                     // If the banner is the bot, it's guranteed the bot has sent a message about the ban.
                     // if not, that's a bug.
                     break;
@@ -250,11 +249,11 @@ public class Moderator {
         }).start();
     }
 
-    public static String getUsername(IUser user){
+    public static String getUsername(IUser user) {
         return user.getName() + "#" + user.getDiscriminator();
     }
 
-    public static EmbedObject banEmbed(String usernameAndDiscriminator, Long uid, String banner, String reason){
+    public static EmbedObject banEmbed(String usernameAndDiscriminator, Long uid, String banner, String reason) {
         return new EmbedBuilder()
                 .withTitle("User banned")
                 .withDesc(concenateDetails("Name", usernameAndDiscriminator))
@@ -264,7 +263,7 @@ public class Moderator {
                 .build();
     }
 
-    public static String concenateDetails(String title, String content){
+    public static String concenateDetails(String title, String content) {
         return "**" + title + "**: " + content + "\n";
     }
 }

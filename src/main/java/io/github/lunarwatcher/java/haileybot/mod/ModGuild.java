@@ -1,6 +1,5 @@
 package io.github.lunarwatcher.java.haileybot.mod;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.github.lunarwatcher.java.haileybot.CrashHandler;
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.data.RegexConstants;
@@ -14,7 +13,6 @@ import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.impl.events.guild.member.UserJoinEvent;
 import sx.blah.discord.handle.impl.events.guild.member.UserLeaveEvent;
-import sx.blah.discord.handle.obj.IEmbed;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
 
@@ -57,36 +55,36 @@ public class ModGuild {
     private SizeLimitedList<IUser> recentlyBanned = new SizeLimitedList<>(5);
     private SizeLimitedList<IMessage> messages = new SizeLimitedList<>(30);
 
-    public ModGuild(HaileyBot bot, long guild){
+    public ModGuild(HaileyBot bot, long guild) {
         this.bot = bot;
         this.guild = guild;
     }
 
-    public void setWarnings(int warnings){
+    public void setWarnings(int warnings) {
         this.warnings = warnings;
     }
 
-    public void banAndLog(IUser user, String reason){
+    public void banAndLog(IUser user, String reason) {
         this.recentlyBanned.add(user);
 
 
         boolean logging = true;
-        if(auditChannel == -1){
+        if (auditChannel == -1) {
             logger.warn("WARNING: Audit channel is null. Logging disabled.");
             logging = false;
         }
 
         try {
             user.getClient().getGuildByID(guild)
-                    .banUser(user,7);
-            if(logging){
+                    .banUser(user, 7);
+            if (logging) {
                 user.getClient().getGuildByID(guild)
                         .getChannelByID(auditChannel)
                         .sendMessage("Banned user " + user.getLongID() + ": " + reason);
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             logger.warn("Failed to ban user " + user.getLongID());
-            if(logging){
+            if (logging) {
                 user.getClient().getGuildByID(guild)
                         .getChannelByID(auditChannel)
                         .sendMessage("***WARNING***: Banning user " + user.getLongID() + " failed. Check my perms");
@@ -96,39 +94,39 @@ public class ModGuild {
 
     }
 
-    public void toggleInviteSpamProtection(boolean inviteSpamProtection){
+    public void toggleInviteSpamProtection(boolean inviteSpamProtection) {
         this.inviteSpamProtection = inviteSpamProtection;
     }
 
-    public boolean getInviteSpamProtection(){
+    public boolean getInviteSpamProtection() {
         return inviteSpamProtection;
     }
 
-    public long getChannel(){
+    public long getChannel() {
         return auditChannel;
     }
 
-    public long getGuild(){
+    public long getGuild() {
         return guild;
     }
 
-    public void userJoined(UserJoinEvent event){
-        if(inviteSpamProtection){
-            if(RegexConstants.INVITE_SPAM.matcher(event.getUser().getName()).find()){
+    public void userJoined(UserJoinEvent event) {
+        if (inviteSpamProtection) {
+            if (RegexConstants.INVITE_SPAM.matcher(event.getUser().getName()).find()) {
                 banAndLog(event.getUser(), "Invite in username");
                 recentlyBanned.add(event.getUser());
                 nukeMessages();
                 return;
             }
         }
-        try{
-            if(event.getUser().isBot())
+        try {
+            if (event.getUser().isBot())
                 return;
 
-            if(joinMessage == null && welcomeChannel > 0){
+            if (joinMessage == null && welcomeChannel > 0) {
                 event.getGuild().getChannelByID(welcomeChannel)
                         .sendMessage(ExtensionsKt.messageFormat(DEFAULT_JOIN_MESSAGE, event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getGuild().getName()));
-            }else if(joinMessage != null && welcomeChannel > 0){
+            } else if (joinMessage != null && welcomeChannel > 0) {
                 event.getGuild().getChannelByID(welcomeChannel)
                         .sendMessage(ExtensionsKt.messageFormat(joinMessage,
                                 event.getUser().getName() + "#" + event.getUser().getDiscriminator(),
@@ -136,66 +134,66 @@ public class ModGuild {
                                 Integer.toString(event.getGuild().getUsers().size()),
                                 getNumberWithNth(event.getGuild().getUsers().size())));
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             CrashHandler.error(e);
             audit("An error happened while attempting to send a join message. Are the channels properly configured?");
         }
 
-        if(joinDM != null){
+        if (joinDM != null) {
             event.getUser().getOrCreatePMChannel()
                     .sendMessage("Welcome to " + event.getGuild().getName() + "! One of the server owners/admins has set a welcome message for joining users.\n\n\n" +
-                        ExtensionsKt.messageFormat(joinDM,
-                                event.getUser().getName() + "#" + event.getUser().getDiscriminator(),
-                                event.getGuild().getName(),
-                                Integer.toString(event.getGuild().getUsers().size())));
+                            ExtensionsKt.messageFormat(joinDM,
+                                    event.getUser().getName() + "#" + event.getUser().getDiscriminator(),
+                                    event.getGuild().getName(),
+                                    Integer.toString(event.getGuild().getUsers().size())));
         }
     }
 
-    public void userLeft(UserLeaveEvent message){
-        if(recentlyBanned.contains(message)){
+    public void userLeft(UserLeaveEvent message) {
+        if (recentlyBanned.contains(message)) {
             return;
         }
 
         try {
-            if(message.getUser().isBot())
+            if (message.getUser().isBot())
                 return;
             if (leaveMessage == null && userLeaveChannel > 0) {
                 message.getGuild().getChannelByID(userLeaveChannel)
-                        .sendMessage(ExtensionsKt.messageFormat(DEFAULT_LEAVE_MESSAGE, message.getUser().getName() + "#" +  message.getUser().getDiscriminator()));
+                        .sendMessage(ExtensionsKt.messageFormat(DEFAULT_LEAVE_MESSAGE, message.getUser().getName() + "#" + message.getUser().getDiscriminator()));
             } else if (leaveMessage != null && userLeaveChannel > 0) {
                 message.getGuild().getChannelByID(userLeaveChannel)
                         .sendMessage(ExtensionsKt.messageFormat(leaveMessage, message.getUser().getName() + "#" + message.getUser().getDiscriminator()));
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             CrashHandler.error(e);
             audit("An error happened while attempting to send a leave message. Are the channels properly configured?");
         }
     }
 
-    public void messageReceived(MessageReceivedEvent event){
-        if(event.getAuthor().isBot()){
+    public void messageReceived(MessageReceivedEvent event) {
+        if (event.getAuthor().isBot()) {
             messages.add(event.getMessage());
         }
         nukeMessages();
     }
 
-    private void nukeMessages(){
-        if(recentlyBanned.hasAny() && messages.hasAny()){
+    private void nukeMessages() {
+        if (recentlyBanned.hasAny() && messages.hasAny()) {
             logger.debug("{}, {}", recentlyBanned, messages);
             List<String> ids = new ArrayList<>();
-            for(IUser user : recentlyBanned){
-                for(IMessage message : messages){
-                    if(message.isDeleted())
+            for (IUser user : recentlyBanned) {
+                for (IMessage message : messages) {
+                    if (message.isDeleted())
                         continue;
 
-                    if(Pattern.compile("(?i)" + user.getName().toLowerCase()).matcher(message.getContent()).find()
-                            || Pattern.compile("(?i)<@!?" + user.getStringID() + ">").matcher(message.getContent()).find()){
+                    if (Pattern.compile("(?i)" + user.getName().toLowerCase()).matcher(message.getContent()).find()
+                            || Pattern.compile("(?i)<@!?" + user.getStringID() + ">").matcher(message.getContent()).find()) {
                         try {
                             ids.add(message.getStringID());
                             message.delete();
-                        }catch(Exception e){
+                        } catch (Exception e) {
                             logger.warn("Failed to delete message.");
                             CrashHandler.error(e);
                             audit("Failed to delete message " + message.getStringID());
@@ -204,7 +202,7 @@ public class ModGuild {
                 }
 
             }
-            if(ids.size() != 0){
+            if (ids.size() != 0) {
                 audit("Deleted messages. IDs: " + ids);
                 recentlyBanned.clear();
                 messages.clear();
@@ -213,56 +211,56 @@ public class ModGuild {
         }
     }
 
-    public void audit(String data){
-        if(auditChannel > 0){
-            try{
+    public void audit(String data) {
+        if (auditChannel > 0) {
+            try {
                 bot.getClient()
                         .getGuildByID(guild)
                         .getChannelByID(auditChannel)
                         .sendMessage(data);
-            }catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public void audit(EmbedObject embed){
-        if(auditChannel > 0){
-            try{
+    public void audit(EmbedObject embed) {
+        if (auditChannel > 0) {
+            try {
                 bot.getClient()
                         .getGuildByID(guild)
                         .getChannelByID(auditChannel)
                         .sendMessage(embed);
-            }catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public Map<String, Object> getDataAsMap(){
+    public Map<String, Object> getDataAsMap() {
         Map<String, Object> data = new HashMap<>();
         data.put(INVITE_FEATURE, inviteSpamProtection);
         data.put(BAN_MONITORING_FEATURE, banMonitoring);
-        if(auditChannel > 0)
+        if (auditChannel > 0)
             data.put(AUDIT_FEATURE, auditChannel);
 
-        if(welcomeChannel > 0)
+        if (welcomeChannel > 0)
             data.put(WELCOME_LOGGING, welcomeChannel);
 
-        if(userLeaveChannel > 0)
+        if (userLeaveChannel > 0)
             data.put(LEAVE_LOGGING, userLeaveChannel);
 
-        if(joinMessage != null)
+        if (joinMessage != null)
             data.put(JOIN_MESSAGE, joinMessage);
-        if(leaveMessage != null)
+        if (leaveMessage != null)
             data.put(LEAVE_MESSAGE, leaveMessage);
-        if(joinDM != null)
+        if (joinDM != null)
             data.put(JOIN_DM, joinDM);
 
         return data;
     }
 
-    public Map<String, Object> getDataAsReadableMap(){
+    public Map<String, Object> getDataAsReadableMap() {
         Map<String, Object> data = new HashMap<>();
         data.put("Invite spam protection", formatBoolean(inviteSpamProtection));
         data.put("Ban monitoring", formatBoolean(banMonitoring));
@@ -271,35 +269,35 @@ public class ModGuild {
         data.put("Welcome channel", formatChannel(welcomeChannel));
         data.put("Leave channel", formatChannel(userLeaveChannel));
 
-        if(welcomeChannel > 0)
+        if (welcomeChannel > 0)
             data.put("Join greeting", formatString(joinMessage, true));
-        if(userLeaveChannel > 0)
+        if (userLeaveChannel > 0)
             data.put("Leave message", formatString(leaveMessage, true));
         data.put("Join DM", formatString(joinDM));
 
         return data;
     }
 
-    public void loadFromMap(Map<String, Object> data){
-        for(Map.Entry<String, Object> entry : data.entrySet()){
-            if(entry.getKey().equals(INVITE_FEATURE))
+    public void loadFromMap(Map<String, Object> data) {
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
+            if (entry.getKey().equals(INVITE_FEATURE))
                 inviteSpamProtection = (boolean) entry.getValue();
-            else if(entry.getKey().equalsIgnoreCase(BAN_MONITORING_FEATURE))
+            else if (entry.getKey().equalsIgnoreCase(BAN_MONITORING_FEATURE))
                 banMonitoring = (boolean) entry.getValue();
-            else if(entry.getKey().equals(AUDIT_FEATURE))
+            else if (entry.getKey().equals(AUDIT_FEATURE))
                 auditChannel = Long.valueOf(entry.getValue().toString());
-            else if(entry.getKey().equals(WELCOME_LOGGING))
+            else if (entry.getKey().equals(WELCOME_LOGGING))
                 welcomeChannel = Long.valueOf(entry.getValue().toString());
-            else if(entry.getKey().equals(LEAVE_LOGGING))
+            else if (entry.getKey().equals(LEAVE_LOGGING))
                 userLeaveChannel = Long.valueOf(entry.getValue().toString());
-            else if(entry.getKey().equals(JOIN_MESSAGE))
+            else if (entry.getKey().equals(JOIN_MESSAGE))
                 joinMessage = entry.getValue().toString().replaceAll("(?i)<user>", "{0}")
                         .replaceAll("(?i)<server>", "{1}")
                         .replaceAll("(?i)<members>", "{2}")
                         .replaceAll("(?i)<nthmember>", "{3}");
-            else if(entry.getKey().equalsIgnoreCase(LEAVE_MESSAGE))
+            else if (entry.getKey().equalsIgnoreCase(LEAVE_MESSAGE))
                 leaveMessage = entry.getValue().toString().replaceAll("(?i)<user>", "{0}");
-            else if(entry.getKey().equalsIgnoreCase(JOIN_DM))
+            else if (entry.getKey().equalsIgnoreCase(JOIN_DM))
                 joinDM = entry.getValue().toString().replaceAll("(?i)<user>", "{0}")
                         .replaceAll("(?i)<server>", "{1}")
                         .replaceAll("(?i)<members>", "{2}")
@@ -311,7 +309,7 @@ public class ModGuild {
     }
 
     public void set(@NotNull String featureName, Object data) {
-        switch(featureName.toLowerCase()){
+        switch (featureName.toLowerCase()) {
             case INVITE_FEATURE:
                 assertType(data, Boolean.class);
                 inviteSpamProtection = (boolean) data;
@@ -357,19 +355,19 @@ public class ModGuild {
         }
     }
 
-    private String formatChannel(long channel){
+    private String formatChannel(long channel) {
         return channel <= 0 ? "None" : "<#" + channel + ">";
     }
 
-    private String formatBoolean(boolean value){
+    private String formatBoolean(boolean value) {
         return value ? "Enabled" : "Disabled";
     }
 
-    private String formatString(@Nullable String value){
+    private String formatString(@Nullable String value) {
         return formatString(value, false);
     }
 
-    private String formatString(@Nullable String value, boolean hasDefaults){
+    private String formatString(@Nullable String value, boolean hasDefaults) {
         return value == null ? "None " + (hasDefaults ? "(using defaults)" : "") : value;
     }
 

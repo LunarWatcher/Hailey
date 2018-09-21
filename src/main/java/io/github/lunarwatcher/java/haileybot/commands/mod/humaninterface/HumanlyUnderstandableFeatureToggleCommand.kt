@@ -19,7 +19,7 @@ abstract class HumanlyUnderstandableFeatureToggleCommand(private val cmdName: St
     override fun getHelp(): String? = cmdHelp
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
-        if(message.channel is IPrivateChannel){
+        if (message.channel is IPrivateChannel) {
             message.channel.sendMessage("This is a DM channel. No mod tools available.");
             return;
         }
@@ -33,11 +33,11 @@ abstract class HumanlyUnderstandableFeatureToggleCommand(private val cmdName: St
             return
         }
         val splitBySpace = rawMessage.split(" ", limit = features.size);
-        if(splitBySpace.size != features.size){
+        if (splitBySpace.size != features.size) {
             message.channel.sendMessage("You seem to be missing one or more arguments. See the help command for more information on required arguments")
             return;
         }
-        for(i in 0 until features.size) {
+        for (i in 0 until features.size) {
             val featureName = features[i];
             val arguments = splitBySpace[i]
             toggleCommand.onMessage(message, "$featureName $arguments", commandName);

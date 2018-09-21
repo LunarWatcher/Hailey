@@ -7,14 +7,14 @@ import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
 import sx.blah.discord.handle.obj.Permissions
 
-class EnableModCommand(val bot: HaileyBot) : Command{
+class EnableModCommand(val bot: HaileyBot) : Command {
     override fun getName(): String = "enableMod"
     override fun getAliases(): MutableList<String>? = null;
     override fun getHelp(): String = "Just run the command. You need to be an administrator, the owner of the server, or a bot admin to use it"
     override fun getDescription(): String = "Enables moderation features for this guild."
 
     override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
-        if(message.channel is IPrivateChannel){
+        if (message.channel is IPrivateChannel) {
             message.channel.sendMessage("This is a DM channel. No mod tools available.");
             return;
         }
@@ -33,20 +33,20 @@ class EnableModCommand(val bot: HaileyBot) : Command{
 
 }
 
-class DisableModCommand(val bot: HaileyBot) : Command{
+class DisableModCommand(val bot: HaileyBot) : Command {
     override fun getName(): String = "disableMod"
     override fun getAliases(): MutableList<String>? = null;
     override fun getHelp(): String = "Just run the command. You need to be an administrator, the owner of the server, or a bot admin to use it"
     override fun getDescription(): String = "Disables moderation features for this guild."
 
     override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
-        if(message.channel is IPrivateChannel){
+        if (message.channel is IPrivateChannel) {
             message.channel.sendMessage("This is a DM channel. No mod tools available.");
             return;
         }
 
         val limit: Int = 90
-        for(i in 0 until limit) {
+        for (i in 0 until limit) {
 
         }
         if (!message.canUserRunAdminCommand(bot)) {

@@ -13,20 +13,21 @@ class HelpCommand(val bot: HaileyBot) : Command {
     override fun getDescription(): String = "Lists all the bots commands, or shows the help for a specific one"
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
-        if(rawMessage.isNotEmpty()){
-            val command: Command? = bot.commands.commandSets.map{
+        if (rawMessage.isNotEmpty()) {
+            val command: Command? = bot.commands.commandSets.map {
                 it.firstOrNull {
                     it.matchesCommand(rawMessage)
                 }
             }.firstOrNull { it != null }
-            if(command == null){
+            if (command == null) {
                 message.channel.sendMessage("Command not found: $rawMessage");
                 return;
             }
             val embed = EmbedBuilder()
             embed.apply {
                 withTitle(command.name)
-                withDesc("Aliases: ${command.aliases}\n\nDescription: ${command.description ?: "None"}\n\nHelp: ${command.help ?: "No help"}")
+                withDesc("Aliases: ${command.aliases}\n\nDescription: ${command.description
+                        ?: "None"}\n\nHelp: ${command.help ?: "No help"}")
                 withColor(Color(1f, 0f, .2f))
                 withFooterText("Made with Java, Kotlin, and ♥")
             }
@@ -38,12 +39,12 @@ class HelpCommand(val bot: HaileyBot) : Command {
     }
 
     private fun generateHelpMessage() = StringBuilder().append("```ini\n")
-                .append(getFormattedFor("Moderation", bot.commands.moderationCommands))
-                .append(getFormattedFor("Meta", bot.commands.metaCommands))
-                .append(getFormattedFor("Bot", bot.commands.botCommands))
-                .append(getFormattedFor("Fun", bot.commands.funCommands))
+            .append(getFormattedFor("Moderation", bot.commands.moderationCommands))
+            .append(getFormattedFor("Meta", bot.commands.metaCommands))
+            .append(getFormattedFor("Bot", bot.commands.botCommands))
+            .append(getFormattedFor("Fun", bot.commands.funCommands))
             .append(getFormattedFor("Self assign", bot.commands.roleCommands))
-                .append("```").toString()
+            .append("```").toString()
 
 
     companion object {
@@ -53,8 +54,8 @@ class HelpCommand(val bot: HaileyBot) : Command {
             val builder = StringBuilder()
             builder.append("[").append(sectionName).append("]").append("\n")
             commands.forEach { entry ->
-                        builder.append(entry.name).append(", ")
-                    }
+                builder.append(entry.name).append(", ")
+            }
             builder.replace(builder.length - 2, builder.length, "\n")
             return builder.toString()
         }

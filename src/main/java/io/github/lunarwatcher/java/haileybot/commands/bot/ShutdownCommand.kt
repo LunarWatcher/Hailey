@@ -5,7 +5,7 @@ import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.utils.randomItem
 import sx.blah.discord.handle.obj.IMessage
 
-class ShutdownCommand (val bot: HaileyBot) : Command{
+class ShutdownCommand(val bot: HaileyBot) : Command {
     override fun getName(): String = "shutdown"
 
     override fun getAliases(): MutableList<String>? = null;

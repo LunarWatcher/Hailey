@@ -89,10 +89,10 @@ public class HaileyBot {
     }
 
     @EventSubscriber
-    public void onGuildCreateEvent(GuildCreateEvent event){
+    public void onGuildCreateEvent(GuildCreateEvent event) {
         logger.info("Joined guild: {}. Owner: {}", event.getGuild().getName(), event.getGuild().getOwner().getName());
 
-        if(blacklistStorage.isBlacklisted(event.getGuild())){
+        if (blacklistStorage.isBlacklisted(event.getGuild())) {
             logger.warn("Joined blacklisted guild! Leaving...");
             event.getGuild().leave();
         }
@@ -102,7 +102,7 @@ public class HaileyBot {
     }
 
     @EventSubscriber
-    public void onReady(ReadyEvent event){
+    public void onReady(ReadyEvent event) {
         logger.info("Bot running!");
         // Initialize stuff that needs the API here
         matcher = new RegexWatcher(this);
@@ -113,7 +113,7 @@ public class HaileyBot {
 
 
     @EventSubscriber
-    public void onRoleDeleteEvent(RoleDeleteEvent event){
+    public void onRoleDeleteEvent(RoleDeleteEvent event) {
         try {
             List<IRole> selfAssignable = assigner.getRolesForGuild(event.getGuild().getLongID());
             if (selfAssignable != null && selfAssignable.stream().anyMatch(r -> r.getLongID() == event.getRole().getLongID())) {
@@ -134,39 +134,39 @@ public class HaileyBot {
                 }
 
             }
-        }catch(Throwable e){
+        } catch (Throwable e) {
             CrashHandler.error(e);
             e.printStackTrace();
         }
     }
 
     @EventSubscriber
-    public void onUserJoinEvent(UserJoinEvent event){
-        try{
+    public void onUserJoinEvent(UserJoinEvent event) {
+        try {
             moderator.userJoined(event);
-        }catch(Throwable e){
+        } catch (Throwable e) {
             CrashHandler.error(e);
             e.printStackTrace();
         }
     }
 
     @EventSubscriber
-    public void onUserBanEvent(UserBanEvent event){
-        try{
+    public void onUserBanEvent(UserBanEvent event) {
+        try {
             moderator.userBanned(event);
-        }catch(Throwable e){
+        } catch (Throwable e) {
             CrashHandler.error(e);
             e.printStackTrace();
         }
     }
 
     @EventSubscriber
-    public void onUserLeaveEvent(UserLeaveEvent event){
-        if(event.getUser().getLongID() == client.getOurUser().getLongID())
+    public void onUserLeaveEvent(UserLeaveEvent event) {
+        if (event.getUser().getLongID() == client.getOurUser().getLongID())
             return;
         try {
             moderator.userLeft(event);
-        }catch(Throwable e){
+        } catch (Throwable e) {
             CrashHandler.error(e);
             e.printStackTrace();
         }
@@ -174,23 +174,23 @@ public class HaileyBot {
 
 
     @EventSubscriber
-    public void onMessageEditedEvent(MessageEditEvent event){
-        if(event.getAuthor().getLongID() == client.getOurUser().getLongID())
+    public void onMessageEditedEvent(MessageEditEvent event) {
+        if (event.getAuthor().getLongID() == client.getOurUser().getLongID())
             return;
 
         try {
             onMessageReceivedEvent(new MessageReceivedEvent(event.getMessage()));
             moderator.messageEdited(event);
 
-        }catch(Throwable e){
+        } catch (Throwable e) {
             CrashHandler.error(e);
             e.printStackTrace();
         }
     }
 
     @EventSubscriber
-    public void onMessageReceivedEvent(MessageReceivedEvent event){
-        if(event.getAuthor().getLongID() == client.getOurUser().getLongID())
+    public void onMessageReceivedEvent(MessageReceivedEvent event) {
+        if (event.getAuthor().getLongID() == client.getOurUser().getLongID())
             return;
 
         try {
@@ -200,31 +200,31 @@ public class HaileyBot {
 
             if (ctn)
                 return;
-            
+
             commands.onCommand(event.getMessage());
-        }catch(Throwable e){
+        } catch (Throwable e) {
             CrashHandler.error(e);
             e.printStackTrace();
         }
     }
 
     @EventSubscriber
-    public void onMessageDeletedEvent(MessageDeleteEvent event){
+    public void onMessageDeletedEvent(MessageDeleteEvent event) {
         moderator.messageDeleted(event);
 
     }
 
 
     @EventSubscriber
-    public void onDisconnectedEvent(DisconnectedEvent event){
+    public void onDisconnectedEvent(DisconnectedEvent event) {
         save();
     }
 
-    private void changePresence(){
+    private void changePresence() {
         client.changePresence(StatusType.ONLINE, ActivityType.WATCHING, client.getGuilds().size() + " guilds");
     }
 
-    public void save(){
+    public void save() {
         moderator.save();
         matcher.save();
         assigner.save();
@@ -233,27 +233,27 @@ public class HaileyBot {
     }
 
 
-    public IUser getBotUser(){
+    public IUser getBotUser() {
         return client.getOurUser();
     }
 
-    public Database getDatabase(){
+    public Database getDatabase() {
         return database;
     }
 
-    public RegexWatcher getMatcher(){
+    public RegexWatcher getMatcher() {
         return matcher;
     }
 
-    public Moderator getModerator(){
+    public Moderator getModerator() {
         return moderator;
     }
 
-    public Commands getCommands(){
+    public Commands getCommands() {
         return commands;
     }
 
-    public List<Long> getBotAdmins(){
+    public List<Long> getBotAdmins() {
         return botAdmins;
     }
 
@@ -261,15 +261,15 @@ public class HaileyBot {
         return client;
     }
 
-    public RoleAssignmentManager getAssigner(){
+    public RoleAssignmentManager getAssigner() {
         return assigner;
     }
 
-    public BlacklistStorage getBlacklistStorage(){
+    public BlacklistStorage getBlacklistStorage() {
         return blacklistStorage;
     }
 
-    public Config getConfig(){
+    public Config getConfig() {
         return config;
     }
 }

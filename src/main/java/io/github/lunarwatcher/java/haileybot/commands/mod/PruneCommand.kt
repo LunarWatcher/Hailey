@@ -4,16 +4,12 @@ package io.github.lunarwatcher.java.haileybot.commands.mod
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
-import io.github.lunarwatcher.java.haileybot.commands.mod.WatchCommand.Companion.logger
 import io.github.lunarwatcher.java.haileybot.data.Constants
-import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
 import io.github.lunarwatcher.java.haileybot.utils.scheduleDeletion
-import org.apache.commons.lang3.ObjectUtils
 import org.slf4j.LoggerFactory
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
-import sx.blah.discord.handle.obj.IUser
 import sx.blah.discord.handle.obj.Permissions
 import sx.blah.discord.util.EmbedBuilder
 
@@ -32,7 +28,7 @@ class PruneCommand(private val bot: HaileyBot) : Command {
     override fun getDescription() = "Deletes some recent messages (defined by command usage)"
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
-        if(message.channel is IPrivateChannel){
+        if (message.channel is IPrivateChannel) {
             message.channel.sendMessage("This is a DM channel. No mod tools available.");
             return;
         }
@@ -53,16 +49,16 @@ class PruneCommand(private val bot: HaileyBot) : Command {
         }
         val deletionCount = count + 1
 
-        val reason = if (data.size == 2) data[1]  else "None"
+        val reason = if (data.size == 2) data[1] else "None"
 
         val title = "Bulk deletion"
 
 
-            val messageHistory = message.channel.getMessageHistory(deletionCount)
-            messageHistory.bulkDelete()
-            message.reply("deleted ${messageHistory.size - 1} messages. \uD83D\uDC3A")
-                    ?.scheduleDeletion(10000);
-            val deletedCount = messageHistory.size - 1
+        val messageHistory = message.channel.getMessageHistory(deletionCount)
+        messageHistory.bulkDelete()
+        message.reply("deleted ${messageHistory.size - 1} messages. \uD83D\uDC3A")
+                ?.scheduleDeletion(10000);
+        val deletedCount = messageHistory.size - 1
 
         val description = """**Message count:** $deletedCount
             **Channel:** ${message.channel}
@@ -76,7 +72,6 @@ class PruneCommand(private val bot: HaileyBot) : Command {
                 .build()
         guild.audit(embed)
     }
-
 
 
     companion object {

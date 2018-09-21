@@ -41,22 +41,22 @@ public class AssignCommand implements Command {
 
     @Override
     public void onMessage(@NotNull IMessage message, String rawMessage, String commandName) {
-        if(message.getChannel() instanceof IPrivateChannel){
+        if (message.getChannel() instanceof IPrivateChannel) {
             message.getChannel().sendMessage("This is a DM channel. No mod tools available.");
             return;
         }
         List<IRole> roles = bot.getAssigner().getRolesForGuild(message.getGuild().getLongID());
-        if(roles == null || roles.size() == 0){
+        if (roles == null || roles.size() == 0) {
             message.reply("There are no self-assignable roles.");
             return;
         }
 
-        if(message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).stream().noneMatch((it) -> it == Permissions.MANAGE_ROLES || it == Permissions.ADMINISTRATOR)){
+        if (message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).stream().noneMatch((it) -> it == Permissions.MANAGE_ROLES || it == Permissions.ADMINISTRATOR)) {
             message.getChannel().sendMessage("I don't have the \"manage roles\" or the \"administrator\" permission (I need one of them to assign roles).");
             return;
         }
 
-        if(rawMessage.isEmpty()){
+        if (rawMessage.isEmpty()) {
             message.getChannel().sendMessage("Which role do you want? Note: roles are case-sensitive.");
             return;
         }

@@ -28,18 +28,18 @@ public class Database {
     private boolean changed = false;
 
     public Database(Path file) throws IOException {
-        if(file == null)
+        if (file == null)
             throw new RuntimeException("File cannot be null!");
         this.file = file;
 
         if (Files.exists(file)) {
             try {
                 load();
-            }catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("Ignored load failing.");
             }
-        }else{
+        } else {
 
             Files.createFile(file);
         }
@@ -47,6 +47,7 @@ public class Database {
 
     /**
      * Loads existing data from the file.
+     *
      * @throws IOException if there's a problem reading the file
      */
     private void load() throws IOException {
@@ -75,7 +76,7 @@ public class Database {
                 list.add(parsedElement);
             }
             return list;
-        }else if (node.isObject()) {
+        } else if (node.isObject()) {
             Map<String, Object> map = new HashMap<>();
             Iterator<String> it = node.fieldNames();
             while (it.hasNext()) {
@@ -85,17 +86,17 @@ public class Database {
                 map.put(fieldName, parsedElement);
             }
             return map;
-        }else if (node.isInt()) {
+        } else if (node.isInt()) {
             return node.asInt();
-        }else if(node.isLong()){
+        } else if (node.isLong()) {
             return node.asLong();
-        }else if(node.isDouble()){
+        } else if (node.isDouble()) {
             return node.asDouble();
-        }else if(node.isFloat()){
+        } else if (node.isFloat()) {
             return node.floatValue();
-        }else if(node.isBoolean()) {
+        } else if (node.isBoolean()) {
             return node.asBoolean();
-        }else if (node.isNull()) {
+        } else if (node.isNull()) {
             return null;
         }
 
@@ -110,6 +111,7 @@ public class Database {
 
     /**
      * Get a value
+     *
      * @param key The key to retrieve
      * @return a value or null if key not found
      */
@@ -119,6 +121,7 @@ public class Database {
 
     /**
      * Put something into the data. Does not update until {@link #commit()} is called
+     *
      * @param key
      * @param value
      */
@@ -139,9 +142,9 @@ public class Database {
 
         StandardOpenOption[] options;
         if (Files.exists(file)) {
-            options = new StandardOpenOption[] { StandardOpenOption.TRUNCATE_EXISTING };
+            options = new StandardOpenOption[]{StandardOpenOption.TRUNCATE_EXISTING};
         } else {
-            options = new StandardOpenOption[] {};
+            options = new StandardOpenOption[]{};
         }
 
         try (Writer writer = Files.newBufferedWriter(file, options)) {
@@ -169,8 +172,9 @@ public class Database {
 
     /**
      * The method for the actual writing, does not include the names of fields with the exception for maps
+     *
      * @param generator The generator
-     * @param value The value to write
+     * @param value     The value to write
      * @throws IOException If something goes wrong
      */
     private void write(JsonGenerator generator, Object value) throws IOException {
@@ -188,7 +192,7 @@ public class Database {
 
             generator.writeEndObject();
             return;
-        }else if (value instanceof Collection) {
+        } else if (value instanceof Collection) {
             Collection<?> list = (Collection<?>) value;
             generator.writeStartArray();
 
@@ -198,23 +202,23 @@ public class Database {
 
             generator.writeEndArray();
             return;
-        }else if (value instanceof LocalDateTime) {
+        } else if (value instanceof LocalDateTime) {
             LocalDateTime date = (LocalDateTime) value;
             generator.writeString(date.format(formatter));
             return;
-        }else if (value instanceof Integer) {
+        } else if (value instanceof Integer) {
             Integer integer = (Integer) value;
             generator.writeNumber(integer);
             return;
-        }else if (value instanceof Long) {
+        } else if (value instanceof Long) {
             Long integer = (Long) value;
             generator.writeNumber(integer);
             return;
-        }else if(value instanceof Boolean) {
+        } else if (value instanceof Boolean) {
             Boolean bool = (Boolean) value;
             generator.writeBoolean(bool);
             return;
-        }else if (value == null) {
+        } else if (value == null) {
             generator.writeNull();
             return;
         }
@@ -223,25 +227,25 @@ public class Database {
         generator.writeString(string);
     }
 
-    public Map<String, Object> getMap(String key){
+    public Map<String, Object> getMap(String key) {
         return (Map<String, Object>) get(key);
     }
 
 
-    public List<Object> getList(String key){
+    public List<Object> getList(String key) {
         return (List<Object>) get(key);
     }
 
-    public void purge(){
+    public void purge() {
         cache.clear();
         cache = new HashMap<>();
     }
 
-    public boolean isEmpty(){
+    public boolean isEmpty() {
         return cache.isEmpty();
     }
 
-    public int getItems(){
+    public int getItems() {
         return cache.size();
     }
 

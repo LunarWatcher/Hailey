@@ -49,27 +49,27 @@ public class AutoAssignCommand implements Command {
 
     @Override
     public void onMessage(@NotNull IMessage message, String rawMessage, String commandName) {
-        if(message.getChannel() instanceof IPrivateChannel){
+        if (message.getChannel() instanceof IPrivateChannel) {
             message.getChannel().sendMessage("This is a DM channel. No mod tools available.");
             return;
         }
-        if(!ExtensionsKt.canUserRunAdminCommand(message, bot)){
+        if (!ExtensionsKt.canUserRunAdminCommand(message, bot)) {
             message.getChannel().sendMessage("You can't do that.");
             return;
         }
 
-        if(rawMessage.isEmpty()){
+        if (rawMessage.isEmpty()) {
             message.getChannel().sendMessage("Which role should be auto-assignable?");
             return;
         }
 
-        if(message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).stream().noneMatch((it) -> it == Permissions.MANAGE_ROLES || it == Permissions.ADMINISTRATOR)){
+        if (message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).stream().noneMatch((it) -> it == Permissions.MANAGE_ROLES || it == Permissions.ADMINISTRATOR)) {
             message.getChannel().sendMessage("WARNING: I don't have the \"manage roles\" or the \"administrator\" permission (I need one of them to assign roles).");
 
         }
 
         List<IRole> roles = message.getGuild().getRoles();
-        for(IRole role : roles) {
+        for (IRole role : roles) {
             if (role.getName().equals(rawMessage)) {
                 boolean result = bot.getAssigner().addAutoRole(message.getGuild().getLongID(), role);
                 if (result)

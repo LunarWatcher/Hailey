@@ -15,34 +15,34 @@ public class ConversionUtils {
     private static final Pattern CHANNEL_PATTERN = Pattern.compile("<#!?(\\d+)>");
     private static final Pattern USER_PATTERN = Pattern.compile("<@!?(\\d+)>");
 
-    public static boolean convertToBoolean(String input){
+    public static boolean convertToBoolean(String input) {
         String lower = input.toLowerCase();
-        for(String t : yes){
-            if(t.equals(lower)){
+        for (String t : yes) {
+            if (t.equals(lower)) {
                 return true;
             }
         }
-        for(String f : no){
-            if(f.equals(lower))
+        for (String f : no) {
+            if (f.equals(lower))
                 return false;
         }
         throw new ClassCastException();
     }
 
-    public static long convertToLong(String input){
+    public static long convertToLong(String input) {
         try {
             return Long.parseLong(input);
-        }catch(NumberFormatException e){
+        } catch (NumberFormatException e) {
             return Long.valueOf(input);
         }
     }
 
-    public static long parseChannel(String input){
+    public static long parseChannel(String input) {
         Matcher matcher = CHANNEL_PATTERN.matcher(input);
-        if(!matcher.find()){
-            try{
+        if (!matcher.find()) {
+            try {
                 return convertToLong(input);
-            }catch(NumberFormatException e){
+            } catch (NumberFormatException e) {
                 return -2;
             }
         }
@@ -50,12 +50,12 @@ public class ConversionUtils {
         return convertToLong(matcher.group(1));
     }
 
-    public static long parseUser(String input){
+    public static long parseUser(String input) {
         Matcher matcher = USER_PATTERN.matcher(input);
-        if(!matcher.find()) {
-            try{
+        if (!matcher.find()) {
+            try {
                 return convertToLong(input);
-            }catch(NumberFormatException e){
+            } catch (NumberFormatException e) {
                 return -2;
             }
         }
@@ -63,9 +63,9 @@ public class ConversionUtils {
         return convertToLong(matcher.group(1));
     }
 
-    public static @NotNull String convertStatusToString(StatusType status){
+    public static @NotNull String convertStatusToString(StatusType status) {
 
-        switch (status){
+        switch (status) {
             case ONLINE:
                 return "Online";
             case OFFLINE:
@@ -81,26 +81,26 @@ public class ConversionUtils {
         }
     }
 
-    public static @NotNull String getGame(IUser user){
+    public static @NotNull String getGame(IUser user) {
         ActivityType activity = user.getPresence().getActivity().orElse(null);
-        if(activity != null){
+        if (activity != null) {
             String type = activity.name().toLowerCase();
             String what = user.getPresence().getText().orElse(null);
             String url = user.getPresence().getStreamingUrl().orElse(null);
 
             String result = type;
-            if(what != null)
+            if (what != null)
                 result += ": " + what;
-            if(url != null)
+            if (url != null)
                 result += " (<" + url + ">)";
 
             return result;
 
-        }else return "None.";
+        } else return "None.";
     }
 
-    public static @NotNull String parseVerificationLevel(VerificationLevel level){
-        switch(level){
+    public static @NotNull String parseVerificationLevel(VerificationLevel level) {
+        switch (level) {
             case NONE:
                 return "None";
             case LOW:

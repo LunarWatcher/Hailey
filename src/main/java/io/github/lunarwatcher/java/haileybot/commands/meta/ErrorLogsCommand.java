@@ -38,18 +38,18 @@ public class ErrorLogsCommand implements Command {
 
     @Override
     public void onMessage(@NotNull IMessage message, String rawMessage, String commandName) {
-        if(!bot.getBotAdmins().contains(message.getAuthor().getLongID())){
+        if (!bot.getBotAdmins().contains(message.getAuthor().getLongID())) {
             message.reply("no");
             return;
         }
 
         List<String> errorHandler = CrashHandler.splitErrors();
-        if(errorHandler.size() == 0){
+        if (errorHandler.size() == 0) {
             message.getChannel().sendMessage("No logs.");
             return;
         }
-        for(String error : errorHandler){
-            if(error.length() == 0)
+        for (String error : errorHandler) {
+            if (error.length() == 0)
                 continue;
             message.getChannel().sendMessage(error);
         }

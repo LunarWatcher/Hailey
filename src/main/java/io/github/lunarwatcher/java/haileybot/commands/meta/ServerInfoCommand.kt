@@ -10,7 +10,6 @@ import io.github.lunarwatcher.java.haileybot.utils.canUserRunBotAdminCommand
 import org.apache.commons.lang3.StringUtils
 import sx.blah.discord.handle.impl.obj.Embed
 import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.handle.obj.IPresence
 import sx.blah.discord.handle.obj.IPrivateChannel
 import sx.blah.discord.util.EmbedBuilder
 import java.awt.Color
@@ -35,7 +34,7 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
     }
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
-        if(message.channel is IPrivateChannel){
+        if (message.channel is IPrivateChannel) {
             message.channel.sendMessage("This is a DM channel. No server info is available.");
             return;
         }
@@ -75,14 +74,13 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
                 "**Roles (${guildRoles?.size ?: 0})**: ${guildRoles?.map { it.name }?.joinToString(", ") ?: "No roles"}"*/
 
 
-
         val roleInfo = bot.assigner
                 .getRolesForGuild(message.guild.longID)
                 ?.joinToString(", ") { it.name } ?: "No self-assignable roles"
 
         val autoInfo = bot.assigner
                 .getAutoRolesForGuild(message.guild)
-                ?.joinToString(", "){it.name} ?: "No auto-assign roles"
+                ?.joinToString(", ") { it.name } ?: "No auto-assign roles"
 
         val selfAssignable = bot.assigner.getRolesForGuild(message.guild)?.size ?: 0
         val autoAssignable = bot.assigner.getAutoRolesForGuild(message.guild)?.size ?: 0
@@ -94,11 +92,11 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
                 .withAuthorName("Hailey")
                 .appendField(Embed.EmbedField("Self- and auto-assignable roles",
                         "There are $selfAssignable self-assignable roles, and $autoAssignable roles that get automatically assigned. " +
-                        (if (roleInfo.length > 1200)
-                            "Too many roles to display. Use `${Constants.TRIGGER}roles` to see self-assignable roles."
-                        else roleInfo) + "\nAuto-assignable: " +
-                                (if(autoInfo.length > 1200) "Too many roles to display."
-                        else autoInfo),
+                                (if (roleInfo.length > 1200)
+                                    "Too many roles to display. Use `${Constants.TRIGGER}roles` to see self-assignable roles."
+                                else roleInfo) + "\nAuto-assignable: " +
+                                (if (autoInfo.length > 1200) "Too many roles to display."
+                                else autoInfo),
                         true))
                 .appendField(Embed.EmbedField("Verification level", ConversionUtils.parseVerificationLevel(message.guild.verificationLevel), true))
                 .appendField(Embed.EmbedField("Location", message.guild.region.name, true))
@@ -108,7 +106,7 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
                 .build()
         message.channel.sendMessage(serverInfo)
 
-        if(message.canUserRunBotAdminCommand(bot)) {
+        if (message.canUserRunBotAdminCommand(bot)) {
             val modInfoEmbed = EmbedBuilder().apply {
                 withTitle("Server mod info")
                         .withColor(message.author.getColorForGuild(message.guild))
@@ -122,7 +120,7 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
 }
 
 val random = Random(System.currentTimeMillis());
-fun getRandomColor() : Color {
+fun getRandomColor(): Color {
     val r = random.nextFloat();
     val g = random.nextFloat();
     val b = random.nextFloat();

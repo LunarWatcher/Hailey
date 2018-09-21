@@ -38,26 +38,26 @@ public class ModerationCommand implements Command {
 
     @NotNull
     @Override
-    public String getName(){
+    public String getName() {
         return name;
     }
 
     @Nullable
     @Override
-    public List<String> getAliases(){
+    public List<String> getAliases() {
         return aliases;
     }
 
 
     @Nullable
     @Override
-    public String getDescription(){
+    public String getDescription() {
         return description;
     }
 
     @Nullable
     @Override
-    public String getHelp(){
+    public String getHelp() {
         return help;
     }
 

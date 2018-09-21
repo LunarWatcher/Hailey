@@ -12,7 +12,7 @@ import io.github.lunarwatcher.java.haileybot.commands.mod.*;
 import io.github.lunarwatcher.java.haileybot.commands.mod.general.ModerationCommand;
 import io.github.lunarwatcher.java.haileybot.commands.mod.humaninterface.*;
 import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
-import io.github.lunarwatcher.java.haileybot.commands.roles.*;
+import io.github.lunarwatcher.java.haileybot.commands.roles.ListRolesCommand;
 import io.github.lunarwatcher.java.haileybot.commands.roles.auto.AutoAssignCommand;
 import io.github.lunarwatcher.java.haileybot.commands.roles.auto.RemoveAutoAssignCommand;
 import io.github.lunarwatcher.java.haileybot.commands.roles.self.AddAssignableRoleCommand;
@@ -46,7 +46,7 @@ public class Commands {
     public List<List<Command>> commandSets;
 
 
-    public Commands(HaileyBot bot){
+    public Commands(HaileyBot bot) {
         this.bot = bot;
         ping = Pattern.compile("<@!?" + bot.getClient().getOurUser().getLongID() + ">");
 
@@ -131,23 +131,23 @@ public class Commands {
 
     }
 
-    public void onCommand(IMessage message){
-        if(!triggered(message))
+    public void onCommand(IMessage message) {
+        if (!triggered(message))
             return;
 
-        if(message.getAuthor().isBot())
+        if (message.getAuthor().isBot())
             return;
         String rawMessage = stripTrigger(message.getContent());
-        if(message.getChannel() instanceof IPrivateChannel)
+        if (message.getChannel() instanceof IPrivateChannel)
             logMessage(message.getChannel().getName(), message.getChannel().getLongID(), message.getAuthor().getName(), message.getAuthor().getLongID(), message.getContent());
         else
             logMessage(message.getGuild().getName(), message.getGuild().getLongID(), message.getAuthor().getName(), message.getAuthor().getLongID(), message.getContent());
 
-        String commandName = rawMessage.split (" ")[0].trim();
+        String commandName = rawMessage.split(" ")[0].trim();
         commandSets
-                .forEach((list) ->{
+                .forEach((list) -> {
                     list.forEach((command) -> {
-                        if(command.matchesCommand(commandName)){
+                        if (command.matchesCommand(commandName)) {
                             logger.info("Running onMessage for " + command.getClass().getSimpleName());
                             command.onMessage(message, stripTriggerAndName(message.getContent()), commandName);
                         }
@@ -156,42 +156,42 @@ public class Commands {
 
     }
 
-    private void logMessage(String name, long id, String authorName, long authorId, String message){
+    private void logMessage(String name, long id, String authorName, long authorId, String message) {
         try {
             logger.info("Command run at " + name + " (UID " + id + ") by " + authorName + " (UID " + authorId + "): " + message);
-        }catch(NullPointerException e){
-            if(name == null) name = "null";
-            if(authorName == null) authorName = "null";
-            if(message == null) message = "null";
+        } catch (NullPointerException e) {
+            if (name == null) name = "null";
+            if (authorName == null) authorName = "null";
+            if (message == null) message = "null";
             logger.warn("WARNING: Null received. Attempted logging failed. Data: [name: {}, id: {}, authorName: {}, authorId: {}, message: {}]",
                     name, id, authorName, authorId, message);
         }
     }
 
-    private String stripTriggerAndName(String content){
-        if(content.toLowerCase().startsWith(Constants.TRIGGER)){
-            String[] p = content.split (" ", 2);
-            if(p.length != 2)
+    private String stripTriggerAndName(String content) {
+        if (content.toLowerCase().startsWith(Constants.TRIGGER)) {
+            String[] p = content.split(" ", 2);
+            if (p.length != 2)
                 return "";
             return p[1];
         }
         Matcher matcher = ping.matcher(content);
         String partial = matcher.replaceFirst("").trim();
         String[] p = partial.split(" ", 2);
-        if(p.length != 2)
+        if (p.length != 2)
             return "";
         return p[1];
     }
 
-    private String stripTrigger(String content){
-        if(content.toLowerCase().startsWith(Constants.TRIGGER)){
+    private String stripTrigger(String content) {
+        if (content.toLowerCase().startsWith(Constants.TRIGGER)) {
             return content.substring(Constants.TRIGGER.length());
         }
         Matcher matcher = ping.matcher(content);
         return matcher.replaceFirst("").trim();
     }
 
-    private boolean triggered (IMessage message){
+    private boolean triggered(IMessage message) {
         String content = message.getContent().split(" ", 2)[0];
         return content.toLowerCase().startsWith(Constants.TRIGGER) || (Constants.ALLOW_MENTION_TRIGGER && ping.matcher(content).find());
     }

@@ -2,17 +2,11 @@ package io.github.lunarwatcher.java.haileybot.commands.meta
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
-import io.github.lunarwatcher.java.haileybot.data.Constants
 import io.github.lunarwatcher.java.haileybot.data.Constants.dateFormatter
 import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils
-import io.github.lunarwatcher.java.haileybot.utils.nl
 import sx.blah.discord.handle.impl.obj.Embed
 import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.handle.obj.Permissions
 import sx.blah.discord.util.EmbedBuilder
-import java.security.Permission
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 class UserInfoCommand(val bot: HaileyBot) : Command {
 
@@ -32,8 +26,8 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
         val uid = ConversionUtils.parseUser(rawMessage);
 
-        val user = if(uid == -2L) message.author else message.client.getUserByID(uid)
-        if(user == null){
+        val user = if (uid == -2L) message.author else message.client.getUserByID(uid)
+        if (user == null) {
             message.channel.sendMessage("Failed to find a user with the UID $uid")
             return;
         }
@@ -53,11 +47,11 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
 
         val uidEmbed = Embed.EmbedField("User ID", user.stringID, true)
         val nicknameEmbed = Embed.EmbedField("Server nickname", user.getNicknameForGuild(message.guild), true)
-        val botStatusEmbed = Embed.EmbedField("Bot", if(bot) "Yes" else "No", true)
+        val botStatusEmbed = Embed.EmbedField("Bot", if (bot) "Yes" else "No", true)
         val accountCreationEmbed = Embed.EmbedField("Creation date", formattedCreationDate, false)
         val presenceEmbed = Embed.EmbedField("Presence", presence, false)
         val activityEmbed = Embed.EmbedField("Activity", activity, false)
-        val roleEmbed = Embed.EmbedField("Roles (${roles.size})", if(stringRoles.length > 1200) "(Too many to display :c)" else stringRoles, false)
+        val roleEmbed = Embed.EmbedField("Roles (${roles.size})", if (stringRoles.length > 1200) "(Too many to display :c)" else stringRoles, false)
         val permissionEmbed = Embed.EmbedField("Permissions", permissions.joinToString(", "), false)
 
         val embed = EmbedBuilder()

@@ -4,7 +4,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public final class Constants {
-    private Constants(){}
+    private Constants() {
+    }
+
     public static final String VERSION = "0.014.001 \"Semi-broken debugging nightmare\"";
     public static final String TRIGGER = "h!";
     public static final boolean ALLOW_MENTION_TRIGGER = true;
