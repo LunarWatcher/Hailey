@@ -149,14 +149,13 @@ class ListWatches(val bot: HaileyBot) : Command {
         }
     }
 
-    private fun getGuild(message: IMessage, channel: Long): IGuild {
-        if (cache[channel] != null)
-            return cache[channel]!!;
+    private fun getGuild(message: IMessage, guild: Long): IGuild {
+        if (cache[guild] != null)
+            return cache[guild]!!;
 
-        val guild = message.client.getChannelByID(channel)
-                .guild
-        cache[channel] = guild;
-        return guild;
+        val iGuild = message.client.getGuildByID(guild)
+        cache[guild] = iGuild;
+        return iGuild;
     }
 
     fun nukeCache() {
