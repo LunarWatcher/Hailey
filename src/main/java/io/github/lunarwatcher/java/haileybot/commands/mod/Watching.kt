@@ -153,7 +153,7 @@ class ListWatches(val bot: HaileyBot) : Command {
     override fun getDescription(): String? = "Lists your regex watches globally"
     override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
         val watcher = bot.matcher
-        val watches = watcher.getWatchesForUser(message.longID)
+        val watches = watcher.getWatchesForUser(message.author.longID)
         if (watches.size == 0) {
             message.channel.sendMessage("You don't have any regex watches.");
             return;
