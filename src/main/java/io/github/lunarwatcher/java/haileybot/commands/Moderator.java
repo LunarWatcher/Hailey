@@ -225,7 +225,12 @@ public class Moderator {
                         .getAuditLog(ActionType.MEMBER_BAN_ADD)
                         .getEntriesByTarget(event.getUser().getLongID());
 
+
                 if(entries.size() == 0){
+                    if(attempt >= 5){
+                        fail(usernameAndDiscriminator, uid, guild);
+                        break;
+                    }
                     continue;
                 }
                 AuditLogEntry entry = entries.get(0);
@@ -240,13 +245,7 @@ public class Moderator {
                 String reason = entry.getReason().orElse("No reason specified");
 
                 guild.audit(banEmbed(usernameAndDiscriminator, uid, banner, reason));
-
-                if(attempt > 5){
-                    fail(usernameAndDiscriminator, uid, guild);
-                    break;
-                }
-
-
+                break;
             }
         }).start();
     }

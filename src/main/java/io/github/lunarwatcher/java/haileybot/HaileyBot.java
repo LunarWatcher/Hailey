@@ -114,43 +114,62 @@ public class HaileyBot {
 
     @EventSubscriber
     public void onRoleDeleteEvent(RoleDeleteEvent event){
-        List<IRole> selfAssignable = assigner.getRolesForGuild(event.getGuild().getLongID());
-        if(selfAssignable != null && selfAssignable.stream().anyMatch(r -> r.getLongID() == event.getRole().getLongID())){
-            assigner.removeRole(event.getGuild().getLongID(), event.getRole());
-            if(moderator.isGuildEnabled(event.getGuild())){
-                //noinspection ConstantConditions
-                moderator.getGuild(event.getGuild().getLongID()).audit("A self-assignable role was deleted. Removed from self-assign: " + event.getRole().getName());
+        try {
+            List<IRole> selfAssignable = assigner.getRolesForGuild(event.getGuild().getLongID());
+            if (selfAssignable != null && selfAssignable.stream().anyMatch(r -> r.getLongID() == event.getRole().getLongID())) {
+                assigner.removeRole(event.getGuild().getLongID(), event.getRole());
+                if (moderator.isGuildEnabled(event.getGuild())) {
+                    //noinspection ConstantConditions
+                    moderator.getGuild(event.getGuild().getLongID()).audit("A self-assignable role was deleted. Removed from self-assign: " + event.getRole().getName());
+                }
+
             }
 
-        }
+            List<IRole> autoAssignable = assigner.getRolesForGuild(event.getGuild().getLongID());
+            if (autoAssignable != null && autoAssignable.stream().anyMatch(r -> r.getLongID() == event.getRole().getLongID())) {
+                assigner.removeAutoRole(event.getGuild().getLongID(), event.getRole());
+                if (moderator.isGuildEnabled(event.getGuild())) {
+                    //noinspection ConstantConditions
+                    moderator.getGuild(event.getGuild().getLongID()).audit("An auto-assignable role was deleted. Removed from auto-assign: " + event.getRole().getName());
+                }
 
-        List<IRole> autoAssignable = assigner.getRolesForGuild(event.getGuild().getLongID());
-        if(autoAssignable != null && autoAssignable.stream().anyMatch(r -> r.getLongID() == event.getRole().getLongID())){
-            assigner.removeAutoRole(event.getGuild().getLongID(), event.getRole());
-            if(moderator.isGuildEnabled(event.getGuild())){
-                //noinspection ConstantConditions
-                moderator.getGuild(event.getGuild().getLongID()).audit("An auto-assignable role was deleted. Removed from auto-assign: " + event.getRole().getName());
             }
-
+        }catch(Throwable e){
+            CrashHandler.error(e);
+            e.printStackTrace();
         }
     }
 
     @EventSubscriber
     public void onUserJoinEvent(UserJoinEvent event){
-        moderator.userJoined(event);
+        try{
+            moderator.userJoined(event);
+        }catch(Throwable e){
+            CrashHandler.error(e);
+            e.printStackTrace();
+        }
     }
 
     @EventSubscriber
     public void onUserBanEvent(UserBanEvent event){
-        moderator.userBanned(event);
-
+        try{
+            moderator.userBanned(event);
+        }catch(Throwable e){
+            CrashHandler.error(e);
+            e.printStackTrace();
+        }
     }
 
     @EventSubscriber
     public void onUserLeaveEvent(UserLeaveEvent event){
         if(event.getUser().getLongID() == client.getOurUser().getLongID())
             return;
-        moderator.userLeft(event);
+        try {
+            moderator.userLeft(event);
+        }catch(Throwable e){
+            CrashHandler.error(e);
+            e.printStackTrace();
+        }
     }
 
 
@@ -159,9 +178,14 @@ public class HaileyBot {
         if(event.getAuthor().getLongID() == client.getOurUser().getLongID())
             return;
 
-        onMessageReceivedEvent(new MessageReceivedEvent(event.getMessage()));
-        moderator.messageEdited(event);
+        try {
+            onMessageReceivedEvent(new MessageReceivedEvent(event.getMessage()));
+            moderator.messageEdited(event);
 
+        }catch(Throwable e){
+            CrashHandler.error(e);
+            e.printStackTrace();
+        }
     }
 
     @EventSubscriber
@@ -176,9 +200,9 @@ public class HaileyBot {
 
             if (ctn)
                 return;
-
+            
             commands.onCommand(event.getMessage());
-        }catch(Exception e){
+        }catch(Throwable e){
             CrashHandler.error(e);
             e.printStackTrace();
         }

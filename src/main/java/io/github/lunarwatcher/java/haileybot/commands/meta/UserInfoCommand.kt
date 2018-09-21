@@ -6,6 +6,7 @@ import io.github.lunarwatcher.java.haileybot.data.Constants
 import io.github.lunarwatcher.java.haileybot.data.Constants.dateFormatter
 import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils
 import io.github.lunarwatcher.java.haileybot.utils.nl
+import sx.blah.discord.handle.impl.obj.Embed
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.Permissions
 import sx.blah.discord.util.EmbedBuilder
@@ -45,32 +46,33 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
         val roles = user.getRolesForGuild(message.guild).filter { !it.isEveryoneRole }.sortedBy { it.position }.map { it.name }
         val stringRoles = roles.joinToString(", ");
 
-        val builder = StringBuilder()
-        builder.appendln("***Meta***:");
-        builder.appendln("**Username:** $username")
-                .appendln("**Server nickname:** $nick")
-                .appendln("**UID:** ${user.longID}")
-                .appendln("**Created on:** $formattedCreationDate")
-                .appendln("**Bot:** ${if(bot) "Yes" else "No"}")
-                .appendln("**Presence:** $presence")
-                .appendln("**Roles (${roles.size}):** ${if(stringRoles.length > 1200) "(Too many to display :c)" else stringRoles}")
-                .nl(2)
+        val activity = ConversionUtils.getGame(user)
+        val permissions = user.getPermissionsForGuild(message.guild)
+                .map { it.name.replace("_", " ").toLowerCase() }
 
-        val permissions = user.getPermissionsForGuild(message.guild).map { it.name.replace("_", " ") }
 
-        builder.appendln("Permissions: ${ permissions.joinToString(", ") }")
-                .nl(2);
-
-        builder.appendln("***Bot data:***");
-        builder.appendln("**Regex watches**: ${watches.size}");
-
+        val uidEmbed = Embed.EmbedField("User ID", user.stringID, true)
+        val nicknameEmbed = Embed.EmbedField("Server nickname", user.getNicknameForGuild(message.guild), true)
+        val botStatusEmbed = Embed.EmbedField("Bot", if(bot) "Yes" else "No", true)
+        val accountCreationEmbed = Embed.EmbedField("Creation date", formattedCreationDate, false)
+        val presenceEmbed = Embed.EmbedField("Presence", presence, false)
+        val activityEmbed = Embed.EmbedField("Activity", activity, false)
+        val roleEmbed = Embed.EmbedField("Roles (${roles.size})", if(stringRoles.length > 1200) "(Too many to display :c)" else stringRoles, false)
+        val permissionEmbed = Embed.EmbedField("Permissions", permissions.joinToString(", "), false)
 
         val embed = EmbedBuilder()
                 .withTitle("User info")
                 .withAuthorName(username)
                 .withAuthorIcon(user.avatarURL)
                 .withColor(user.getColorForGuild(message.guild))
-                .withDesc(builder.toString())
+                .appendField(uidEmbed)
+                .appendField(nicknameEmbed)
+                .appendField(botStatusEmbed)
+                .appendField(accountCreationEmbed)
+                .appendField(presenceEmbed)
+                .appendField(activityEmbed)
+                .appendField(roleEmbed)
+                .appendField(permissionEmbed)
                 .build()
         message.channel.sendMessage(embed)
 

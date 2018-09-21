@@ -9,10 +9,10 @@ public class NumberUtils {
     private static final String NTH = "th";
 
     public static String getNumberWithNth(long value){
-        boolean isNegative = value < 0;
+        long abs = value < 0 ? -value : value;
 
-        long tens = value % 10;
-        long hundreds = value % 100;
+        long tens = abs % 10;
+        long hundreds = abs % 100;
 
         if(equalsPlusMinus(tens, 1) && hundreds != 11)
             return stringify(value, ONE);

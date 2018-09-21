@@ -5,6 +5,7 @@ import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.commands.Moderator
 import io.github.lunarwatcher.java.haileybot.data.Constants
 import io.github.lunarwatcher.java.haileybot.data.Constants.dateFormatter
+import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunBotAdminCommand
 import org.apache.commons.lang3.StringUtils
 import sx.blah.discord.handle.impl.obj.Embed
@@ -91,16 +92,19 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
                 .withColor(getRandomColor())
                 .withAuthorIcon(guild.iconURL)
                 .withAuthorName("Hailey")
-                .appendField(Embed.EmbedField("Self- and auto-assignable roles:",
-                        "There are $selfAssignable self-assignable roles, and $autoAssignable roles that get automatically assigned." +
+                .appendField(Embed.EmbedField("Self- and auto-assignable roles",
+                        "There are $selfAssignable self-assignable roles, and $autoAssignable roles that get automatically assigned. " +
                         (if (roleInfo.length > 1200)
                             "Too many roles to display. Use `${Constants.TRIGGER}roles` to see self-assignable roles."
-                        else roleInfo) + "\n" +
+                        else roleInfo) + "\nAuto-assignable: " +
                                 (if(autoInfo.length > 1200) "Too many roles to display."
                         else autoInfo),
                         true))
+                .appendField(Embed.EmbedField("Verification level", ConversionUtils.parseVerificationLevel(message.guild.verificationLevel), true))
+                .appendField(Embed.EmbedField("Location", message.guild.region.name, true))
+                .appendField(Embed.EmbedField("Channels", "${message.guild.channels.size} channels in ${message.guild.categories.size}. ${message.guild.voiceChannels.size} voice channels.", true))
+                .appendField(Embed.EmbedField("Info", content, false))
 
-                .appendField(Embed.EmbedField("Info", content, true))
                 .build()
         message.channel.sendMessage(serverInfo)
 

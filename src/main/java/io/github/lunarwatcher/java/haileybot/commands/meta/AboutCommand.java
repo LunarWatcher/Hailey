@@ -4,6 +4,7 @@ import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;
 import io.github.lunarwatcher.java.haileybot.data.Config;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
+import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils;
 import org.jetbrains.annotations.NotNull;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.impl.obj.Embed;
@@ -53,12 +54,14 @@ public class AboutCommand implements Command {
                                 .withColor(new Color(0, .3f, 1f))
                                 .appendField("General", "**Owner:** " + props.getOwner() + "\n" +
                                                 "**Creator:** " + Config.CREATOR + "\n" +
-                                                "**Source code:** " + props.getGithub() + "\n" +
-                                                "**Version:** " + Constants.VERSION + "\n",
+                                                "**Source code:** [GitHub](" + props.getGithub() + ")\n" +
+                                                "**Version:** " + Constants.VERSION + "\n" +
+                                                "**Prefix:** " + Constants.TRIGGER + "\n",
                                         false)
                                 .appendField("Technical details", "**Shards:** " + bot.getClient().getShardCount() + "\n" +
-                                                "**Current shard:** " + message.getShard().getInfo()[0] + "\n" +
-                                                "**Total member count:** " + message.getClient().getGuilds().stream().mapToInt((it) -> it.getUsers().size()).sum() + "\n",
+                                                "**Current shard index:** " + message.getShard().getInfo()[0] + "\n" +
+                                                "**Joined this guild:** " + Constants.dateFormatter.format(message.getGuild().getJoinTimeForUser(message.getClient().getOurUser())) + "\n" +
+                                                "**Users affected** " + message.getClient().getGuilds().stream().mapToInt((it) -> it.getUsers().size()).sum() + "\n",
                                         true)
                                 .build()
                 );

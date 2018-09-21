@@ -78,6 +78,7 @@ public class Commands {
         moderationCommands.add(new ModerationCommand("ban", null, "Bans a user (@ mention or UID)", null, Permissions.BAN, ModUtils::banHandler));
         moderationCommands.add(new ModerationCommand("unban", null, "Unbans a user (requires a UID)", null, Permissions.BAN, ModUtils::unbanHandler));
         moderationCommands.add(new ModerationCommand("kick", null, "Kicks a user", null, Permissions.KICK, ModUtils::kickHandler));
+        moderationCommands.add(new ListWatches(bot));
 
         // Fun commands
 

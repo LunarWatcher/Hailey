@@ -1,6 +1,10 @@
 package io.github.lunarwatcher.java.haileybot.utils;
 
+import org.jetbrains.annotations.NotNull;
+import sx.blah.discord.handle.obj.ActivityType;
+import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.handle.obj.StatusType;
+import sx.blah.discord.handle.obj.VerificationLevel;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,21 +63,56 @@ public class ConversionUtils {
         return convertToLong(matcher.group(1));
     }
 
-    public static String convertStatusToString(StatusType status){
+    public static @NotNull String convertStatusToString(StatusType status){
 
         switch (status){
             case ONLINE:
-                return "online";
+                return "Online";
             case OFFLINE:
-                return "offline";
+                return "Offline";
             case DND:
-                return "do not disturb";
+                return "Do not disturb";
             case IDLE:
-                return "idle";
+                return "Idle";
             case INVISIBLE:
-                return "invisible";
+                return "Invisible";
             default:
-                return "unknown";
+                return "Unknown";
+        }
+    }
+
+    public static @NotNull String getGame(IUser user){
+        ActivityType activity = user.getPresence().getActivity().orElse(null);
+        if(activity != null){
+            String type = activity.name().toLowerCase();
+            String what = user.getPresence().getText().orElse(null);
+            String url = user.getPresence().getStreamingUrl().orElse(null);
+
+            String result = type;
+            if(what != null)
+                result += ": " + what;
+            if(url != null)
+                result += " (<" + url + ">)";
+
+            return result;
+
+        }else return "None.";
+    }
+
+    public static @NotNull String parseVerificationLevel(VerificationLevel level){
+        switch(level){
+            case NONE:
+                return "None";
+            case LOW:
+                return "Low (requires a valid email)";
+            case MEDIUM:
+                return "Medium (needs to be registered for > 5 minutes)";
+            case HIGH:
+                return "High (must also have been a member for > 10 minutes)";
+            case EXTREME:
+                return "Extreme (must have a verified phone)";
+            default:
+                return "Unknown";
         }
     }
 }

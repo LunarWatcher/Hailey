@@ -167,6 +167,10 @@ public class RegexWatcher {
             pattern = Pattern.compile(res.toString());
         }
 
+        public long getChannel(){
+            return channel;
+        }
+
         public boolean matches(String content){
             if(System.currentTimeMillis() - lastMatch < MIN_TIMEOUT){
                 return false;

@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 
 public final class Constants {
     private Constants(){}
-    public static final String VERSION = "0.013.001 \"Debugging nightmare\"";
+    public static final String VERSION = "0.014.001 \"Semi-broken debugging nightmare\"";
     public static final String TRIGGER = "h!";
     public static final boolean ALLOW_MENTION_TRIGGER = true;
 
@@ -13,4 +13,5 @@ public final class Constants {
 
     public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy @ ss:mm:hh")
             .withZone(ZoneId.systemDefault());
+
 }

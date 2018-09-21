@@ -109,7 +109,7 @@ class LickCommand : ActionCommand(replies, listOf(), { message -> message.channe
     override fun getDescription(): String? = help;
     override fun getAliases(): MutableList<String>? = null
     companion object {
-        const val self = "licks themselves"
+        const val self = "**{0}** licks themselves"
         val replies = listOf(
                 "licks **{0}**",
                 "gives **{0}** some soft licks :tongue:",
@@ -124,7 +124,7 @@ class KissCommand : ActionCommand(replies, listOf(), { message -> message.channe
     override fun getHelp(): String? = "Kisses someone :kissing_heart:"
     override fun getDescription(): String? = help
     companion object {
-        const val self = "kisses their own reflection"
+        const val self = "**{0}** kisses their own reflection"
         val replies = listOf(
                 "takes a deep breath, and kisses **{0}**",
                 "kisses **{0}**",
@@ -139,7 +139,7 @@ class BoopCommand : ActionCommand(replies, listOf(), { message -> message.channe
     override fun getHelp(): String? = "BOOP!"
     override fun getDescription(): String? = help
     companion object {
-        const val self = "boops the mirror"
+        const val self = "**{0}** boops the mirror"
         val replies = listOf(
                 "sneaks up on **{0}**, and boops them",
                 "boops **{0}**",
