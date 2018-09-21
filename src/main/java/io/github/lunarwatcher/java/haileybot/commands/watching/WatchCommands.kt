@@ -95,7 +95,7 @@ class ListWatches(val bot: HaileyBot) : Command {
     override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
         val watcher = bot.matcher
         val watches = watcher.getWatchesForUser(message.author.longID)
-        if (watches.size == 0) {
+        if (watches.isEmpty()) {
             message.channel.sendMessage("You don't have any regex watches.");
             return;
         }
@@ -105,12 +105,19 @@ class ListWatches(val bot: HaileyBot) : Command {
         val watchesByGuild = mutableMapOf<String, MutableList<RegexMatch>>()
 
         for (watch in watches) {
+            if(watch.regex.size == 0)
+                continue;
             val guildId = watch.guild
             val guild = getGuild(message, guildId)
 
             watchesByGuild.computeIfAbsent(guild.name) { mutableListOf() }
 
             watchesByGuild[guild.name]?.add(watch);
+        }
+
+        if(watchesByGuild.isEmpty()){
+            message.channel.sendMessage("You don't have any regex watches.");
+            return;
         }
         val embed = EmbedBuilder()
                 .withColor(getRandomColor())

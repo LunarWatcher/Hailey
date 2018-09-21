@@ -53,7 +53,7 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
         val activityEmbed = Embed.EmbedField("Activity", activity, false)
         val roleEmbed = Embed.EmbedField("Roles (${roles.size})", if (stringRoles.length > 1200) "(Too many to display :c)" else stringRoles, false)
         val permissionEmbed = Embed.EmbedField("Permissions", permissions.joinToString(", "), false)
-        val watchesEmbed = Embed.EmbedField("Watches", watches.size.toString(), false)
+        val watchesEmbed = Embed.EmbedField("Watches", watches.filter { it.regex.isNotEmpty() }.size.toString(), false)
 
         val embed = EmbedBuilder()
                 .withTitle("User info")
