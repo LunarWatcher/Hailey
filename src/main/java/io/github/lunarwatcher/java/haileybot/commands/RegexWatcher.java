@@ -182,5 +182,10 @@ public class RegexWatcher {
             lastMatch = System.currentTimeMillis();
             return match;
         }
+
+        public List<String> getRegex(){
+            return regex;
+        }
+
     }
 }

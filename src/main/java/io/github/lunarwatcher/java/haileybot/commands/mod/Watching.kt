@@ -173,7 +173,7 @@ class ListWatches(val bot: HaileyBot) : Command {
         }
 
         for ((k, v) in watchesByGuild) {
-            targetChannel.sendMessage("Guild: $k\nWatches:\n```${v.joinToString("\n")}```")
+            targetChannel.sendMessage("Guild: $k\nWatches:\n```${v.map { it.regex }.joinToString("\n")}```")
         }
     }
 
