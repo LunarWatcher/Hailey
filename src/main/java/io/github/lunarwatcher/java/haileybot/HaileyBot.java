@@ -34,6 +34,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.*;
 
 public class HaileyBot {
     private static final Logger logger = LoggerFactory.getLogger(HaileyBot.class);
@@ -50,6 +51,9 @@ public class HaileyBot {
     private static List<Long> botAdmins;
 
     private Config config;
+
+    private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    ScheduledFuture<?> autoSaver;
 
     static {
         botAdmins = new ArrayList<>();
@@ -85,6 +89,7 @@ public class HaileyBot {
 
         logger.info("Initializing systems...");
 
+        autoSaver = executor.scheduleAtFixedRate(this::save, 1, 1, TimeUnit.HOURS);
 
     }
 
@@ -225,9 +230,13 @@ public class HaileyBot {
     }
 
     public void save() {
-        moderator.save();
-        matcher.save();
-        assigner.save();
+        if(moderator != null)
+            moderator.save();
+        if(matcher != null)
+            matcher.save();
+        if(assigner != null)
+            assigner.save();
+
 
         database.commit();
     }
