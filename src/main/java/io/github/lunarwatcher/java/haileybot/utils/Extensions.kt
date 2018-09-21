@@ -46,3 +46,31 @@ fun StringBuilder.nl(count: Int) = this.append(StringUtils.repeat("\n", if (coun
 
 fun StringBuilder.appendLine(data: String) = this.appendln(data)
 fun StringBuilder.appendln(data: String) = this.append(data).nl()
+
+fun String.fitDiscordLengthRequirements(allowedLen: Int) : List<String>{
+    val code = this.startsWith("```")
+    val targetLen = if(code) allowedLen - 6 else allowedLen
+
+    val result = mutableListOf<String>()
+
+    var i = 0;
+    while(true){
+        val range = if(i + targetLen > length){
+            length - i;
+        }else {
+            if(i == 0 && code) targetLen + 3
+            else targetLen
+        }
+        var subset = subSequence(i, i + range).toString();
+        if(code && !subset.startsWith("```"))
+            subset = "```$subset";
+        if(code && !subset.endsWith("```"))
+            subset = "$subset```"
+        result.add(subset);
+        i += range;
+
+        if(range < targetLen) break;
+    }
+
+    return result;
+}

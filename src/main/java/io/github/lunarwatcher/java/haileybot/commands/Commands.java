@@ -19,6 +19,9 @@ import io.github.lunarwatcher.java.haileybot.commands.roles.self.AddAssignableRo
 import io.github.lunarwatcher.java.haileybot.commands.roles.self.AssignCommand;
 import io.github.lunarwatcher.java.haileybot.commands.roles.self.RemoveAssignableRoleCommand;
 import io.github.lunarwatcher.java.haileybot.commands.roles.self.UnassignCommand;
+import io.github.lunarwatcher.java.haileybot.commands.watching.ListWatches;
+import io.github.lunarwatcher.java.haileybot.commands.watching.UnwatchCommand;
+import io.github.lunarwatcher.java.haileybot.commands.watching.WatchCommand;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

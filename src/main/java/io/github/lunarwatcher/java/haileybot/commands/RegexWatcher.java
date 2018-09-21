@@ -1,6 +1,7 @@
 package io.github.lunarwatcher.java.haileybot.commands;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
+import io.github.lunarwatcher.java.haileybot.commands.watching.RegexMatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sx.blah.discord.handle.obj.IMessage;
@@ -14,7 +15,6 @@ import java.util.regex.Pattern;
 
 public class RegexWatcher {
     private static final String KEY = "regex-watches";
-    private static final Logger logger = LoggerFactory.getLogger(RegexWatcher.class);
 
     private HaileyBot bot;
     private Map<Long, List<RegexMatch>> stored;
@@ -25,7 +25,7 @@ public class RegexWatcher {
         load();
     }
 
-    public boolean watch(long user, long channel, String regex) {
+    public boolean watch(long user, long guild, String regex) {
         try {
             Pattern.compile(regex);
         } catch (Exception e) {
@@ -34,21 +34,21 @@ public class RegexWatcher {
         AtomicBoolean existing = new AtomicBoolean(false);
         stored.computeIfAbsent(user, k -> new ArrayList<>());
         stored.get(user).forEach((it) -> {
-            if (it.channel == channel) {
-                it.regex.add(regex);
+            if (it.getGuild() == guild) {
+                it.getRegex().add(regex);
                 it.patternify();
                 existing.set(true);
             }
         });
 
         if (!existing.get()) {
-            stored.get(user).add(new RegexMatch(channel, regex));
+            stored.get(user).add(new RegexMatch(regex, guild));
         }
         return true;
 
     }
 
-    public boolean unwatch(long user, long channel, String regex) {
+    public boolean unwatch(long user, long guild, String regex) {
         RegexMatch affected = null;
         if (stored.get(user) == null)
             return false;
@@ -58,19 +58,20 @@ public class RegexWatcher {
             return false;
 
         for (RegexMatch match : watches) {
-            if (match.channel == channel) {
-                if (match.regex.contains(regex)) {
-                    match.regex.remove(regex);
+            if (match.getGuild() == guild) {
+                if (match.getRegex().contains(regex)) {
+                    match.getRegex().remove(regex);
                     affected = match;
                     break;
                 } else if (regex.equalsIgnoreCase("all")) {
-                    match.regex.clear();
+                    match.getRegex().clear();
                     affected = match;
+                    break;
                 }
             }
         }
         if (affected != null) {
-            if (affected.regex == null)
+            if (affected.getRegex() == null || affected.getRegex().isEmpty())
                 stored.get(user).remove(affected);
             return true;
         }
@@ -82,13 +83,18 @@ public class RegexWatcher {
         if (stored.size() == 0)
             return;
 
-        for (Map.Entry<Long, List<RegexMatch>> entry : stored.entrySet())
+        for (Map.Entry<Long, List<RegexMatch>> entry : stored.entrySet()) {
+            long user = entry.getKey();
+            if(user == message.getAuthor().getLongID())
+                continue;
             for (RegexMatch match : entry.getValue()) {
+                if(match.getGuild() != message.getGuild().getLongID())
+                    continue;
                 if (match.matches(message.getContent())) {
-                    message.getChannel().sendMessage("Regex match. <@" + entry.getKey() + "> ");
+                    message.getChannel().sendMessage("Regex match. /cc <@" + entry.getKey() + "> ");
                 }
             }
-
+        }
     }
 
     private void load() {
@@ -103,8 +109,7 @@ public class RegexWatcher {
                 Map<String, List<String>> value = (Map<String, List<String>>) entry.getValue();
                 for (Map.Entry<String, List<String>> nested : value.entrySet()) {
 
-                    stored.get(user).add(new RegexMatch(Long.valueOf(nested.getKey()),
-                            nested.getValue()));
+                    stored.get(user).add(new RegexMatch(nested.getValue(), Long.valueOf(nested.getKey())));
                 }
 
             }
@@ -119,10 +124,10 @@ public class RegexWatcher {
             String user = String.valueOf(matches.getKey());
             for (RegexMatch match : matches.getValue()) {
                 if (data.containsKey(user)) {
-                    data.get(user).put(match.channel, match.regex);
+                    data.get(user).put(match.getGuild(), match.getRegex());
                 } else {
                     Map<Long, List<String>> toAdd = new HashMap<>();
-                    toAdd.put(match.channel, match.regex);
+                    toAdd.put(match.getGuild(), match.getRegex());
                     data.put(user, toAdd);
                 }
             }
@@ -138,54 +143,5 @@ public class RegexWatcher {
         return stored.get(uid);
     }
 
-    public static class RegexMatch {
-        private static final long MIN_TIMEOUT = 60000;
-        long channel;
-        List<String> regex;
-        private Pattern pattern;
-        private long lastMatch = 0;
 
-        public RegexMatch(long channel, String regex) {
-            this.channel = channel;
-            this.regex = new ArrayList<>();
-            this.regex.add(regex);
-
-            patternify();
-        }
-
-        public RegexMatch(long channel, List<String> regex) {
-            this.channel = channel;
-            this.regex = regex;
-
-            patternify();
-        }
-
-        void patternify() {
-            StringBuilder res = new StringBuilder("((?i)");
-            for (int i = 0; i < regex.size(); i++) {
-                res.append(regex.get(i));
-                if (i != regex.size() - 1) res.append("|");
-            }
-            res.append(")");
-            pattern = Pattern.compile(res.toString());
-        }
-
-        public long getChannel() {
-            return channel;
-        }
-
-        public boolean matches(String content) {
-            if (System.currentTimeMillis() - lastMatch < MIN_TIMEOUT) {
-                return false;
-            }
-            boolean match = pattern.matcher(content).find();
-            lastMatch = System.currentTimeMillis();
-            return match;
-        }
-
-        public List<String> getRegex(){
-            return regex;
-        }
-
-    }
 }
