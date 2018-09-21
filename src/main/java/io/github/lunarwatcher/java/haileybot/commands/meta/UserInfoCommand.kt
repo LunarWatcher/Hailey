@@ -54,6 +54,7 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
         val roleEmbed = Embed.EmbedField("Roles (${roles.size})", if (stringRoles.length > 1200) "(Too many to display :c)" else stringRoles, false)
         val permissionEmbed = Embed.EmbedField("Permissions", permissions.joinToString(", "), false)
         val watchesEmbed = Embed.EmbedField("Watches", watches.size.toString(), false)
+
         val embed = EmbedBuilder()
                 .withTitle("User info")
                 .withAuthorName(username)
@@ -67,6 +68,7 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
                 .appendField(activityEmbed)
                 .appendField(roleEmbed)
                 .appendField(permissionEmbed)
+                .appendField(watchesEmbed)
                 .build()
         message.channel.sendMessage(embed)
 
