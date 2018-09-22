@@ -51,6 +51,8 @@ public class Moderator {
         this.bot = bot;
         enabledGuilds = new HashMap<>();
         load();
+
+        logger.info("Successfully loaded the moderator.");
     }
 
     public void save() {
@@ -112,11 +114,8 @@ public class Moderator {
     public void messageEdited(MessageEditEvent event) {
         if (event.getChannel() instanceof IPrivateChannel)
             return;
-    }
 
-    public void messageFilter(MessageReceivedEvent event) {
-        if (event.getChannel() instanceof IPrivateChannel)
-            return;
+        // TODO create edit watcher
     }
 
 
@@ -131,6 +130,8 @@ public class Moderator {
     public void messageDeleted(MessageDeleteEvent event) {
         if (event.getChannel() instanceof IPrivateChannel)
             return;
+
+        // TODO create message deletion watcher
     }
 
     // Meta
@@ -170,8 +171,8 @@ public class Moderator {
 
     private static String combine(String... args) {
         StringBuilder res = new StringBuilder();
-        for (int i = 0; i < args.length; i++) {
-            res.append(args[i]);
+        for (String arg : args) {
+            res.append(arg);
             if (args.length != args.length - 1) {
                 res.append(", ");
             }
@@ -200,7 +201,7 @@ public class Moderator {
 
     private void fail(String usernameAndDiscriminator, long uid, ModGuild guild) {
         guild.audit("A user has been banned, but I either don't have permission to see the details, or can't get an entry after 25 minutes.");
-        guild.audit(banEmbed(usernameAndDiscriminator, uid, "Unknown", "Unknown"));
+        guild.audit(banEmbed(usernameAndDiscriminator, uid, "Unknown", 0, "Unknown"));
     }
 
     private void launchAsyncAuditBanLogTask(final String usernameAndDiscriminator, UserBanEvent event, final ModGuild guild) {
@@ -240,10 +241,11 @@ public class Moderator {
                     // if not, that's a bug.
                     break;
                 }
+                long bannerUid = responsible.getLongID();
                 String banner = getUsername(responsible);
                 String reason = entry.getReason().orElse("No reason specified");
 
-                guild.audit(banEmbed(usernameAndDiscriminator, uid, banner, reason));
+                guild.audit(banEmbed(usernameAndDiscriminator, uid, banner, bannerUid, reason));
                 break;
             }
         }).start();
@@ -253,12 +255,12 @@ public class Moderator {
         return user.getName() + "#" + user.getDiscriminator();
     }
 
-    public static EmbedObject banEmbed(String usernameAndDiscriminator, Long uid, String banner, String reason) {
+    public static EmbedObject banEmbed(String usernameAndDiscriminator, Long uid, String banner, long bannerUid, String reason) {
         return new EmbedBuilder()
                 .withTitle("User banned")
                 .withDesc(concenateDetails("Name", usernameAndDiscriminator))
                 .appendDesc(concenateDetails("UID", String.valueOf(uid)))
-                .appendDesc(concenateDetails("Banned by", banner))
+                .appendDesc(concenateDetails("Banned by", banner + " (UID " + (bannerUid == 0 ? "Unknown" : bannerUid) + ")"))
                 .appendDesc(concenateDetails("Reason", reason))
                 .build();
     }

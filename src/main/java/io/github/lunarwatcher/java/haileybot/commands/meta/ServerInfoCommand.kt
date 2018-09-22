@@ -39,28 +39,6 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
             return;
         }
         val guild = message.guild
-        val modGuild = bot.moderator.getGuild(guild.longID)
-
-        val modInfo = StringBuilder()
-        if (modGuild != null) {
-            modInfo.append("|### Guild moderation module enabled. ###|").append(StringUtils.repeat(" ", 4)).append("\n\nEnabled features:\n")
-            val data = modGuild.dataAsReadableMap
-            for ((key, value) in data) {
-                modInfo.append("**$key**").append(": ")
-
-                if (key.equals(Moderator.AUDIT_FEATURE, ignoreCase = true) ||
-                        key.equals(Moderator.WELCOME_LOGGING, ignoreCase = true) ||
-                        key.equals(Moderator.LEAVE_LOGGING, ignoreCase = true)) {
-                    modInfo.append("<#$value>")
-                } else {
-                    modInfo.append(value.toString())
-                }
-
-                modInfo.append("\n")
-            }
-        } else {
-            modInfo.append("|### Guild moderation module disabled. ###|").append(StringUtils.repeat(" ", 4))
-        }
 
         val users = message.guild.users;
         val bots = users.filter { it.isBot }.size
@@ -68,7 +46,7 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
 
         val content = "**Owner:** ${guild.owner.name} (${guild.owner.longID})\n" +
                 "**Server created at:** ${dateFormatter.format(guild.creationDate)}\n" +
-                "**Members:** ${guild.totalMemberCount} ($members members, $bots bots)\n" + "\n" +
+                "**Members:** ${users.size} ($members members, $bots bots)\n" + "\n" +
                 "**Meta:** ID ${guild.longID} at shard " + (guild.shard.info[0] + 1) +
                 "/${guild.shard.info[1]}\n\n" /*+
                 "**Roles (${guildRoles?.size ?: 0})**: ${guildRoles?.map { it.name }?.joinToString(", ") ?: "No roles"}"*/
@@ -101,21 +79,38 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
                 .appendField(Embed.EmbedField("Verification level", ConversionUtils.parseVerificationLevel(message.guild.verificationLevel), true))
                 .appendField(Embed.EmbedField("Location", message.guild.region.name, true))
                 .appendField(Embed.EmbedField("Channels", "${message.guild.channels.size} channels in ${message.guild.categories.size} categories. ${message.guild.voiceChannels.size} voice channels.", true))
-                .appendField(Embed.EmbedField("Info", content, false))
-
-                .build()
-        message.channel.sendMessage(serverInfo)
+                .appendField(Embed.EmbedField("Info", content, false));
 
         if (message.canUserRunBotAdminCommand(bot)) {
-            val modInfoEmbed = EmbedBuilder().apply {
-                withTitle("Server mod info")
-                        .withColor(message.author.getColorForGuild(message.guild))
-                        .withDescription(modInfo.toString());
-            }.build()
+            val modGuild = bot.moderator.getGuild(guild.longID)
 
-            message.channel.sendMessage(modInfoEmbed)
+            val modInfo = StringBuilder()
+            if (modGuild != null) {
+                modInfo.append("Guild moderation module enabled.").append(StringUtils.repeat(" ", 4)).append("\n\nEnabled features:\n")
+                val data = modGuild.dataAsReadableMap
+                for ((key, value) in data) {
+                    modInfo.append("**$key**").append(": ")
+
+                    if (key.equals(Moderator.AUDIT_FEATURE, ignoreCase = true) ||
+                            key.equals(Moderator.WELCOME_LOGGING, ignoreCase = true) ||
+                            key.equals(Moderator.LEAVE_LOGGING, ignoreCase = true)) {
+                        modInfo.append("<#$value>")
+                    } else {
+                        modInfo.append(value.toString())
+                    }
+
+                    modInfo.append("\n")
+                }
+            } else {
+                modInfo.append("|### Guild moderation module disabled. ###|").append(StringUtils.repeat(" ", 4))
+            }
+
+
+            val modInfoEmbed = Embed.EmbedField("Server mod info", modInfo.toString(), false);
+
+            serverInfo.appendField(modInfoEmbed);
         }
-
+        message.channel.sendMessage(serverInfo.build())
     }
 }
 

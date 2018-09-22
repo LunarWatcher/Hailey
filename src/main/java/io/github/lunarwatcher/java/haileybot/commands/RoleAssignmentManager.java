@@ -29,6 +29,9 @@ public class RoleAssignmentManager {
         assignableRoles = new HashMap<>();
 
         load();
+
+        logger.info("Loaded the role assignment manager. Loaded assignable roles for {} guilds, and auto-assign roles for {} guilds",
+                assignableRoles.size(), autoRoles.size());
     }
 
     private void load() {

@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.*;
 
+@SuppressWarnings({"unused", "FieldCanBeLocal"})
 public class HaileyBot {
     private static final Logger logger = LoggerFactory.getLogger(HaileyBot.class);
     private boolean running;
@@ -95,14 +96,30 @@ public class HaileyBot {
 
     @EventSubscriber
     public void onGuildCreateEvent(GuildCreateEvent event) {
-        logger.info("Joined guild: {}. Owner: {}", event.getGuild().getName(), event.getGuild().getOwner().getName());
+        logger.info("Joined guild: {}. Owner: {}",
+                event.getGuild().getName(),
+                event.getGuild().getOwner().getName());
 
         if (blacklistStorage.isBlacklisted(event.getGuild())) {
             logger.warn("Joined blacklisted guild! Leaving...");
+            logger.warn("Dumping info. Guild: {} (UID {}), owned by {} (UID {}).",
+                    event.getGuild().getName(),
+                    event.getGuild().getStringID(),
+                    event.getGuild().getOwner().getName(),
+                    event.getGuild().getOwner().getStringID());
             event.getGuild().leave();
+            return;
         }
-
-        changePresence();
+        if(matcher != null) {
+            /*
+             * If the matcher != null, that means we've initialized. It could be any of the other fields initialized
+             * in on-ready. It was picked at random, there's no special meaning to it.
+             *
+             * The presence is updated in onReady to avoid rate limiting, so once it's initialized, any new guilds
+             * will update it, instead of spam-updating on boot.
+             */
+            changePresence();
+        }
 
     }
 
@@ -114,6 +131,8 @@ public class HaileyBot {
         commands = new Commands(this);
         moderator = new Moderator(this);
         assigner = new RoleAssignmentManager(this);
+
+        changePresence();
     }
 
 

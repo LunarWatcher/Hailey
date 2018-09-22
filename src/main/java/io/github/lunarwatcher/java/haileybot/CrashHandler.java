@@ -15,13 +15,18 @@ public class CrashHandler {
     }
 
     public static void error(Throwable e) {
+        logger.warn("Crash!!");
         String base = e.toString();
         String reason = e.getLocalizedMessage();
         StringBuilder error = new StringBuilder(base + ": " + reason + "\n");
         for (StackTraceElement element : e.getStackTrace()) {
             error.append(StringUtils.repeat(" ", 4)).append(element.toString());
         }
-        errors.add(error.toString());
+
+        String err = error.toString();
+        logger.error(err);
+
+        errors.add(err);
     }
 
     public static List<String> splitErrors() {

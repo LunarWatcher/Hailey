@@ -33,46 +33,69 @@ public class ModUtils {
         return instance;
     }
 
+    /**
+     * The core of the main moderation tools.
+     * @param message The message; used for replies and getting necessary API info, in addition to getting info
+     *                on the user who posted the message.
+     * @param rawMessage The content of the message, as received by a command.
+     * @param permission The permission that's necessary to run the command. This can be something like {@link Permissions#BAN}.
+     *                   The command will not work if the permission is null.
+     * @param handleUser A {@link Factory2} &lt;Boolean, InternalDataForwarder, IMessage&gt; of a handler function. This is
+     *                   called after the shared code for all the functions are called, which primarily includes parsing data
+     *                   from the message, finding the user, and finding the reason, in addition to checking if the guild
+     *                   is a {@link ModGuild}
+     */
     public static void onMessageRun(IMessage message, String rawMessage, Permissions permission,
                                     Factory2<Boolean, InternalDataForwarder, IMessage> handleUser) {
         if (getInstance().bot.getModerator().getGuild(message.getGuild()) == null) {
             message.reply("this isn't a mod-enabled guild. Please run `" + Constants.TRIGGER + "enableMod` to access this feature.");
             return;
         }
-        if (!message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).contains(permission)
-                && !message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).contains(Permissions.ADMINISTRATOR)) {
-            message.reply("I do not have the appropriate permissions to do that.");
-            return;
-        }
         if (permission != null) {
+            if (!message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).contains(permission)
+                    && !message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).contains(Permissions.ADMINISTRATOR)) {
+                message.reply("I do not have the appropriate permissions to do that.");
+                return;
+            }
             if (!message.getAuthor().getPermissionsForGuild(message.getGuild()).contains(permission)
                     && !message.getAuthor().getPermissionsForGuild(message.getGuild()).contains(Permissions.ADMINISTRATOR)) {
                 message.reply("you don't have the necessary permissions to do that");
                 return;
             }
         } else {
-            message.reply("the permission is null. As a security precausion, this command cannot be used");
+            message.reply("the permission is null. As a security precausion, this command cannot be used. Please ping a bot admin with the problem");
             return;
         }
         if (handleUser == null || rawMessage == null)
             throw new NullPointerException();
         List<IUser> mentions = message.getMentions();
         String reason = rawMessage.replaceAll("<@!?\\d+>", "").trim();
+        if (reason.length() == 0 || reason.replace(" ", "").length() == 0)
+            reason = "No reason.";
+
         if (mentions.size() == 0) {
             try {
-                Long uid = ConversionUtils.parseUser(rawMessage);
+                String[] sections = rawMessage.split(" ", 2);
+                if(sections.length == 0){
+                    unknownUsageMessage(message);
+                    return;
+                }
+                Long uid = ConversionUtils.parseUser(sections[0]);
+                if(uid == -2){
+                    unknownUsageMessage(message);
+                    return;
+                }
                 IUser user = message.getClient()
                         .fetchUser(uid);
                 if (user == null) {
-                    message.reply("specify who to ban with either a mention, or their UID");
+                    unknownUsageMessage(message);
                     return;
                 }
 
                 boolean result = safeAccept(handleUser, new InternalDataForwarder(user, uid, reason), message);
                 handleResult(result, message);
             } catch (Exception e) {
-                message.reply("specify who to ban with either a mention, or their UID");
-                return;
+                unknownUsageMessage(message);
             }
         } else {
             int count = mentions.size();
@@ -89,12 +112,16 @@ public class ModUtils {
                 return;
             }
 
-
-            if (reason.length() == 0 || reason.replace(" ", "").length() == 0)
-                reason = "No reason.";
             boolean result = safeAccept(handleUser, new InternalDataForwarder(user, user.getLongID(), reason), message);
             handleResult(result, message);
         }
+    }
+
+    /**
+     * Tiny one-line method to unify a repeated message.
+     */
+    private static void unknownUsageMessage(IMessage message){
+        message.reply("specify who to ban with either a mention, or their UID");
     }
 
     private static void handleResult(boolean result, IMessage message) {
@@ -104,6 +131,10 @@ public class ModUtils {
             message.reply("failed to complete the action.");
     }
 
+    /**
+     * Utility method for accepting a Factory2&lt;Boolean, InternalDataForwarder, IMessage&gt;, and handling
+     * any failure.
+     */
     private static boolean safeAccept(Factory2<Boolean, InternalDataForwarder, IMessage> fun, InternalDataForwarder data, IMessage message) {
 
         try {
@@ -115,37 +146,47 @@ public class ModUtils {
         }
     }
 
-    public static boolean banHandler(InternalDataForwarder user, IMessage message) {
-        if (user.useLong()) {
-            if (user.hasUID())
-                message.getGuild().banUser(user.id);
+    /**
+     * Bans a user with a specified reason
+     */
+    public static boolean banHandler(InternalDataForwarder data, IMessage message) {
+        if (data.useLong()) {
+            if (data.hasUID())
+                message.getGuild().banUser(data.id, data.reason);
             else {
                 message.reply("I failed to find that user.");
                 return false;
             }
         } else
-            message.getGuild().banUser(user.user);
-        audit(message.getGuild(), createEmbedLog("Ban", user, message.getAuthor()));
+            message.getGuild().banUser(data.user, data.reason);
+        audit(message.getGuild(), createEmbedLog("Ban", data, message.getAuthor()));
         return true;
     }
 
-    public static boolean kickHandler(InternalDataForwarder user, IMessage message) {
-        if (user.useLong()) {
+    /**
+     * Kicks a user with a specified reason
+     */
+    public static boolean kickHandler(InternalDataForwarder data, IMessage message) {
+        if (data.useLong()) {
             message.reply("I failed to find the user.");
             return false;
         }
-        message.getGuild().kickUser(user.user);
-        audit(message.getGuild(), createEmbedLog("Kick", user, message.getAuthor()));
+        message.getGuild().kickUser(data.user, data.reason);
+        audit(message.getGuild(), createEmbedLog("Kick", data, message.getAuthor()));
         return true;
     }
 
-    public static boolean unbanHandler(InternalDataForwarder user, IMessage message) {
-        if (!user.hasUID()) {
+    /**
+     * Note that the API doesn't care about unbanning reasons; only kick and ban has a reason field in it. The reason
+     * for unbanning is only posted in chat by the bot.
+     */
+    public static boolean unbanHandler(InternalDataForwarder data, IMessage message) {
+        if (!data.hasUID()) {
             message.reply("You need a valid UID to do that.");
             return false;
         }
-        message.getGuild().pardonUser(user.id);
-        audit(message.getGuild(), createEmbedLog("Unban", user, message.getAuthor()));
+        message.getGuild().pardonUser(data.id);
+        audit(message.getGuild(), createEmbedLog("Unban", data, message.getAuthor()));
 
         return true;
     }

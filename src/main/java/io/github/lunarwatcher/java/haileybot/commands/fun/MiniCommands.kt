@@ -65,7 +65,7 @@ class ShootCommand : ActionCommand(replies, listOf(), { message ->
 
     companion object {
 
-        const val self = "**{0}** shot themselves! Press **R** to show respects."
+        const val self = "**{0}** shot themselves! Press **R** to pay respects."
         val replies = listOf(
                 "shoots **{0}**. Any last words?",
                 "emptied a mag in **{0}**'s head.",

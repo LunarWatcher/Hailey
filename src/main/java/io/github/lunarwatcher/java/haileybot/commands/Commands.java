@@ -132,6 +132,7 @@ public class Commands {
         commandSets.add(botCommands);
         commandSets.add(roleCommands);
 
+        logger.info("Successfully loaded the commands");
     }
 
     public void onCommand(IMessage message) {

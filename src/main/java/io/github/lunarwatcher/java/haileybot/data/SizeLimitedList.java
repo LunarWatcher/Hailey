@@ -11,6 +11,12 @@ public class SizeLimitedList<T> extends ArrayList<T> {
 
     @Override
     public boolean add(T item) {
+        if(this.size() > maxCap) {
+
+            for(int i = 0; i < size() - maxCap; i++){
+                super.remove(0);
+            }
+        }
         if (this.size() == maxCap) {
             super.remove(0);
         }

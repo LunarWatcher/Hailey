@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 public class RegexWatcher {
     private static final String KEY = "regex-watches";
+    private static final Logger logger = LoggerFactory.getLogger(RegexWatcher.class);
 
     private HaileyBot bot;
     private Map<Long, List<RegexMatch>> stored;
@@ -23,6 +24,7 @@ public class RegexWatcher {
         this.bot = bot;
         stored = new HashMap<>();
         load();
+        logger.info("Loaded the regex watcher. {} entries in the map.", stored.size());
     }
 
     public boolean watch(long user, long guild, String regex) {
