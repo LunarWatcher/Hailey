@@ -43,7 +43,7 @@ public class CrashHandler {
                     try {
                         user.getOrCreatePMChannel().sendMessage("Something bad happened :c");
                     }catch(Exception ex){
-                        // Ignore
+                        ex.printStackTrace();
                     }
                 }
             }
