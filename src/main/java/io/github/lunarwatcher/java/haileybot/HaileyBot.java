@@ -207,6 +207,11 @@ public class HaileyBot {
         if (event.getAuthor().getLongID() == client.getOurUser().getLongID())
             return;
 
+        if(matcher == null || commands == null){
+            logger.debug("Mather or commands not initialized yet. {}, {}", matcher, commands);
+            return;
+        }
+
         try {
             onMessageReceivedEvent(new MessageReceivedEvent(event.getMessage()));
             moderator.messageEdited(event);
@@ -226,6 +231,11 @@ public class HaileyBot {
     public void onMessageReceivedEvent(MessageReceivedEvent event) {
         if (event.getAuthor().getLongID() == client.getOurUser().getLongID())
             return;
+
+        if(matcher == null || commands == null){
+            logger.debug("Mather or commands not initialized yet. {}, {}", matcher, commands);
+            return;
+        }
 
         try {
             matcher.checkMessageForMatch(event.getMessage());
