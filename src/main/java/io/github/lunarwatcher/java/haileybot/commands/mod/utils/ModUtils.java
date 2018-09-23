@@ -92,6 +92,14 @@ public class ModUtils {
                     return;
                 }
 
+                if (user.getLongID() == message.getClient().getOurUser().getLongID()) {
+                    message.reply("I can't ban/kick myself. If you really want me to leave, please do so manually.");
+                    return;
+                } else if (user.getLongID() == message.getAuthor().getLongID()) {
+                    message.reply("You can't ban/kick yourself.");
+                    return;
+                }
+
                 boolean result = safeAccept(handleUser, new InternalDataForwarder(user, uid, reason), message);
                 handleResult(result, message);
             } catch (Exception e) {

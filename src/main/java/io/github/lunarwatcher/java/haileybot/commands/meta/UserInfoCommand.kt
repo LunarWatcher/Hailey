@@ -33,7 +33,7 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
         }
         val watches = bot.matcher.getWatchesForUser(user.longID);
         val username = user.name + "#" + user.discriminator
-        val nick = user.getNicknameForGuild(message.guild)
+        val nick = user.getNicknameForGuild(message.guild) ?: "None"
         val formattedCreationDate = dateFormatter.format(user.creationDate)
         val bot: Boolean = user.isBot
         val presence = ConversionUtils.convertStatusToString(user.presence.status);

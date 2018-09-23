@@ -7,12 +7,14 @@ import io.github.lunarwatcher.java.haileybot.commands.RegexWatcher;
 import io.github.lunarwatcher.java.haileybot.commands.RoleAssignmentManager;
 import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
 import io.github.lunarwatcher.java.haileybot.data.Config;
+import io.github.lunarwatcher.java.haileybot.data.Constants;
 import io.github.lunarwatcher.java.haileybot.data.Database;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.api.events.EventSubscriber;
+import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
 import sx.blah.discord.handle.impl.events.guild.GuildCreateEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageDeleteEvent;
@@ -27,7 +29,9 @@ import sx.blah.discord.handle.obj.ActivityType;
 import sx.blah.discord.handle.obj.IRole;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.handle.obj.StatusType;
+import sx.blah.discord.util.EmbedBuilder;
 
+import java.awt.*;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -65,6 +69,7 @@ public class HaileyBot {
 
     public HaileyBot() {
         ModUtils.initialize(this);
+        CrashHandler.injectBotClass(this);
         try {
             database = new Database(Paths.get("database.json"));
             blacklistStorage = new BlacklistStorage(database);
@@ -209,6 +214,11 @@ public class HaileyBot {
         } catch (Throwable e) {
             CrashHandler.error(e);
             e.printStackTrace();
+
+            if(event.getMessage().getContent().startsWith(Constants.TRIGGER)){
+                event.getChannel().sendMessage(new EmbedBuilder().withColor(Color.RED).withTitle(":warning: Error :warning:")
+                        .withDesc("Something bad happened when processing that :c My devs are probably on it already").build());
+            }
         }
     }
 
@@ -229,6 +239,11 @@ public class HaileyBot {
         } catch (Throwable e) {
             CrashHandler.error(e);
             e.printStackTrace();
+
+            if(event.getMessage().getContent().startsWith(Constants.TRIGGER)){
+                event.getChannel().sendMessage(new EmbedBuilder().withColor(Color.RED).withTitle(":warning: Error :warning:")
+                        .withDesc("Something bad happened when processing that :c My devs are probably on it already").build());
+            }
         }
     }
 

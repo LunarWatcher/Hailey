@@ -39,11 +39,12 @@ public class ErrorLogsCommand implements Command {
     @Override
     public void onMessage(@NotNull IMessage message, String rawMessage, String commandName) {
         if (!bot.getBotAdmins().contains(message.getAuthor().getLongID())) {
-            message.reply("no");
+            message.reply("no. Bot admins only.");
             return;
         }
 
         List<String> errorHandler = CrashHandler.splitErrors();
+        CrashHandler.clear();
         if (errorHandler.size() == 0) {
             message.getChannel().sendMessage("No logs.");
             return;
