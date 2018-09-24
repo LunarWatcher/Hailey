@@ -1,5 +1,6 @@
 package io.github.lunarwatcher.java.haileybot.commands.watching
 
+import com.sun.org.apache.xml.internal.serializer.utils.Utils.messages
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.commands.meta.getRandomColor
@@ -95,7 +96,7 @@ class ListWatches(val bot: HaileyBot) : Command {
     override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
         val watcher = bot.matcher
         val watches = watcher.getWatchesForUser(message.author.longID)
-        if (watches.isEmpty()) {
+        if (watches.isEmpty() || watches.flatMap { it.regex }.isEmpty()) {
             message.channel.sendMessage("You don't have any regex watches.");
             return;
         }
@@ -121,7 +122,12 @@ class ListWatches(val bot: HaileyBot) : Command {
         }
         val embed = EmbedBuilder()
                 .withColor(getRandomColor())
+
         for ((k, v) in watchesByGuild) {
+            val cache = v.flatMap { it.regex }
+            if(cache.isEmpty()){
+                continue;
+            }
             val string = "```${v.flatMap { it.regex }.joinToString("\n")}```"
             val len = string.length
             if(len > EmbedBuilder.FIELD_CONTENT_LIMIT){
@@ -141,10 +147,11 @@ class ListWatches(val bot: HaileyBot) : Command {
                 embed.appendField("Guild: $k", string, false);
             }
 
-            if(embed.totalVisibleCharacters > 0){
+            if(embed.totalVisibleCharacters > 6){
                 targetChannel.sendMessage(embed.build());
             }
         }
+
     }
 
     private fun getGuild(message: IMessage, guild: Long): IGuild {

@@ -59,8 +59,13 @@ public class CrashHandler {
         }
         builder.append("```");
 
+        String str = builder.toString();
+        if(str.toLowerCase().equals("``````")){
+            return new ArrayList<>();
+        }
 
-        return ExtensionsKt.fitDiscordLengthRequirements(builder.toString(), 2000);
+
+        return ExtensionsKt.fitDiscordLengthRequirements(str, 2000);
     }
 
     public static void clear() {

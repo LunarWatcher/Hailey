@@ -48,6 +48,9 @@ fun StringBuilder.appendLine(data: String) = this.appendln(data)
 fun StringBuilder.appendln(data: String) = this.append(data).nl()
 
 fun String.fitDiscordLengthRequirements(allowedLen: Int) : List<String>{
+    if(this.isEmpty() || this.isBlank() || this.equals("``````"))
+        return listOf();
+    
     val code = this.startsWith("```")
     val targetLen = if(code) allowedLen - 6 else allowedLen
 
