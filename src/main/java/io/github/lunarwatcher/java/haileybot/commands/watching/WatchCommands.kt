@@ -1,6 +1,5 @@
 package io.github.lunarwatcher.java.haileybot.commands.watching
 
-import com.sun.org.apache.xml.internal.serializer.utils.Utils.messages
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.commands.meta.getRandomColor
