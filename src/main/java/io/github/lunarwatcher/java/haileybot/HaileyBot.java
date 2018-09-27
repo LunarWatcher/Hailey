@@ -193,8 +193,12 @@ public class HaileyBot {
 
     @EventSubscriber
     public void onUserLeaveEvent(UserLeaveEvent event) {
-        if (event.getUser().getLongID() == client.getOurUser().getLongID())
+        if (event.getUser().getLongID() == client.getOurUser().getLongID()) {
+            matcher.clearWatchesForGuild(event.getGuild().getLongID());
             return;
+        }
+
+        matcher.clearWatchesForUser(event.getUser().getLongID(), event.getGuild().getLongID());
         try {
             moderator.userLeft(event);
         } catch (Throwable e) {

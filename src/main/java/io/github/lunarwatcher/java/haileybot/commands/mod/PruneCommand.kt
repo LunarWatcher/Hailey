@@ -12,6 +12,7 @@ import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
 import sx.blah.discord.handle.obj.Permissions
 import sx.blah.discord.util.EmbedBuilder
+import sx.blah.discord.util.MissingPermissionsException
 
 class PruneCommand(private val bot: HaileyBot) : Command {
 
@@ -53,9 +54,14 @@ class PruneCommand(private val bot: HaileyBot) : Command {
 
         val title = "Bulk deletion"
 
-
         val messageHistory = message.channel.getMessageHistory(deletionCount)
-        messageHistory.bulkDelete()
+        try {
+
+            messageHistory.bulkDelete()
+        }catch(e: MissingPermissionsException){
+            message.channel.sendMessage("I do not have the appropriate permissions to delete messages. Unfortunately, due to a bug in the API I use, the \"manage messages\" permission needs to be explcitly declared.")
+            return;
+        }
         message.reply("deleted ${messageHistory.size - 1} messages. \uD83D\uDC3A")
                 ?.scheduleDeletion(10000);
         val deletedCount = messageHistory.size - 1

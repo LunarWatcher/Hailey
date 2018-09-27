@@ -4,14 +4,16 @@ import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.watching.RegexMatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sx.blah.discord.api.IDiscordClient;
+import sx.blah.discord.handle.obj.IChannel;
+import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IMessage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public class RegexWatcher {
     private static final String BASE_KEY = "regex-watches";
@@ -27,6 +29,7 @@ public class RegexWatcher {
         this.bot = bot;
         stored = new HashMap<>();
         load();
+        bot.getDatabase().remove(BASE_KEY);
         logger.info("Loaded the regex watcher. {} entries in the map.", stored.size());
     }
 
@@ -180,4 +183,64 @@ public class RegexWatcher {
     }
 
 
+    public void clearWatchesForGuild(long guildId) {
+        IDiscordClient client = bot.getClient();
+
+        for(Map.Entry<Long, List<RegexMatch>> entry : stored.entrySet()){
+            List<RegexMatch> matches = entry.getValue();
+            for(RegexMatch match : matches){
+                if(match.getGuild()){
+                    if(match.getLocationId() == guildId){
+                        match.getRegex().clear();
+                    }
+                }else{
+                    IChannel channel = client.getChannelByID(match.getLocationId());
+                    if(channel.getGuild().getLongID() == guildId){
+                        match.getRegex().clear();
+                    }
+                }
+            }
+        }
+
+        cleanStored();
+    }
+
+    public void clearWatchesForUser(long userId, long guildId) {
+        if(stored.get(userId) == null) return;
+
+        for(RegexMatch match : stored.get(userId)){
+            if(match.getGuild()){
+                if(match.getLocationId() == guildId){
+                    match.getRegex().clear();
+                }
+            }else{
+                IChannel channel = bot.getClient().getChannelByID(match.getLocationId());
+                if(channel.getGuild().getLongID() == guildId){
+                    match.getRegex().clear();
+                }
+            }
+
+        }
+
+        cleanStored();
+
+    }
+
+
+    private void cleanStored(){
+        stored.forEach((key, value) -> {
+            if(value.stream().map(RegexMatch::getRegex).flatMap(List::stream).collect(Collectors.toList()).size() == 0){
+                value.clear();
+            }else{
+                value.removeIf((it) -> it.getRegex().size() == 0);
+            }
+        });
+
+        Set<Long> entries = stored.keySet();
+
+        for(long key : entries){
+            if(stored.get(key).size() == 0)
+                stored.remove(key);
+        }
+    }
 }

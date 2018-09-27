@@ -169,6 +169,7 @@ class ListWatches(val bot: HaileyBot) : Command {
         processWatches(message, watchesByChannel, embed, targetChannel, "Channel")
         processWatches(message, watchesByGuild, embed, targetChannel, "Guild");
 
+        message.channel.sendMessage("Check your DM's!")
     }
 
     private fun processWatches(message: IMessage, watches: Map<String, MutableList<RegexMatch>>, embed: EmbedBuilder, targetChannel: IPrivateChannel, label: String){

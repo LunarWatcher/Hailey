@@ -249,4 +249,9 @@ public class Database {
         return cache.size();
     }
 
+    public void remove(String baseKey) {
+        if(!cache.containsKey(baseKey))
+            return;
+        cache.remove(baseKey);
+    }
 }
