@@ -3,10 +3,12 @@ package io.github.lunarwatcher.java.haileybot.commands.watching
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.commands.meta.getRandomColor
+import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
+import io.github.lunarwatcher.java.haileybot.utils.canUserRunBotAdminCommand
 import io.github.lunarwatcher.java.haileybot.utils.fitDiscordLengthRequirements
-import org.slf4j.LoggerFactory
 import sx.blah.discord.handle.impl.obj.Embed
+import sx.blah.discord.handle.obj.IChannel
 import sx.blah.discord.handle.obj.IGuild
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
@@ -30,12 +32,32 @@ class WatchCommand(val bot: HaileyBot) : Command {
         if (rawMessage == ".*")
             return
 
+        if(rawMessage.length > 800 && !message.canUserRunBotAdminCommand(bot)){
+            message.channel.sendMessage("Woah, slow down! You need to be a bot admin to have regex entries over 800 chars. *(What were you planning to do with that anyways?)*")
+            return;
+        }
+
         if (rawMessage.isEmpty() || rawMessage.isBlank()) {
-            message.reply("You need 1 argument: regex")
+            message.reply("You need at least 1 argument: regex. An optional #channel can be placed in front of the regex.")
         } else {
+            val channel = ConversionUtils.parseChannel(rawMessage.split(" ").getOrNull(0), false)
+
+            val reifiedMessage = if(channel != -2L){
+                if(!assertChannelServerMatches(channel, message)){
+                    message.channel.sendMessage("You can't watch stuff on other guilds -_-")
+                    return;
+                }
+                rawMessage.split(" ", limit = 2).getOrNull(1)?.trim() ?: ""
+            } else rawMessage
+
+            if(reifiedMessage.isBlank() || reifiedMessage.isEmpty()){
+                message.channel.sendMessage("What do you want me to unwatch?")
+                return;
+            }
+
             val user = message.author.longID
             val guild = message.guild.longID
-            val result = bot.matcher.watch(user, guild, rawMessage)
+            val result = bot.matcher.watch(user, guild, channel, reifiedMessage)
 
             if (!result)
                 message.reply("Compiling failed. Check your regex")
@@ -46,9 +68,6 @@ class WatchCommand(val bot: HaileyBot) : Command {
         }
     }
 
-    companion object {
-        private val logger = LoggerFactory.getLogger(WatchCommand::class.java)
-    }
 }
 
 class UnwatchCommand(val bot: HaileyBot) : Command {
@@ -63,16 +82,32 @@ class UnwatchCommand(val bot: HaileyBot) : Command {
             return;
         }
         if (rawMessage.isEmpty() || rawMessage.isBlank()) {
-            message.reply("You need 1 argument: regex")
+            message.reply("You need at least 1 argument: regex. An optional #channel can be placed in front of the regex.")
         } else {
+            val channel = ConversionUtils.parseChannel(rawMessage.split(" ").getOrNull(0), false)
+
+            val reifiedMessage = if(channel != -2L){
+                if(!assertChannelServerMatches(channel, message)){
+                    message.channel.sendMessage("You can't watch stuff on other guilds -_-")
+                    return;
+                }
+                rawMessage.split(" ", limit = 2).getOrNull(1)?.trim() ?: ""
+            } else rawMessage
+
+            if(reifiedMessage.isBlank() || reifiedMessage.isEmpty()){
+                message.channel.sendMessage("What do you want me to unwatch?")
+                return;
+            }
 
             val user = message.author.longID
             val guild = message.guild.longID
 
-            val result = bot.matcher.unwatch(user, guild, rawMessage)
+            val result = bot.matcher.unwatch(user, guild, channel, reifiedMessage)
 
             if (!result)
-                message.reply("You weren't watching that.")
+                message.reply("You weren't watching that."
+                        + if(channel != -2L) " Note that you tried a channel unwatch. If it's watched for the guild, don't pass a channel as an argument"
+                else "")
             else
                 message.reply("Unwatched!")
 
@@ -80,21 +115,19 @@ class UnwatchCommand(val bot: HaileyBot) : Command {
         }
     }
 
-    companion object {
-        private val logger = LoggerFactory.getLogger(UnwatchCommand::class.java)
-    }
-
 }
 
 class ListWatches(val bot: HaileyBot) : Command {
     override fun getName(): String = "listWatches"
-    override fun getAliases(): MutableList<String>? = null
+    override fun getAliases() = Companion.aliases
 
     override fun getHelp(): String? = null
     override fun getDescription(): String? = "Lists your regex watches globally"
     override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
         val watcher = bot.matcher
         val watches = watcher.getWatchesForUser(message.author.longID)
+        for(watch in watches)
+            println(watch.regex);
         if (watches.isEmpty() || watches.flatMap { it.regex }.isEmpty()) {
             message.channel.sendMessage("You don't have any regex watches.");
             return;
@@ -103,71 +136,91 @@ class ListWatches(val bot: HaileyBot) : Command {
         val targetChannel = message.author.orCreatePMChannel
 
         val watchesByGuild = mutableMapOf<String, MutableList<RegexMatch>>()
+        val watchesByChannel = mutableMapOf<String, MutableList<RegexMatch>>()
 
         for (watch in watches) {
             if(watch.regex.size == 0)
                 continue;
-            val guildId = watch.guild
-            val guild = getGuild(message, guildId)
+            val locationId = watch.locationId
+            val isGuild = watch.guild
 
-            watchesByGuild.computeIfAbsent(guild.name) { mutableListOf() }
+            if(isGuild) {
+                val guild = getGuild(message, locationId)?.name ?: "Unknown guild"
+                watchesByGuild.computeIfAbsent(guild) { mutableListOf() }
+                watchesByGuild[guild]?.add(watch);
+            } else {
+                val c = getChannel(message, locationId)
+                val channel = c?.let {
+                    it.name + if(it.guild != null) " (${it.guild.name})" else "";
+                } ?: "Unknown channel"
 
-            watchesByGuild[guild.name]?.add(watch);
+                watchesByChannel.computeIfAbsent(channel) { mutableListOf() }
+                watchesByChannel[channel]?.add(watch);
+            }
         }
 
-        if(watchesByGuild.isEmpty()){
+        if(watchesByGuild.isEmpty() && watchesByChannel.isEmpty()){
             message.channel.sendMessage("You don't have any regex watches.");
             return;
         }
+
         val embed = EmbedBuilder()
                 .withColor(getRandomColor())
+        processWatches(message, watchesByChannel, embed, targetChannel, "Channel")
+        processWatches(message, watchesByGuild, embed, targetChannel, "Guild");
 
-        for ((k, v) in watchesByGuild) {
-            val cache = v.flatMap { it.regex }
-            if(cache.isEmpty()){
-                continue;
-            }
-            val string = "```${v.flatMap { it.regex }.joinToString("\n")}```"
-            val len = string.length
-            if(len > EmbedBuilder.FIELD_CONTENT_LIMIT){
-                val pieces = string.fitDiscordLengthRequirements(EmbedBuilder.FIELD_CONTENT_LIMIT)
-                for(piece in pieces){
-                    if(embed.fieldCount == EmbedBuilder.FIELD_COUNT_LIMIT){
+    }
+
+    private fun processWatches(message: IMessage, watches: Map<String, MutableList<RegexMatch>>, embed: EmbedBuilder, targetChannel: IPrivateChannel, label: String){
+        try {
+            for ((k, v) in watches) {
+                val cache = v.flatMap { it.regex }
+                if (cache.isEmpty()) {
+                    continue;
+                }
+                val string = "```${v.flatMap { it.regex }.joinToString("\n")}```"
+                val len = string.length
+                if (len > EmbedBuilder.FIELD_CONTENT_LIMIT) {
+                    val pieces = string.fitDiscordLengthRequirements(EmbedBuilder.FIELD_CONTENT_LIMIT)
+                    for (piece in pieces) {
+                        if (embed.fieldCount == EmbedBuilder.FIELD_COUNT_LIMIT) {
+                            targetChannel.sendMessage(embed.build());
+                            embed.clearFields();
+                        }
+                        embed.appendField(Embed.EmbedField("$label: $k", piece, false))
+                    }
+                } else {
+                    if (embed.fieldCount == EmbedBuilder.FIELD_COUNT_LIMIT) {
                         targetChannel.sendMessage(embed.build());
                         embed.clearFields();
                     }
-                    embed.appendField(Embed.EmbedField("Guild: $k", piece, false))
+                    embed.appendField("$label: $k", string, false);
                 }
-            }else {
-                if(embed.fieldCount == EmbedBuilder.FIELD_COUNT_LIMIT){
+
+                if (embed.totalVisibleCharacters > 6) {
                     targetChannel.sendMessage(embed.build());
-                    embed.clearFields();
                 }
-                embed.appendField("Guild: $k", string, false);
             }
-
-            if(embed.totalVisibleCharacters > 6){
-                targetChannel.sendMessage(embed.build());
-            }
+        }catch(e: Exception) {
+            message.channel.sendMessage("Something went wrong when sending the message. You might not be able to send you DM's :c")
         }
-
     }
 
-    private fun getGuild(message: IMessage, guild: Long): IGuild {
-        if (cache[guild] != null)
-            return cache[guild]!!;
-
-        val iGuild = message.client.getGuildByID(guild)
-        cache[guild] = iGuild;
-        return iGuild;
-    }
-
-    fun nukeCache() {
-        cache.clear();
-    }
+    private fun getGuild(message: IMessage, guild: Long): IGuild? = message.client.getGuildByID(guild)
+    private fun getChannel(message: IMessage, channel: Long) : IChannel? = message.client.getChannelByID(channel)
 
     companion object {
-        private val cache = mutableMapOf<Long, IGuild>()
+        val aliases = listOf("watches");
     }
 
+}
+
+// Functions
+
+internal fun assertChannelServerMatches(channel: Long, message: IMessage): Boolean {
+    if(message.guild == null){
+        return false;
+    }
+
+    return message.client.getChannelByID(channel)?.guild?.longID == message.guild.longID;
 }

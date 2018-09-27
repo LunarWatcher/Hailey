@@ -38,8 +38,15 @@ public class ConversionUtils {
     }
 
     public static long parseChannel(String input) {
+        return parseChannel(input, true);
+    }
+
+    public static long parseChannel(String input, boolean convertRawToLong) {
+        if(input == null) return -2;
         Matcher matcher = CHANNEL_PATTERN.matcher(input);
         if (!matcher.find()) {
+            if(!convertRawToLong)
+                return -2;
             try {
                 return convertToLong(input);
             } catch (NumberFormatException e) {

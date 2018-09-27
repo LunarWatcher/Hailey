@@ -14,8 +14,8 @@ public class Config {
     private String owner;
 
     /**
-     * Link to the GitHub repository, or a fork. Points to <a href="https://github.com/LunarWatcher/Hailey">/LunarWatcher/Hailey</a>
-     * by default.
+     * Link to the GitHub repository, or a forked version if applicable.
+     * Points to <a href="https://github.com/LunarWatcher/Hailey">/LunarWatcher/Hailey</a> by default.
      */
     private String github;
     private String token;
@@ -23,6 +23,10 @@ public class Config {
     public Config(Properties properties) {
         this.properties = properties;
 
+        refresh();
+    }
+
+    public void refresh(){
         this.github = properties.getOrDefault("github", "https://github.com/LunarWatcher/Hailey").toString();
         this.owner = properties.getOrDefault("owner", CREATOR).toString();
         this.token = (String) properties.get("token");
@@ -43,6 +47,9 @@ public class Config {
         return github;
     }
 
+    /**
+     * Returns the raw representation of the properties.
+     */
     public Properties getProperties() {
         return properties;
     }

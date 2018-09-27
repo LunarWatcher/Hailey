@@ -1,5 +1,7 @@
 package io.github.lunarwatcher.java.haileybot.commands.watching;
 
+import sx.blah.discord.handle.obj.IMessage;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -8,23 +10,35 @@ public class RegexMatch {
     private static final long MIN_TIMEOUT = 120000;
     private List<String> regex;
     private Pattern pattern;
-    private long guild;
+    private long locationId;
     private long lastMatch = 0;
 
-    public RegexMatch(String regex, long guild) {
+    private boolean guild;
+
+    public RegexMatch(String regex, long locationId, boolean guild) {
         this.regex = new ArrayList<>();
         this.regex.add(regex);
 
+        this.locationId = locationId;
         this.guild = guild;
 
         patternify();
     }
 
-    public RegexMatch(List<String> regex, long guild) {
+    public RegexMatch(List<String> regex, long locationId, boolean guild) {
         this.regex = regex;
+        this.locationId = locationId;
         this.guild = guild;
 
         patternify();
+    }
+
+    public boolean doesLocationMatch(IMessage message){
+        long id;
+        if(guild) id = message.getGuild().getLongID();
+        else id = message.getChannel().getLongID();
+
+        return locationId == id;
     }
 
     public void patternify() {
@@ -50,7 +64,11 @@ public class RegexMatch {
         return regex;
     }
 
-    public long getGuild() {
+    public long getLocationId() {
+        return locationId;
+    }
+
+    public boolean getGuild(){
         return guild;
     }
 }

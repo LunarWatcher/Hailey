@@ -39,7 +39,7 @@ abstract class ActionCommand(val replies: List<String>, val emojis: List<String>
         }
 
         val result = message.mentions
-                .filter { it.longID != message.client.ourUser.longID }
+                .filter { it.longID != message.client.ourUser.longID && it.longID != message.author.longID}
                 .map {
                     it.getDisplayName(message.guild)
                 }.toHashSet()
@@ -48,8 +48,8 @@ abstract class ActionCommand(val replies: List<String>, val emojis: List<String>
             onEmptyMessage.invoke(message)
             return;
         }
-        message.channel.sendMessage("**${message.author.getDisplayName(message.guild)}** " + replies.randomItem()?.messageFormat(result) + " ${emojis.randomItem()
-                ?: ""}")
+        message.channel.sendMessage("**${message.author.getDisplayName(message.guild)}** " + replies.randomItem()?.messageFormat(result, message.author.getDisplayName(message.guild))
+                + " ${emojis.randomItem() ?: ""}")
     }
 
 }
@@ -72,7 +72,10 @@ class ShootCommand : ActionCommand(replies, listOf(), { message ->
                 "shoots **{0}** down at noon.",
                 "killed **{0}** by sending automated gun drones after them.",
                 "bust a cap in **{0}**.",
-                "sniped **{0}**. ***HEADSHOT!***"
+                "sniped **{0}**. ***HEADSHOT!***",
+                "tried to shoot **{0}**, but realized they're out of bullets.",
+                "tries to shoot **{0}**. PLOT TWIST!! **{0}** turns around and **{1}** you down",
+                "shoots at **{0}**, but misses!"
 
         )
     }
@@ -94,7 +97,8 @@ class HugCommand : ActionCommand(replies, listOf(), { message ->
                 "covers **{0}** in fluff <3",
                 "warms **{0}** with hugs",
                 "cuddles **{0}**",
-                "hugs **{0}** tightly and refuses to let go"
+                "hugs **{0}** tightly and refuses to let go",
+                "soaks **{0}** into their fluff owo"
         )
     }
 }
@@ -146,4 +150,20 @@ class BoopCommand : ActionCommand(replies, listOf(), { message -> message.channe
                 "runs up to **{0}** and boops them <3"
         )
     }
+}
+
+class PatCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)))}){
+    override fun getName(): String = "pat"
+    override fun getAliases(): List<String>? = null
+    override fun getHelp(): String? = null;
+    override fun getDescription(): String? = "Pats someone owo"
+    companion object {
+        const val self = "**{0}** pats themselves!"
+        val replies = listOf(
+                "pats **{0}** :heart:",
+                "yells *\"SURPRISE!\" and pats **{0}**",
+                "puts **{0}** in their lap, and pats **{0}**"
+        )
+    }
+
 }

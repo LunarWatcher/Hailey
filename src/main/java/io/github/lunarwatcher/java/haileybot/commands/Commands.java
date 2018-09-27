@@ -92,6 +92,7 @@ public class Commands {
 
         funCommands.add(new LickCommand());
         funCommands.add(new BoopCommand());
+        funCommands.add(new PatCommand());
 
         // Meta commands
 
