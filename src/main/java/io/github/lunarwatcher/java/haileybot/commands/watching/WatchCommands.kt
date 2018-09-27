@@ -126,8 +126,6 @@ class ListWatches(val bot: HaileyBot) : Command {
     override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
         val watcher = bot.matcher
         val watches = watcher.getWatchesForUser(message.author.longID)
-        for(watch in watches)
-            println(watch.regex);
         if (watches.isEmpty() || watches.flatMap { it.regex }.isEmpty()) {
             message.channel.sendMessage("You don't have any regex watches.");
             return;
