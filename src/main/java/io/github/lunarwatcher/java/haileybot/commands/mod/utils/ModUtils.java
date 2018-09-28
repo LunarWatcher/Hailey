@@ -4,6 +4,7 @@ import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
 import io.github.lunarwatcher.java.haileybot.mod.ModGuild;
 import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils;
+import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
 import io.github.lunarwatcher.java.haileybot.utils.Factory2;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IGuild;
@@ -35,8 +36,9 @@ public class ModUtils {
 
     /**
      * The core of the main moderation tools.
-     * @param message The message; used for replies and getting necessary API info, in addition to getting info
-     *                on the user who posted the message.
+     *
+     * @param message    The message; used for replies and getting necessary API info, in addition to getting info
+     *                   on the user who posted the message.
      * @param rawMessage The content of the message, as received by a command.
      * @param permission The permission that's necessary to run the command. This can be something like {@link Permissions#BAN}.
      *                   The command will not work if the permission is null.
@@ -76,12 +78,12 @@ public class ModUtils {
         if (mentions.size() == 0) {
             try {
                 String[] sections = rawMessage.split(" ", 2);
-                if(sections.length == 0){
+                if (sections.length == 0) {
                     unknownUsageMessage(message);
                     return;
                 }
                 Long uid = ConversionUtils.parseUser(sections[0]);
-                if(uid == -2){
+                if (uid == -2) {
                     unknownUsageMessage(message);
                     return;
                 }
@@ -99,7 +101,14 @@ public class ModUtils {
                     message.reply("You can't ban/kick yourself.");
                     return;
                 }
+                String[] cache = reason.split(" ", 2);
+                if (cache.length != 2)
+                    reason = "No reason.";
+                else {
+                    if (cache[1].replace(" ", "").isEmpty()) reason = "No reason.";
+                    else reason = cache[1];
 
+                }
                 boolean result = safeAccept(handleUser, new InternalDataForwarder(user, uid, reason), message);
                 handleResult(result, message);
             } catch (Exception e) {
@@ -128,15 +137,21 @@ public class ModUtils {
     /**
      * Tiny one-line method to unify a repeated message.
      */
-    private static void unknownUsageMessage(IMessage message){
+    private static void unknownUsageMessage(IMessage message) {
         message.reply("specify who to ban with either a mention, or their UID");
     }
 
+    /**
+     * Handles the result of a ban, kick, or unban, sends a message that has a timer, and deletes the original message
+     * that triggered the command. This is to keep chat clean.
+     */
     private static void handleResult(boolean result, IMessage message) {
         if (result)
-            message.reply("successfully completed the action.");
+            ExtensionsKt.scheduleDeletion(message.reply("successfully completed the action."), 10000);
         else
-            message.reply("failed to complete the action.");
+            ExtensionsKt.scheduleDeletion(message.reply("failed to complete the action."), 10000);
+
+        message.delete();
     }
 
     /**

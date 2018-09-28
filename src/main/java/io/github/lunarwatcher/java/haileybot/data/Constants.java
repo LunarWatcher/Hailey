@@ -7,7 +7,7 @@ public final class Constants {
     private Constants() {
     }
 
-    public static final String VERSION = "0.015.124 \"Stabilizing\"";
+    public static final String VERSION = "0.016.001 \"Nightmare II\"";
     public static final String TRIGGER = "h!";
     public static final boolean ALLOW_MENTION_TRIGGER = true;
 
