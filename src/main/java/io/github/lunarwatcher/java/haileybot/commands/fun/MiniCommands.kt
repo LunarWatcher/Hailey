@@ -163,6 +163,23 @@ class PatCommand : ActionCommand(replies, listOf(), { message -> message.channel
                 "pats **{0}** :heart:",
                 "yells *\"SURPRISE!\" and pats **{0}**",
                 "puts **{0}** in their lap, and pats **{0}**"
+
+        )
+    }
+
+}
+
+class PetCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)))}){
+    override fun getName(): String = "pet"
+    override fun getAliases(): List<String>? = null
+    override fun getHelp(): String? = null;
+    override fun getDescription(): String? = "Pet someone ~<3"
+    companion object {
+        const val self = "**{0}** pets themselves!"
+        val replies = listOf(
+                "gently pets **{0}**",
+                "pets **{0}** on their head, and says \"Who's a good <pronoun>?\"",
+                "cuddles and pets **{0}**"
         )
     }
 

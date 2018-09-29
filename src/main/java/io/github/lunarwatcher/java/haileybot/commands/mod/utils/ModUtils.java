@@ -1,5 +1,6 @@
 package io.github.lunarwatcher.java.haileybot.commands.mod.utils;
 
+import io.github.lunarwatcher.java.haileybot.CrashHandler;
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
 import io.github.lunarwatcher.java.haileybot.mod.ModGuild;
@@ -163,8 +164,26 @@ public class ModUtils {
         try {
             return fun.accept(data, message);
         } catch (Exception e) {
-            e.printStackTrace();
+            String errorMessage = e.getMessage();
+            /*
+             * The Discord role hirearchy prevents lower users from banning those above them. That results in a problem
+             * for the bot, if the bot role is under any member roles. Because the message may not make sense for
+             * users of the command, this if-statement checks if the message contains "higher position" (in an attempt
+             * to match the message "Attempt to interact with user of equal or higher position in role hierarchy"),
+             * and then sends a more detailed message of what went wrong, and how to fix it.
+             *
+             * This will likely only be called for kick an banned; when they're banned they obviously don't have a role,
+             * which means any position for the bot role in the role hierarchy would successfully unban the user.
+             *
+             */
+            if (errorMessage.contains("higher position")){
+                message.reply("Seems like I couldn't ban them: `" + errorMessage + "`. My highest role needs to be above" +
+                        " the role of the person you're trying to ban. So if it's i.e. a member, please move my role up" +
+                        " before attempting to use this command again.");
+                return false;
+            }
             message.reply("Failed: " + e.getMessage());
+            CrashHandler.error(e);
             return false;
         }
     }
