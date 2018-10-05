@@ -194,9 +194,9 @@ class TickleCommand : ActionCommand(replies, listOf(), { message -> message.chan
     companion object {
         const val self = "**{0}** tickles themselves?!"
         val replies = listOf(
-                "tickes **{0}**",
-                "tickes **{0}** to insanity",
-                "surprises **{0}** with ticking owo"
+                "tickles **{0}**",
+                "tickles **{0}** to insanity",
+                "surprises **{0}** with tickling owo"
         )
     }
 
