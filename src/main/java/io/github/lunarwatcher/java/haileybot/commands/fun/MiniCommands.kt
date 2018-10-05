@@ -74,7 +74,7 @@ class ShootCommand : ActionCommand(replies, listOf(), { message ->
                 "bust a cap in **{0}**.",
                 "sniped **{0}**. ***HEADSHOT!***",
                 "tried to shoot **{0}**, but realized they're out of bullets.",
-                "tries to shoot **{0}**. PLOT TWIST!! **{0}** turns around and **{1}** you down",
+                "tries to shoot **{0}**. PLOT TWIST!! **{0}** turns around and shoots **{1}**",
                 "shoots at **{0}**, but misses!"
 
         )
@@ -161,7 +161,7 @@ class PatCommand : ActionCommand(replies, listOf(), { message -> message.channel
         const val self = "**{0}** pats themselves!"
         val replies = listOf(
                 "pats **{0}** :heart:",
-                "yells *\"SURPRISE!\" and pats **{0}**",
+                "yells *\"SURPRISE!\"* and pats **{0}**",
                 "puts **{0}** in their lap, and pats **{0}**"
 
         )
@@ -180,6 +180,23 @@ class PetCommand : ActionCommand(replies, listOf(), { message -> message.channel
                 "gently pets **{0}**",
                 "pets **{0}** on their head, and says \"Who's a good <pronoun>?\"",
                 "cuddles and pets **{0}**"
+        )
+    }
+
+}
+
+
+class TickleCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)))}){
+    override fun getName(): String = "tickle"
+    override fun getAliases(): List<String>? = null
+    override fun getHelp(): String? = null;
+    override fun getDescription(): String? = "Tickle someone!! *laughs incontrollably*"
+    companion object {
+        const val self = "**{0}** tickles themselves?!"
+        val replies = listOf(
+                "tickes **{0}**",
+                "tickes **{0}** to insanity",
+                "surprises **{0}** with ticking owo"
         )
     }
 

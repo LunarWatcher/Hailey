@@ -95,6 +95,8 @@ public class Commands {
         funCommands.add(new PatCommand());
         funCommands.add(new PetCommand());
 
+        funCommands.add(new TickleCommand());
+
         // Meta commands
 
         metaCommands.add(new HelpCommand(bot));
