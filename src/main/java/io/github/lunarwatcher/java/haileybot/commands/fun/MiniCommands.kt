@@ -43,7 +43,7 @@ abstract class ActionCommand(val replies: List<String>, val emojis: List<String>
                 .map {
                     it.getDisplayName(message.guild)
                 }.toHashSet()
-                .joinToString(", ")
+                .joinToString(" and ")
         if (result.isBlank() || result.isEmpty()) {
             onEmptyMessage.invoke(message)
             return;
