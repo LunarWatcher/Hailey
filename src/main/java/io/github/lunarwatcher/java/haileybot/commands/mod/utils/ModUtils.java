@@ -194,13 +194,13 @@ public class ModUtils {
     public static boolean banHandler(InternalDataForwarder data, IMessage message) {
         if (data.useLong()) {
             if (data.hasUID())
-                message.getGuild().banUser(data.id, data.reason);
+                message.getGuild().banUser(data.id, data.reason, 7);
             else {
                 message.reply("I failed to find that user.");
                 return false;
             }
         } else
-            message.getGuild().banUser(data.user, data.reason);
+            message.getGuild().banUser(data.user, data.reason, 7);
         audit(message.getGuild(), createEmbedLog("Ban", data, message.getAuthor()));
         return true;
     }
