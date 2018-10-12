@@ -311,28 +311,52 @@ public class ModGuild {
     public void set(@NotNull String featureName, Object data) {
         switch (featureName.toLowerCase()) {
             case INVITE_FEATURE:
+                if(data == null){
+                    inviteSpamProtection = false;
+                    return;
+                }
                 assertType(data, Boolean.class);
                 inviteSpamProtection = (boolean) data;
                 break;
             case BAN_MONITORING_FEATURE:
+                if(data == null){
+                    banMonitoring = false;
+                    return;
+                }
                 assertType(data, Boolean.class);
                 banMonitoring = (boolean) data;
                 break;
             case AUDIT_FEATURE:
+                if(data == null){
+                    auditChannel = -1L;
+                    return;
+                }
                 assertType(data, Long.class);
                 auditChannel = (long) data;
                 break;
             case WELCOME_LOGGING:
+                if(data == null){
+                    welcomeChannel = -1L;
+                    return;
+                }
                 assertType(data, Long.class);
                 welcomeChannel = (long) data;
                 joinMessage = DEFAULT_JOIN_MESSAGE;
                 break;
             case LEAVE_LOGGING:
+                if(data == null){
+                    userLeaveChannel = -1L;
+                    return;
+                }
                 assertType(data, Long.class);
                 userLeaveChannel = (long) data;
                 leaveMessage = DEFAULT_LEAVE_MESSAGE;
                 break;
             case JOIN_MESSAGE:
+                if(data == null){
+                    joinMessage = null;
+                    return;
+                }
                 assertType(data, String.class);
                 joinMessage = ((String) data).replaceAll("(?i)<user>", "{0}")
                         .replaceAll("(?i)<server>", "{1}")
@@ -340,10 +364,18 @@ public class ModGuild {
                         .replaceAll("(?i)<nthmember>", "{3}");
                 break;
             case LEAVE_MESSAGE:
+                if(data == null){
+                    leaveMessage = null;
+                    return;
+                }
                 assertType(data, String.class);
                 leaveMessage = ((String) data).replaceAll("(?i)<user>", "{0}");
                 break;
             case JOIN_DM:
+                if(data == null){
+                    joinDM = null;
+                    return;
+                }
                 assertType(data, String.class);
                 joinDM = ((String) data).replaceAll("(?i)<user>", "{0}")
                         .replaceAll("(?i)<server>", "{1}")

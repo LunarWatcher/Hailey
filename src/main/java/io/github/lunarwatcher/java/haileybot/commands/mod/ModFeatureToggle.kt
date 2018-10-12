@@ -61,6 +61,7 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
             return
         }
         val feature = splitBySpace[0].trim()
+
         val mode = splitBySpace[1].trim()
 
         logger.info("**Enabling features**")
@@ -83,58 +84,72 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
                 message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled).");
             }
             AUDIT_FEATURE -> try {
-                val channel = if (mode.toLongOrNull() == null) {
+
+                val channel = if(mode == "null") -1 else if (mode.toLongOrNull() == null) {
                     ConversionUtils.parseChannel(mode);
                 } else mode.toLong()
                 if (channel == -2L) {
+                    // -2 is triggered by failed parsing; -1 is used for no channel. That's why only -2 is handled here.
                     message.channel.sendMessage("Failed to parse channel.");
                     return;
                 }
-                message.guild.getChannelByID(channel)
-                        .sendMessage("Audit channel set.");
+                if(channel != -1L)
+                    message.guild.getChannelByID(channel)
+                            .sendMessage("Audit channel set.");
+
                 guild.set(AUDIT_FEATURE, channel)
-                message.channel.sendMessage("Successfully set the audit channel.");
+                if(channel != -1L)
+                    message.channel.sendMessage("Successfully set the audit channel.");
+                else
+                    message.channel.sendMessage("Removed the audit channel.");
 
             } catch (e: ClassCastException) {
                 message.channel.sendMessage("Failed to convert channel to a long ID.")
             }
             WELCOME_LOGGING -> try {
-                val channel = if (mode.toLongOrNull() == null) {
+                val channel = if(mode == "null") -1 else if (mode.toLongOrNull() == null) {
                     ConversionUtils.parseChannel(mode);
                 } else mode.toLong()
                 if (channel == -2L) {
                     message.channel.sendMessage("Failed to parse channel.");
                     return;
                 }
-                message.guild.getChannelByID(channel)
-                        .sendMessage("Welcome channel set to <#$channel>.");
+                if(channel != -1L)
+                    message.guild.getChannelByID(channel)
+                            .sendMessage("Welcome channel set to <#$channel>.");
                 guild.set(WELCOME_LOGGING, channel)
-                message.channel.sendMessage("Successfully set the welcome channel.  Please run the `set` command using join_message to specify a custom message. <user> is a placeholder if you want to add the user's username to the message, and <server> is for the server name");
-
+                if(channel != -1L)
+                    message.channel.sendMessage("Successfully set the welcome channel.");
+                else message.channel.sendMessage("Removed the welcome channel.");
             } catch (e: ClassCastException) {
                 message.channel.sendMessage("Failed to convert channel to a long ID.")
             }
             LEAVE_LOGGING -> try {
-                val channel = if (mode.toLongOrNull() == null) {
+                val channel = if(mode == "null") -1 else if (mode.toLongOrNull() == null) {
                     ConversionUtils.parseChannel(mode);
                 } else mode.toLong()
                 if (channel == -2L) {
                     message.channel.sendMessage("Failed to parse channel.");
                     return;
                 }
-
-                message.guild.getChannelByID(channel)
-                        .sendMessage("Leave channel set to <#$channel>.");
+                if(channel != -1L)
+                    message.guild.getChannelByID(channel)
+                            .sendMessage("Leave channel set to <#$channel>.");
                 guild.set(LEAVE_LOGGING, channel)
-                message.channel.sendMessage("Successfully set the leave message channel. Please run the `set` command using leave_message to specify a custom message. <user> is a placeholder if you want to add the user's username to the message");
-
+                if(channel != -1L)
+                    message.channel.sendMessage("Successfully set the leave message channel. Please run the `set` command using leave_message to specify a custom message. <user> is a placeholder if you want to add the user's username to the message");
+                else message.channel.sendMessage("Removed the leave logging channel.");
             } catch (e: ClassCastException) {
                 message.channel.sendMessage("Failed to convert channel to a long ID.")
             }
             JOIN_MESSAGE -> try {
 
                 guild.set(JOIN_MESSAGE, mode)
-                message.channel.sendMessage("Set join message to: \"$mode\"")
+                if(!mode.equals("null", true))
+                    message.channel.sendMessage("Set join message to: \"$mode\"")
+                else
+                    message.channel.sendMessage("Removed the join message.");
+
             } catch (e: Exception) {
                 CrashHandler.error(e);
                 message.channel.sendMessage("Something went wrong. Check the logs.");
@@ -143,7 +158,10 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
             LEAVE_MESSAGE -> try {
 
                 guild.set(LEAVE_MESSAGE, mode)
-                message.channel.sendMessage("Set leave message to: \"$mode\"")
+                if(!mode.equals("null", true))
+                    message.channel.sendMessage("Set leave message to: \"$mode\"")
+                else
+                    message.channel.sendMessage("Removed the leave message.");
             } catch (e: Exception) {
                 CrashHandler.error(e);
                 message.channel.sendMessage("Something went wrong. Check the logs.");
@@ -151,13 +169,16 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
 
             JOIN_DM -> try {
                 guild.set(JOIN_DM, mode)
-                message.channel.sendMessage("Set join DM to: \"$mode\"")
+                if(!mode.equals("null", true))
+                    message.channel.sendMessage("Set join dm to: \"$mode\"")
+                else
+                    message.channel.sendMessage("Removed the join dm.");
             } catch (e: Exception) {
                 CrashHandler.error(e);
                 message.channel.sendMessage("Something went wrong. Check the logs.");
             }
 
-            else -> message.channel.sendMessage("Could not find the feature $feature (note: checks are case-insensitive)")
+            else -> message.channel.sendMessage("Could not find the feature `$feature` (note: checks are case-insensitive)")
         }
     }
 
