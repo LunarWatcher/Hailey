@@ -117,6 +117,11 @@ public class ModGuild {
                 recentlyBanned.add(event.getUser());
                 nukeMessages();
                 return;
+            } else if (RegexConstants.GENERAL_SPAM.matcher(event.getUser().getName()).find()){
+                banAndLog(event.getUser(), "Spam in username");
+                recentlyBanned.add(event.getUser());
+                nukeMessages();
+                return;
             }
         }
         try {
