@@ -1,5 +1,8 @@
 package io.github.lunarwatcher.java.haileybot.commands.watching;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import sx.blah.discord.handle.impl.obj.PrivateChannel;
 import sx.blah.discord.handle.obj.IMessage;
 
 import java.util.ArrayList;
@@ -7,6 +10,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class RegexMatch {
+    private static final Logger logger = LoggerFactory.getLogger(RegexMatch.class);
     private static final long MIN_TIMEOUT = 120000;
     private List<String> regex;
     private Pattern pattern;
@@ -34,6 +38,10 @@ public class RegexMatch {
     }
 
     public boolean doesLocationMatch(IMessage message){
+        if(message.getChannel() instanceof PrivateChannel || message.getGuild() == null){
+            logger.warn("Ignoring matching. Channel is a: " + message.getChannel().getClass().getName());
+            return false;
+        }
         long id;
         if(guild) id = message.getGuild().getLongID();
         else id = message.getChannel().getLongID();
