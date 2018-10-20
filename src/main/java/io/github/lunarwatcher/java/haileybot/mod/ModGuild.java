@@ -4,6 +4,7 @@ import io.github.lunarwatcher.java.haileybot.CrashHandler;
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.data.RegexConstants;
 import io.github.lunarwatcher.java.haileybot.data.SizeLimitedList;
+import io.github.lunarwatcher.java.haileybot.data.DecayableList;
 import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,9 @@ import sx.blah.discord.handle.impl.events.guild.member.UserJoinEvent;
 import sx.blah.discord.handle.impl.events.guild.member.UserLeaveEvent;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
+import sx.blah.discord.util.EmbedBuilder;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,20 +55,16 @@ public class ModGuild {
     // Internal meta
     private HaileyBot bot;
 
-    private SizeLimitedList<IUser> recentlyBanned = new SizeLimitedList<>(5);
-    private SizeLimitedList<IMessage> messages = new SizeLimitedList<>(30);
+    private DecayableList<IUser> recentBans = new DecayableList<>(30000);
+    private SizeLimitedList<IMessage> recentMessages = new SizeLimitedList<>(30);
 
     public ModGuild(HaileyBot bot, long guild) {
         this.bot = bot;
         this.guild = guild;
     }
 
-    public void setWarnings(int warnings) {
-        this.warnings = warnings;
-    }
-
     public void banAndLog(IUser user, String reason) {
-        this.recentlyBanned.add(user);
+        this.recentBans.add(user);
 
 
         boolean logging = true;
@@ -80,7 +79,10 @@ public class ModGuild {
             if (logging) {
                 user.getClient().getGuildByID(guild)
                         .getChannelByID(auditChannel)
-                        .sendMessage("Banned user " + user.getLongID() + ": " + reason);
+                        .sendMessage(new EmbedBuilder().withColor(Color.ORANGE)
+                                .withTitle("User banned")
+                                .withDesc("UID: " + user.getLongID() + ". Banned by auto-mod: " + reason)
+                                .build());
             }
         } catch (Exception e) {
             logger.warn("Failed to ban user " + user.getLongID());
@@ -92,14 +94,6 @@ public class ModGuild {
             e.printStackTrace();
         }
 
-    }
-
-    public void toggleInviteSpamProtection(boolean inviteSpamProtection) {
-        this.inviteSpamProtection = inviteSpamProtection;
-    }
-
-    public boolean getInviteSpamProtection() {
-        return inviteSpamProtection;
     }
 
     public long getChannel() {
@@ -114,12 +108,12 @@ public class ModGuild {
         if (inviteSpamProtection) {
             if (RegexConstants.INVITE_SPAM.matcher(event.getUser().getName()).find()) {
                 banAndLog(event.getUser(), "Invite in username");
-                recentlyBanned.add(event.getUser());
+                recentBans.add(event.getUser());
                 nukeMessages();
                 return;
             } else if (RegexConstants.GENERAL_SPAM.matcher(event.getUser().getName()).find()){
                 banAndLog(event.getUser(), "Spam in username");
-                recentlyBanned.add(event.getUser());
+                recentBans.add(event.getUser());
                 nukeMessages();
                 return;
             }
@@ -156,7 +150,7 @@ public class ModGuild {
     }
 
     public void userLeft(UserLeaveEvent message) {
-        if (recentlyBanned.contains(message)) {
+        if (recentBans.contains(message.getUser())) {
             return;
         }
 
@@ -179,24 +173,27 @@ public class ModGuild {
 
     public void messageReceived(MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) {
-            messages.add(event.getMessage());
+            recentMessages.add(event.getMessage());
         }
         nukeMessages();
     }
 
-    private void nukeMessages() {
-        if (recentlyBanned.hasAny() && messages.hasAny()) {
-            logger.debug("{}, {}", recentlyBanned, messages);
-            List<String> ids = new ArrayList<>();
-            for (IUser user : recentlyBanned) {
-                for (IMessage message : messages) {
+    private synchronized void nukeMessages() {
+        if (recentBans.hasAny() && recentMessages.hasAny()) {
+            logger.debug("{}, {}", recentBans, recentMessages);
+            List<IMessage> deletedMessages = new ArrayList<>();
+            for (IUser user : recentBans) {
+                for (IMessage message : recentMessages) {
                     if (message.isDeleted())
                         continue;
+
 
                     if (Pattern.compile("(?i)" + user.getName().toLowerCase()).matcher(message.getContent()).find()
                             || Pattern.compile("(?i)<@!?" + user.getStringID() + ">").matcher(message.getContent()).find()) {
                         try {
-                            ids.add(message.getStringID());
+
+                            if(!deletedMessages.contains(message))
+                                deletedMessages.add(message);
                             message.delete();
                         } catch (Exception e) {
                             logger.warn("Failed to delete message.");
@@ -207,10 +204,17 @@ public class ModGuild {
                 }
 
             }
-            if (ids.size() != 0) {
-                audit("Deleted messages. IDs: " + ids);
-                recentlyBanned.clear();
-                messages.clear();
+            if (deletedMessages.size() != 0) {
+                EmbedBuilder embed = new EmbedBuilder();
+                embed.withColor(Color.RED);
+                for(IMessage m : deletedMessages){
+                    embed.appendDesc("Deleted message " + m.getStringID() +
+                            " from " + m.getAuthor().getName() + "#" + m.getAuthor().getDiscriminator() +
+                            " (bot: " + (m.getAuthor().isBot() ? "yes" : "no") +
+                            " while banning users for invite usernames.\n");
+
+                }
+                recentMessages.clear();
             }
 
         }

@@ -36,7 +36,7 @@ dependencies {
     implementation "org.slf4j:slf4j-api:$slf4jVersion@jar"
     implementation "ch.qos.logback:logback-classic:$logbackVersion"
 
-    compile 'org.jetbrains:annotations:16.0.2'
+    implementation 'org.jetbrains:annotations:16.0.2'
 
 }
 
