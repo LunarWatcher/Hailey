@@ -17,7 +17,7 @@ public class RegexConstants {
      *
      * All of these are legitimate sites, but they've frequently been abused by spammers to get views, follows,
      * etc. There's also no legitimate reason to have links in usernames anyways, so this is more or less
-     * designed to fight back against the spam. 
+     * designed to fight back against the spam.
      */
     public static final Pattern GENERAL_SPAM =
             Pattern.compile("(?i)(?:free\\W*games|follow\\W*me)?(?:\\W*at\\W*)?(?:(?:twitch\\W*tv|rabb.it|twitter.com)/.*(?:#\\d+)?)");

@@ -214,6 +214,7 @@ public class ModGuild {
                             " while banning users for invite usernames.\n");
 
                 }
+                audit(embed.build());
                 recentMessages.clear();
             }
 
