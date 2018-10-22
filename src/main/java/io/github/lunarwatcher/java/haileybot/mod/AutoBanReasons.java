@@ -5,7 +5,7 @@ package io.github.lunarwatcher.java.haileybot.mod;
  */
 public enum AutoBanReasons {
     INVITE_USERNAME("Invite in username"),
-    SPAM_USERNAME("Span in username"),
+    SPAM_USERNAME("Spam in username"),
     UNHANDLED_SPAM("Spam in username not caught by the other categories");
 
     private final String reason;
