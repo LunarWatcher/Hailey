@@ -1,7 +1,6 @@
 package io.github.lunarwatcher.java.haileybot.data;
 
 import org.jetbrains.annotations.NotNull;
-import sx.blah.discord.handle.obj.IUser;
 
 import java.util.ArrayList;
 import java.util.Iterator;

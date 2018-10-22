@@ -1,7 +1,6 @@
 package io.github.lunarwatcher.java.haileybot.mod;
 
 import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.handle.obj.IUser;
 
 public class AutoDeletedMessage {
     private final IMessage message;
