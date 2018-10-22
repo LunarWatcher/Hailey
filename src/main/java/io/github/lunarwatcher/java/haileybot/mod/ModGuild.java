@@ -2,9 +2,9 @@ package io.github.lunarwatcher.java.haileybot.mod;
 
 import io.github.lunarwatcher.java.haileybot.CrashHandler;
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
+import io.github.lunarwatcher.java.haileybot.data.DecayableList;
 import io.github.lunarwatcher.java.haileybot.data.RegexConstants;
 import io.github.lunarwatcher.java.haileybot.data.SizeLimitedList;
-import io.github.lunarwatcher.java.haileybot.data.DecayableList;
 import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,9 +19,7 @@ import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.EmbedBuilder;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -33,6 +31,7 @@ public class ModGuild {
     private static final Logger logger = LoggerFactory.getLogger(ModGuild.class);
     private static final String DEFAULT_LEAVE_MESSAGE = "What a shame to see you go, {0}!";
     private static final String DEFAULT_JOIN_MESSAGE = "Welcome to {1}, {0}!";
+    private static final long FLUSH_TIMEOUT = 30000;
 
     // General
     private long guild;
@@ -55,17 +54,19 @@ public class ModGuild {
     // Internal meta
     private HaileyBot bot;
 
-    private DecayableList<IUser> recentBans = new DecayableList<>(30000);
+    private DecayableList<AutoBannedUser> recentBans = new DecayableList<>(30000);
     private SizeLimitedList<IMessage> recentMessages = new SizeLimitedList<>(30);
+
+    private StringBuilder messageBuffer = new StringBuilder();
+    private long lastMessage = 0;
 
     public ModGuild(HaileyBot bot, long guild) {
         this.bot = bot;
         this.guild = guild;
     }
 
-    public void banAndLog(IUser user, String reason) {
-        this.recentBans.add(user);
-
+    public void banAndLog(IUser user, AutoBanReasons reason) {
+        this.recentBans.add(new AutoBannedUser(user, reason));
 
         boolean logging = true;
         if (auditChannel == -1) {
@@ -81,7 +82,7 @@ public class ModGuild {
                         .getChannelByID(auditChannel)
                         .sendMessage(new EmbedBuilder().withColor(Color.ORANGE)
                                 .withTitle("User banned")
-                                .withDesc("UID: " + user.getLongID() + ". Banned by auto-mod: " + reason)
+                                .withDesc("UID: " + user.getLongID() + ". Banned by auto-mod: " + reason.getReason())
                                 .build());
             }
         } catch (Exception e) {
@@ -91,7 +92,6 @@ public class ModGuild {
                         .getChannelByID(auditChannel)
                         .sendMessage("***WARNING***: Banning user " + user.getLongID() + " failed. Check my perms");
             }
-            e.printStackTrace();
         }
 
     }
@@ -107,13 +107,15 @@ public class ModGuild {
     public void userJoined(UserJoinEvent event) {
         if (inviteSpamProtection) {
             if (RegexConstants.INVITE_SPAM.matcher(event.getUser().getName()).find()) {
-                banAndLog(event.getUser(), "Invite in username");
-                recentBans.add(event.getUser());
+                banAndLog(event.getUser(), AutoBanReasons.INVITE_USERNAME);
                 nukeMessages();
                 return;
             } else if (RegexConstants.GENERAL_SPAM.matcher(event.getUser().getName()).find()){
-                banAndLog(event.getUser(), "Spam in username");
-                recentBans.add(event.getUser());
+                banAndLog(event.getUser(), AutoBanReasons.SPAM_USERNAME);
+                nukeMessages();
+                return;
+            } else if(RegexConstants.UNCAUGHT_SPAM.matcher(event.getUser().getName()).find()){
+                banAndLog(event.getUser(), AutoBanReasons.UNHANDLED_SPAM);
                 nukeMessages();
                 return;
             }
@@ -150,7 +152,10 @@ public class ModGuild {
     }
 
     public void userLeft(UserLeaveEvent message) {
-        if (recentBans.contains(message.getUser())) {
+        if (recentBans.stream().anyMatch(
+                it -> it.getBannedUser() == message.getUser()
+                        || it.getBannedUser().equals(message.getUser())
+        )) {
             return;
         }
 
@@ -176,13 +181,15 @@ public class ModGuild {
             recentMessages.add(event.getMessage());
         }
         nukeMessages();
+        processCache();
     }
 
     private synchronized void nukeMessages() {
         if (recentBans.hasAny() && recentMessages.hasAny()) {
             logger.debug("{}, {}", recentBans, recentMessages);
-            List<IMessage> deletedMessages = new ArrayList<>();
-            for (IUser user : recentBans) {
+            Map<IMessage, String> deletedMessages = new HashMap<>();
+            for (AutoBannedUser autoBannedUser : recentBans) {
+                IUser user = autoBannedUser.getBannedUser();
                 for (IMessage message : recentMessages) {
                     if (message.isDeleted())
                         continue;
@@ -192,8 +199,8 @@ public class ModGuild {
                             || Pattern.compile("(?i)<@!?" + user.getStringID() + ">").matcher(message.getContent()).find()) {
                         try {
 
-                            if(!deletedMessages.contains(message))
-                                deletedMessages.add(message);
+                            if(!deletedMessages.containsKey(message) && auditChannel > 0)
+                                deletedMessages.put(message, autoBannedUser.getStringReason());
                             message.delete();
                         } catch (Exception e) {
                             logger.warn("Failed to delete message.");
@@ -205,20 +212,41 @@ public class ModGuild {
 
             }
             if (deletedMessages.size() != 0) {
-                EmbedBuilder embed = new EmbedBuilder();
-                embed.withColor(Color.RED);
-                for(IMessage m : deletedMessages){
-                    embed.appendDesc("Deleted message " + m.getStringID() +
-                            " from " + m.getAuthor().getName() + "#" + m.getAuthor().getDiscriminator() +
-                            " (bot: " + (m.getAuthor().isBot() ? "yes" : "no") +
-                            " while banning users for invite usernames.\n");
+
+                for(Map.Entry<IMessage, String> entry : deletedMessages.entrySet()){
+                    IMessage m = entry.getKey();
+                    String reason = entry.getValue();
+
+                    messageBuffer.append("Deleted message ")
+                            .append(m.getStringID())
+                            .append(" from ")
+                            .append(m.getAuthor().getName()).append("#").append(m.getAuthor().getDiscriminator())
+                            .append(" (Poster is a ")
+                            .append(m.getAuthor().isBot() ? "bot" : "user")
+                            .append(")\n")
+                            .append("Occured while banning users for \"")
+                            .append(reason).append("\"\n");
 
                 }
-                audit(embed.build());
+
                 recentMessages.clear();
             }
 
+            lastMessage = System.currentTimeMillis();
+
         }
+    }
+
+    public void processCache(){
+        if(auditChannel < 0)
+            return;
+        if(messageBuffer.length() == 0 || System.currentTimeMillis() - lastMessage < FLUSH_TIMEOUT)
+            return;
+        audit(new EmbedBuilder()
+                .withTitle("Auto-mod message deleter")
+                .withColor(Color.RED)
+                .withDesc(messageBuffer.toString()).build());
+        messageBuffer = new StringBuilder();
     }
 
     public void audit(String data) {
@@ -415,5 +443,9 @@ public class ModGuild {
 
     public boolean getBanMonitoring() {
         return banMonitoring;
+    }
+
+    public HaileyBot getBot(){
+        return bot;
     }
 }

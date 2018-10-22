@@ -6,6 +6,8 @@ import sx.blah.discord.handle.obj.IUser;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Threadless decayable list
@@ -48,6 +50,9 @@ public class DecayableList<T> implements Iterable<T>  {
         return !storage.isEmpty();
     }
 
+    public boolean hasAnyLike(Predicate<T> predicate){
+        return storage.stream().anyMatch(it -> predicate.test(it.item));
+    }
     public boolean contains(T item){
         if(storage.size() == 0)
             return false;
@@ -61,6 +66,10 @@ public class DecayableList<T> implements Iterable<T>  {
         decay();
         return storage.stream().map(it -> it.item)
                 .iterator();
+    }
+
+    public Stream<T> stream() {
+        return storage.stream().map(it -> it.item);
     }
 
 

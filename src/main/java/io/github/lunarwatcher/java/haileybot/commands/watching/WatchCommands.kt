@@ -13,6 +13,7 @@ import sx.blah.discord.handle.obj.IGuild
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
 import sx.blah.discord.util.EmbedBuilder
+import java.util.*
 
 class WatchCommand(val bot: HaileyBot) : Command {
     override fun getName(): String = "watch"
