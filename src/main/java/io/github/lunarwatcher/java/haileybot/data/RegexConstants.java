@@ -36,6 +36,8 @@ public class RegexConstants {
                             + "follow\\W*me\\W*(?:at|@)?.*" // catches regular "follow me" stuff. There's no legitimate reason to have this in a username anyways.
                             + "|"
                             + "pl[easz]* donate" // Donation spam; again, no legit reason to have in a normal username.
+                            + "|"
+                            + "bit\\.ly|ad\\.fly1goo\\.gl" // URL shorteners
                     + ")"
                     // @formatter:on
             );
