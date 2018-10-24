@@ -10,9 +10,14 @@ public class RegexConstants {
      * Gets rid of pesky invite and add my account bots
      */
     public static final Pattern INVITE_SPAM =
-            Pattern.compile("(?i)(?:discord\\.me.*|selly\\.gg.*|discord\\.gg/[a-z0-9]+|" +
-                    "invite\\W*gg/./|discordapp\\.com/invite/[a-z0-9]+" +
-                    "|(?:pl(?:[sz]|ease)\\W*)?add\\W*(?:me\\W*)?(?:pl(?:[sz]|ease)\\W*)?.*" +
+            Pattern.compile("(?i)(?:discord\\.me.*" +
+                    "|selly\\.gg.*" +
+                    "|discord\\.gg/[a-z0-9]+" +
+                    "|invite\\W*gg/./" +
+                    "|discordapp\\.com/invite/[a-z0-9]+" +
+                    "|^.*\\.tumblr.com" +
+                    "|" +
+                    "(?:pl(?:[sz]|ease)\\W*)?add\\W*(?:me\\W*)?(?:pl(?:[sz]|ease)\\W*)?.*" +
                     "\\(?(?:tag|#|at)\\)?\\W*\\d+(?:#\\d+)?)");
     /**
      * Nukes twitch and rabb.it, and twitter.
