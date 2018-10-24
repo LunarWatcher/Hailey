@@ -13,7 +13,7 @@ public class RegexConstants {
             Pattern.compile("(?i)(?:discord\\.me.*" +
                     "|selly\\.gg.*" +
                     "|discord\\.gg/[a-z0-9]+" +
-                    "|invite\\W*gg/./" +
+                    "|invite\\W*gg/.*" +
                     "|discordapp\\.com/invite/[a-z0-9]+" +
                     "|^.*\\.tumblr.com" +
                     "|" +
