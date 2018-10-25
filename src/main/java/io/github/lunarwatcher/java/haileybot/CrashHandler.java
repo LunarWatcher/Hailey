@@ -17,11 +17,22 @@ public class CrashHandler {
 
     private static long lastBugged = 0;
 
-    public static void injectBotClass(HaileyBot bot){
+    public static void injectBotClass(HaileyBot bot) {
         CrashHandler.bot = bot;
     }
 
     public static void error(Throwable e) {
+        error(e, true);
+    }
+
+    /**
+     * Logs the exception, and sends a DM to bot admins if `notify` is true, and the timeout since the last message has
+     * passed.
+     *
+     * @param e      The throwable to log.
+     * @param notify Whether to DM bot admins or not.
+     */
+    public static void error(Throwable e, boolean notify) {
         logger.warn("Crash!!");
         String base = e.toString();
         StringBuilder error = new StringBuilder(base + "\n");
@@ -34,15 +45,15 @@ public class CrashHandler {
 
         errors.add(err);
 
-        if(System.currentTimeMillis() - lastBugged > 2 * 60 * 60 * 1000){
+        if (System.currentTimeMillis() - lastBugged > 2 * 60 * 60 * 1000 && notify) {
             lastBugged = System.currentTimeMillis();
-
-            for(long uid : bot.getBotAdmins()){
+            // TODO better system?
+            for (long uid : bot.getBotAdmins()) {
                 IUser user = bot.getClient().getUserByID(uid);
-                if(user != null){
+                if (user != null) {
                     try {
                         user.getOrCreatePMChannel().sendMessage("Something bad happened :c");
-                    }catch(Exception ex){
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 }
@@ -60,7 +71,7 @@ public class CrashHandler {
         builder.append("```");
 
         String str = builder.toString();
-        if(str.toLowerCase().equals("``````")){
+        if (str.toLowerCase().equals("``````")) {
             return new ArrayList<>();
         }
 

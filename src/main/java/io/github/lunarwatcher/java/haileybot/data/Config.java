@@ -26,7 +26,7 @@ public class Config {
         refresh();
     }
 
-    public void refresh(){
+    public void refresh() {
         this.github = properties.getOrDefault("github", "https://github.com/LunarWatcher/Hailey").toString();
         this.owner = properties.getOrDefault("owner", CREATOR).toString();
         this.token = (String) properties.get("token");

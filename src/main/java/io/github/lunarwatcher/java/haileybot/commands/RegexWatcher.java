@@ -42,9 +42,9 @@ public class RegexWatcher {
         stored.get(user).forEach((it) -> {
             long id;
 
-            if(it.getGuild() && channel == -2) id = guild;
-            else{
-                if(channel == -2)
+            if (it.getGuild() && channel == -2) id = guild;
+            else {
+                if (channel == -2)
                     return;
                 id = channel;
             }
@@ -56,7 +56,7 @@ public class RegexWatcher {
         });
 
         if (!existing.get()) {
-            if(channel != -2)
+            if (channel != -2)
                 stored.get(user).add(new RegexMatch(regex, channel, false));
             else stored.get(user).add(new RegexMatch(regex, guild, true));
         }
@@ -75,9 +75,9 @@ public class RegexWatcher {
 
         for (RegexMatch match : watches) {
             long id;
-            if(match.getGuild() && channel == -2) id = guild;
+            if (match.getGuild() && channel == -2) id = guild;
             else {
-                if(channel == -2){
+                if (channel == -2) {
                     continue;
                 }
                 id = channel;
@@ -111,10 +111,10 @@ public class RegexWatcher {
         for (Map.Entry<Long, List<RegexMatch>> entry : stored.entrySet()) {
 
             long user = entry.getKey();
-            if(user == message.getAuthor().getLongID())
+            if (user == message.getAuthor().getLongID())
                 continue;
             for (RegexMatch match : entry.getValue()) {
-                if(!match.doesLocationMatch(message))
+                if (!match.doesLocationMatch(message))
                     continue;
                 if (match.matches(message.getContent())) {
                     message.getChannel().sendMessage("Regex match. /cc <@" + entry.getKey() + "> ");
@@ -128,7 +128,7 @@ public class RegexWatcher {
         loadMap(GUILD_KEY, true);
     }
 
-    private void loadMap(String key, boolean guild){
+    private void loadMap(String key, boolean guild) {
         Map<String, Object> users = bot.getDatabase().getMap(key);
         if (users != null) {
             for (Map.Entry<String, Object> entry : users.entrySet()) {
@@ -153,7 +153,7 @@ public class RegexWatcher {
         for (Map.Entry<Long, List<RegexMatch>> matches : stored.entrySet()) {
             String user = String.valueOf(matches.getKey());
             for (RegexMatch match : matches.getValue()) {
-                if(match.getGuild()){
+                if (match.getGuild()) {
                     addWatch(match, user, guilds);
                 } else addWatch(match, user, channels);
             }
@@ -164,7 +164,7 @@ public class RegexWatcher {
         bot.getDatabase().put(GUILD_KEY, guilds);
     }
 
-    private void addWatch(RegexMatch match, String user, Map<String, Map<Long, List<String>>> data){
+    private void addWatch(RegexMatch match, String user, Map<String, Map<Long, List<String>>> data) {
 
         if (data.containsKey(user)) {
             data.get(user).put(match.getLocationId(), match.getRegex());
@@ -184,16 +184,16 @@ public class RegexWatcher {
     public void clearWatchesForGuild(long guildId) {
         IDiscordClient client = bot.getClient();
 
-        for(Map.Entry<Long, List<RegexMatch>> entry : stored.entrySet()){
+        for (Map.Entry<Long, List<RegexMatch>> entry : stored.entrySet()) {
             List<RegexMatch> matches = entry.getValue();
-            for(RegexMatch match : matches){
-                if(match.getGuild()){
-                    if(match.getLocationId() == guildId){
+            for (RegexMatch match : matches) {
+                if (match.getGuild()) {
+                    if (match.getLocationId() == guildId) {
                         match.getRegex().clear();
                     }
-                }else{
+                } else {
                     IChannel channel = client.getChannelByID(match.getLocationId());
-                    if(channel.getGuild().getLongID() == guildId){
+                    if (channel.getGuild().getLongID() == guildId) {
                         match.getRegex().clear();
                     }
                 }
@@ -204,16 +204,16 @@ public class RegexWatcher {
     }
 
     public void clearWatchesForUser(long userId, long guildId) {
-        if(stored.get(userId) == null) return;
+        if (stored.get(userId) == null) return;
 
-        for(RegexMatch match : stored.get(userId)){
-            if(match.getGuild()){
-                if(match.getLocationId() == guildId){
+        for (RegexMatch match : stored.get(userId)) {
+            if (match.getGuild()) {
+                if (match.getLocationId() == guildId) {
                     match.getRegex().clear();
                 }
-            }else{
+            } else {
                 IChannel channel = bot.getClient().getChannelByID(match.getLocationId());
-                if(channel.getGuild().getLongID() == guildId){
+                if (channel.getGuild().getLongID() == guildId) {
                     match.getRegex().clear();
                 }
             }
@@ -225,19 +225,19 @@ public class RegexWatcher {
     }
 
 
-    private void cleanStored(){
+    private void cleanStored() {
         stored.forEach((key, value) -> {
-            if(value.stream().map(RegexMatch::getRegex).flatMap(List::stream).collect(Collectors.toList()).size() == 0){
+            if (value.stream().map(RegexMatch::getRegex).flatMap(List::stream).collect(Collectors.toList()).size() == 0) {
                 value.clear();
-            }else{
+            } else {
                 value.removeIf((it) -> it.getRegex().size() == 0);
             }
         });
 
         Set<Long> entries = stored.keySet();
 
-        for(long key : entries){
-            if(stored.get(key).size() == 0)
+        for (long key : entries) {
+            if (stored.get(key).size() == 0)
                 stored.remove(key);
         }
     }

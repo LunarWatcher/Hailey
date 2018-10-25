@@ -21,7 +21,7 @@ public class RegexConstants {
                     "\\(?(?:tag|#|at)\\)?\\W*\\d+(?:#\\d+)?)");
     /**
      * Nukes twitch and rabb.it, and twitter.
-     *
+     * <p>
      * All of these are legitimate sites, but they've frequently been abused by spammers to get views, follows,
      * etc. There's also no legitimate reason to have links in usernames anyways, so this is more or less
      * designed to fight back against the spam.
@@ -36,7 +36,7 @@ public class RegexConstants {
     public static final Pattern UNCAUGHT_SPAM =
             Pattern.compile(
                     "(?i)"// Nothing can hide! <insert evil laugh>
-                    //@formatter:off
+                            //@formatter:off
                     + "(" // This will contain a ton of different stuff; this is the main capture group.
                             // Begin basic spam
                             + "(?:sell(?:ing)|tweet|follow).*senseibin" // Usually spams selling products, mainly bots. Also links to twitter, but that's caught.

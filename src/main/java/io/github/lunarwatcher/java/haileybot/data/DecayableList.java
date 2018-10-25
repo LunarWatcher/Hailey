@@ -10,24 +10,26 @@ import java.util.stream.Stream;
 
 /**
  * Threadless decayable list
+ *
  * @param <T> The type to store.
  */
-public class DecayableList<T> implements Iterable<T>  {
+public class DecayableList<T> implements Iterable<T> {
     private final long decayTime;
     private final List<Decayable> storage = new ArrayList<>();
 
     /**
      * Initializes the list
+     *
      * @param decayTime The time before an item dies.
      */
     public DecayableList(long decayTime) {
-        if(decayTime <= 0)
+        if (decayTime <= 0)
             throw new IllegalArgumentException("The decay time can not be <= 0");
 
         this.decayTime = decayTime;
     }
 
-    public void add(T item){
+    public void add(T item) {
         decay();
         storage.add(new Decayable(item));
     }
@@ -37,23 +39,24 @@ public class DecayableList<T> implements Iterable<T>  {
      * It's called in multiple places to help with the GC, but it's only called when methods of the list are.
      * This is to avoid threading, which could quickly turn into a mess.
      */
-    private void decay(){
-        if(storage.size() == 0)
+    private void decay() {
+        if (storage.size() == 0)
             return;
         long now = System.currentTimeMillis();
         storage.removeIf(it -> now - it.expirationDate > decayTime);
     }
 
-    public boolean hasAny(){
+    public boolean hasAny() {
         decay();
         return !storage.isEmpty();
     }
 
-    public boolean hasAnyLike(Predicate<T> predicate){
+    public boolean hasAnyLike(Predicate<T> predicate) {
         return storage.stream().anyMatch(it -> predicate.test(it.item));
     }
-    public boolean contains(T item){
-        if(storage.size() == 0)
+
+    public boolean contains(T item) {
+        if (storage.size() == 0)
             return false;
         decay();
         return storage.stream().anyMatch(it -> it == item || it.equals(item));
@@ -74,7 +77,6 @@ public class DecayableList<T> implements Iterable<T>  {
 
     /**
      * Immutable, decayable, item.
-     *
      */
     private class Decayable {
         /**
@@ -88,7 +90,7 @@ public class DecayableList<T> implements Iterable<T>  {
          */
         final long expirationDate;
 
-        public Decayable(T item){
+        public Decayable(T item) {
             this.item = item;
             expirationDate = System.currentTimeMillis() + decayTime;
         }

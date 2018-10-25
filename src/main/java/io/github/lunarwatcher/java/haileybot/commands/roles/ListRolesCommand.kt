@@ -6,6 +6,7 @@ import sx.blah.discord.handle.impl.obj.Embed
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
 import sx.blah.discord.util.EmbedBuilder
+import sx.blah.discord.util.RequestBuffer
 
 class ListRolesCommand(private val bot: HaileyBot) : Command {
 
@@ -17,7 +18,9 @@ class ListRolesCommand(private val bot: HaileyBot) : Command {
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
         if (message.channel is IPrivateChannel) {
-            message.channel.sendMessage("This is a DM channel. No roles are available.");
+            RequestBuffer.request {
+                message.channel.sendMessage("This is a DM channel. No roles are available.")
+            };
             return;
         }
         val selfAssignable = bot.assigner.getRolesForGuild(message.guild.longID)?.map { it.name }

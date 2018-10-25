@@ -13,6 +13,7 @@ import sx.blah.discord.handle.obj.IGuild
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
 import sx.blah.discord.util.EmbedBuilder
+import sx.blah.discord.util.RequestBuffer
 
 class WatchCommand(val bot: HaileyBot) : Command {
     override fun getName(): String = "watch"
@@ -22,7 +23,9 @@ class WatchCommand(val bot: HaileyBot) : Command {
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String?) {
         if (message.channel is IPrivateChannel) {
-            message.channel.sendMessage("This is a DM channel. No mod tools available.");
+            RequestBuffer.request {
+                message.channel.sendMessage("This is a DM channel. No mod tools available.")
+            };
             return;
         }
         if (!message.canUserRunAdminCommand(bot)) {
@@ -32,8 +35,10 @@ class WatchCommand(val bot: HaileyBot) : Command {
         if (rawMessage == ".*")
             return
 
-        if(rawMessage.length > 800 && !message.canUserRunBotAdminCommand(bot)){
-            message.channel.sendMessage("Woah, slow down! You need to be a bot admin to have regex entries over 800 chars. *(What were you planning to do with that anyways?)*")
+        if (rawMessage.length > 800 && !message.canUserRunBotAdminCommand(bot)) {
+            RequestBuffer.request {
+                message.channel.sendMessage("Woah, slow down! You need to be a bot admin to have regex entries over 800 chars. *(What were you planning to do with that anyways?)*")
+            }
             return;
         }
 
@@ -42,16 +47,20 @@ class WatchCommand(val bot: HaileyBot) : Command {
         } else {
             val channel = ConversionUtils.parseChannel(rawMessage.split(" ").getOrNull(0), false)
 
-            val reifiedMessage = if(channel != -2L){
-                if(!assertChannelServerMatches(channel, message)){
-                    message.channel.sendMessage("You can't watch stuff on other guilds -_-")
+            val reifiedMessage = if (channel != -2L) {
+                if (!assertChannelServerMatches(channel, message)) {
+                    RequestBuffer.request {
+                        message.channel.sendMessage("You can't watch stuff on other guilds -_-")
+                    }
                     return;
                 }
                 rawMessage.split(" ", limit = 2).getOrNull(1)?.trim() ?: ""
             } else rawMessage
 
-            if(reifiedMessage.isBlank() || reifiedMessage.isEmpty()){
-                message.channel.sendMessage("What do you want me to unwatch?")
+            if (reifiedMessage.isBlank() || reifiedMessage.isEmpty()) {
+                RequestBuffer.request {
+                    message.channel.sendMessage("What do you want me to unwatch?")
+                }
                 return;
             }
 
@@ -78,7 +87,9 @@ class UnwatchCommand(val bot: HaileyBot) : Command {
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String?) {
         if (message.channel is IPrivateChannel) {
-            message.channel.sendMessage("This is a DM channel. No mod tools available.");
+            RequestBuffer.request {
+                message.channel.sendMessage("This is a DM channel. No mod tools available.")
+            };
             return;
         }
         if (rawMessage.isEmpty() || rawMessage.isBlank()) {
@@ -86,16 +97,20 @@ class UnwatchCommand(val bot: HaileyBot) : Command {
         } else {
             val channel = ConversionUtils.parseChannel(rawMessage.split(" ").getOrNull(0), false)
 
-            val reifiedMessage = if(channel != -2L){
-                if(!assertChannelServerMatches(channel, message)){
-                    message.channel.sendMessage("You can't watch stuff on other guilds -_-")
+            val reifiedMessage = if (channel != -2L) {
+                if (!assertChannelServerMatches(channel, message)) {
+                    RequestBuffer.request {
+                        message.channel.sendMessage("You can't watch stuff on other guilds -_-")
+                    }
                     return;
                 }
                 rawMessage.split(" ", limit = 2).getOrNull(1)?.trim() ?: ""
             } else rawMessage
 
-            if(reifiedMessage.isBlank() || reifiedMessage.isEmpty()){
-                message.channel.sendMessage("What do you want me to unwatch?")
+            if (reifiedMessage.isBlank() || reifiedMessage.isEmpty()) {
+                RequestBuffer.request {
+                    message.channel.sendMessage("What do you want me to unwatch?")
+                }
                 return;
             }
 
@@ -106,7 +121,7 @@ class UnwatchCommand(val bot: HaileyBot) : Command {
 
             if (!result)
                 message.reply("You weren't watching that."
-                        + if(channel != -2L) " Note that you tried a channel unwatch. If it's watched for the guild, don't pass a channel as an argument"
+                        + if (channel != -2L) " Note that you tried a channel unwatch. If it's watched for the guild, don't pass a channel as an argument"
                 else "")
             else
                 message.reply("Unwatched!")
@@ -127,7 +142,9 @@ class ListWatches(val bot: HaileyBot) : Command {
         val watcher = bot.matcher
         val watches = watcher.getWatchesForUser(message.author.longID)
         if (watches.isEmpty() || watches.flatMap { it.regex }.isEmpty()) {
-            message.channel.sendMessage("You don't have any regex watches.");
+            RequestBuffer.request {
+                message.channel.sendMessage("You don't have any regex watches.")
+            };
             return;
         }
 
@@ -137,19 +154,19 @@ class ListWatches(val bot: HaileyBot) : Command {
         val watchesByChannel = mutableMapOf<String, MutableList<RegexMatch>>()
 
         for (watch in watches) {
-            if(watch.regex.size == 0)
+            if (watch.regex.size == 0)
                 continue;
             val locationId = watch.locationId
             val isGuild = watch.guild
 
-            if(isGuild) {
+            if (isGuild) {
                 val guild = getGuild(message, locationId)?.name ?: "Unknown guild"
                 watchesByGuild.computeIfAbsent(guild) { mutableListOf() }
                 watchesByGuild[guild]?.add(watch);
             } else {
                 val c = getChannel(message, locationId)
                 val channel = c?.let {
-                    it.name + if(it.guild != null) " (${it.guild.name})" else "";
+                    it.name + if (it.guild != null) " (${it.guild.name})" else "";
                 } ?: "Unknown channel"
 
                 watchesByChannel.computeIfAbsent(channel) { mutableListOf() }
@@ -157,8 +174,10 @@ class ListWatches(val bot: HaileyBot) : Command {
             }
         }
 
-        if(watchesByGuild.isEmpty() && watchesByChannel.isEmpty()){
-            message.channel.sendMessage("You don't have any regex watches.");
+        if (watchesByGuild.isEmpty() && watchesByChannel.isEmpty()) {
+            RequestBuffer.request {
+                message.channel.sendMessage("You don't have any regex watches.")
+            };
             return;
         }
 
@@ -167,10 +186,12 @@ class ListWatches(val bot: HaileyBot) : Command {
         processWatches(message, watchesByChannel, embed, targetChannel, "Channel")
         processWatches(message, watchesByGuild, embed, targetChannel, "Guild");
 
-        message.channel.sendMessage("Check your DM's!")
+        RequestBuffer.request {
+            message.channel.sendMessage("Check your DM's!")
+        }
     }
 
-    private fun processWatches(message: IMessage, watches: Map<String, MutableList<RegexMatch>>, embed: EmbedBuilder, targetChannel: IPrivateChannel, label: String){
+    private fun processWatches(message: IMessage, watches: Map<String, MutableList<RegexMatch>>, embed: EmbedBuilder, targetChannel: IPrivateChannel, label: String) {
         try {
             for ((k, v) in watches) {
                 val cache = v.flatMap { it.regex }
@@ -200,13 +221,15 @@ class ListWatches(val bot: HaileyBot) : Command {
                     targetChannel.sendMessage(embed.build());
                 }
             }
-        }catch(e: Exception) {
-            message.channel.sendMessage("Something went wrong when sending the message. You might not be able to send you DM's :c")
+        } catch (e: Exception) {
+            RequestBuffer.request {
+                message.channel.sendMessage("Something went wrong when sending the message. You might not be able to send you DM's :c")
+            }
         }
     }
 
     private fun getGuild(message: IMessage, guild: Long): IGuild? = message.client.getGuildByID(guild)
-    private fun getChannel(message: IMessage, channel: Long) : IChannel? = message.client.getChannelByID(channel)
+    private fun getChannel(message: IMessage, channel: Long): IChannel? = message.client.getChannelByID(channel)
 
     companion object {
         val aliases = listOf("watches");
@@ -217,7 +240,7 @@ class ListWatches(val bot: HaileyBot) : Command {
 // Functions
 
 internal fun assertChannelServerMatches(channel: Long, message: IMessage): Boolean {
-    if(message.guild == null){
+    if (message.guild == null) {
         return false;
     }
 

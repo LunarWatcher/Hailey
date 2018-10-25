@@ -6,6 +6,7 @@ import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
 import sx.blah.discord.handle.obj.Permissions
+import sx.blah.discord.util.RequestBuffer
 
 class EnableModCommand(val bot: HaileyBot) : Command {
     override fun getName(): String = "enableMod"
@@ -15,7 +16,9 @@ class EnableModCommand(val bot: HaileyBot) : Command {
 
     override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
         if (message.channel is IPrivateChannel) {
-            message.channel.sendMessage("This is a DM channel. No mod tools available.");
+            RequestBuffer.request {
+                message.channel.sendMessage("This is a DM channel. No mod tools available.")
+            };
             return;
         }
         if (!message.author.getPermissionsForGuild(message.guild).contains(Permissions.ADMINISTRATOR) &&
@@ -41,7 +44,9 @@ class DisableModCommand(val bot: HaileyBot) : Command {
 
     override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
         if (message.channel is IPrivateChannel) {
-            message.channel.sendMessage("This is a DM channel. No mod tools available.");
+            RequestBuffer.request {
+                message.channel.sendMessage("This is a DM channel. No mod tools available.")
+            };
             return;
         }
 

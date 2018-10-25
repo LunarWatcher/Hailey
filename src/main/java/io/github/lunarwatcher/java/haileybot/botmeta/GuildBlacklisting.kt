@@ -6,6 +6,7 @@ import io.github.lunarwatcher.java.haileybot.data.Database
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunBotAdminCommand
 import sx.blah.discord.handle.obj.IGuild
 import sx.blah.discord.handle.obj.IMessage
+import sx.blah.discord.util.RequestBuffer
 import java.util.*
 
 
@@ -44,7 +45,9 @@ class ListGuildsCommand(val bot: HaileyBot) : Command {
     override fun getDescription(): String? = help
     override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
         if (!message.canUserRunBotAdminCommand(bot)) {
-            message.channel.sendMessage("You can't ue this command.");
+            RequestBuffer.request {
+                message.channel.sendMessage("You can't ue this command.")
+            };
             return;
         }
 
@@ -66,7 +69,9 @@ class ListGuildsCommand(val bot: HaileyBot) : Command {
 
         if (res != "")
             dms.sendMessage(res);
-        message.channel.sendMessage("You have mail!");
+        RequestBuffer.request {
+            message.channel.sendMessage("You have mail!")
+        };
     }
 
     override fun getAliases(): MutableList<String>? = null
@@ -81,25 +86,33 @@ class BlacklistGuildCommand(val bot: HaileyBot) : Command {
     override fun getDescription(): String? = help
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
         if (!message.canUserRunBotAdminCommand(bot)) {
-            message.channel.sendMessage("You can't do that.");
+            RequestBuffer.request {
+                message.channel.sendMessage("You can't do that.")
+            };
             return;
         }
         val id = rawMessage.toLongOrNull()
         if (id == null) {
-            message.channel.sendMessage("Which guild?");
+            RequestBuffer.request {
+                message.channel.sendMessage("Which guild?")
+            };
             return;
         }
 
         val guild = message.client.getGuildByID(id);
         if (guild == null) {
-            message.channel.sendMessage("Failed to find guild with the ID $id");
+            RequestBuffer.request {
+                message.channel.sendMessage("Failed to find guild with the ID $id")
+            };
             return;
         }
 
         guild.leave()
 
         if (message.guild.longID != id) {
-            message.channel.sendMessage("Successfully blacklisted the guild.");
+            RequestBuffer.request {
+                message.channel.sendMessage("Successfully blacklisted the guild.")
+            };
         }
 
         bot.blacklistStorage.blacklist(guild)
@@ -115,24 +128,32 @@ class UnblacklistGuildCommand(val bot: HaileyBot) : Command {
     override fun getDescription(): String? = help
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
         if (!message.canUserRunBotAdminCommand(bot)) {
-            message.channel.sendMessage("You can't do that.");
+            RequestBuffer.request {
+                message.channel.sendMessage("You can't do that.")
+            };
             return;
         }
         val id = rawMessage.toLongOrNull()
         if (id == null) {
-            message.channel.sendMessage("Which guild?");
+            RequestBuffer.request {
+                message.channel.sendMessage("Which guild?")
+            };
             return;
         }
 
         val guild = message.client.getGuildByID(id);
         if (guild == null) {
-            message.channel.sendMessage("Failed to find guild with the ID $id");
+            RequestBuffer.request {
+                message.channel.sendMessage("Failed to find guild with the ID $id")
+            };
             return;
         }
 
         bot.blacklistStorage.unblacklist(guild)
 
-        message.channel.sendMessage("Removed the guild $id from the blacklist")
+        RequestBuffer.request {
+            message.channel.sendMessage("Removed the guild $id from the blacklist")
+        }
     }
 
 }

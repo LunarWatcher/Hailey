@@ -13,6 +13,7 @@ import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.handle.obj.Permissions;
 import sx.blah.discord.util.EmbedBuilder;
+import sx.blah.discord.util.RequestBuffer;
 
 import java.util.List;
 
@@ -51,22 +52,30 @@ public class ModUtils {
     public static void onMessageRun(IMessage message, String rawMessage, Permissions permission,
                                     Factory2<Boolean, InternalDataForwarder, IMessage> handleUser) {
         if (getInstance().bot.getModerator().getGuild(message.getGuild()) == null) {
-            message.reply("this isn't a mod-enabled guild. Please run `" + Constants.TRIGGER + "enableMod` to access this feature.");
+            RequestBuffer.request(() -> {
+                message.reply("this isn't a mod-enabled guild. Please run `" + Constants.TRIGGER + "enableMod` to access this feature.");
+            });
             return;
         }
         if (permission != null) {
             if (!message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).contains(permission)
                     && !message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).contains(Permissions.ADMINISTRATOR)) {
-                message.reply("I do not have the appropriate permissions to do that.");
+                RequestBuffer.request(() -> {
+                    message.reply("I do not have the appropriate permissions to do that.");
+                });
                 return;
             }
             if (!message.getAuthor().getPermissionsForGuild(message.getGuild()).contains(permission)
                     && !message.getAuthor().getPermissionsForGuild(message.getGuild()).contains(Permissions.ADMINISTRATOR)) {
-                message.reply("you don't have the necessary permissions to do that");
+                RequestBuffer.request(() -> {
+                    message.reply("you don't have the necessary permissions to do that");
+                });
                 return;
             }
         } else {
-            message.reply("the permission is null. As a security precausion, this command cannot be used. Please ping a bot admin with the problem");
+            RequestBuffer.request(() -> {
+                message.reply("the permission is null. As a security precausion, this command cannot be used. Please ping a bot admin with the problem");
+            });
             return;
         }
         if (handleUser == null || rawMessage == null)
@@ -83,7 +92,7 @@ public class ModUtils {
                     unknownUsageMessage(message);
                     return;
                 }
-                Long uid = ConversionUtils.parseUser(sections[0]);
+                long uid = ConversionUtils.parseUser(sections[0]);
                 if (uid == -2) {
                     unknownUsageMessage(message);
                     return;
@@ -96,10 +105,14 @@ public class ModUtils {
                 }
 
                 if (user.getLongID() == message.getClient().getOurUser().getLongID()) {
-                    message.reply("I can't ban/kick myself. If you really want me to leave, please do so manually.");
+                    RequestBuffer.request(() -> {
+                        message.reply("I can't ban/kick myself. If you really want me to leave, please do so manually.");
+                    });
                     return;
                 } else if (user.getLongID() == message.getAuthor().getLongID()) {
-                    message.reply("You can't ban/kick yourself.");
+                    RequestBuffer.request(() -> {
+                        message.reply("You can't ban/kick yourself.");
+                    });
                     return;
                 }
                 String[] cache = reason.split(" ", 2);
@@ -118,15 +131,21 @@ public class ModUtils {
         } else {
             int count = mentions.size();
             if (count > 1) {
-                message.reply("mass banning/kicking isn't supported due to security reasons.");
+                RequestBuffer.request(() -> {
+                    message.reply("mass banning/kicking isn't supported due to security reasons.");
+                });
                 return;
             }
             IUser user = mentions.get(0);
             if (user.getLongID() == message.getClient().getOurUser().getLongID()) {
-                message.reply("I can't ban/kick myself. If you really want me to leave, please do so manually.");
+                RequestBuffer.request(() -> {
+                    message.reply("I can't ban/kick myself. If you really want me to leave, please do so manually.");
+                });
                 return;
             } else if (user.getLongID() == message.getAuthor().getLongID()) {
-                message.reply("You can't ban/kick yourself.");
+                RequestBuffer.request(() -> {
+                    message.reply("You can't ban/kick yourself.");
+                });
                 return;
             }
 
@@ -139,7 +158,9 @@ public class ModUtils {
      * Tiny one-line method to unify a repeated message.
      */
     private static void unknownUsageMessage(IMessage message) {
-        message.reply("specify who to ban with either a mention, or their UID");
+        RequestBuffer.request(() -> {
+            message.reply("specify who to ban with either a mention, or their UID");
+        });
     }
 
     /**
@@ -176,13 +197,15 @@ public class ModUtils {
              * which means any position for the bot role in the role hierarchy would successfully unban the user.
              *
              */
-            if (errorMessage.contains("higher position")){
+            if (errorMessage.contains("higher position")) {
                 message.reply("Seems like I couldn't ban them: `" + errorMessage + "`. My highest role needs to be above" +
                         " the role of the person you're trying to ban. So if it's i.e. a member, please move my role up" +
                         " before attempting to use this command again.");
                 return false;
             }
-            message.reply("Failed: " + e.getMessage());
+            RequestBuffer.request(() -> {
+                message.reply("Failed: " + e.getMessage());
+            });
             CrashHandler.error(e);
             return false;
         }
@@ -196,7 +219,9 @@ public class ModUtils {
             if (data.hasUID())
                 message.getGuild().banUser(data.id, data.reason, 7);
             else {
-                message.reply("I failed to find that user.");
+                RequestBuffer.request(() -> {
+                    message.reply("I failed to find that user.");
+                });
                 return false;
             }
         } else
@@ -210,7 +235,9 @@ public class ModUtils {
      */
     public static boolean kickHandler(InternalDataForwarder data, IMessage message) {
         if (data.useLong()) {
-            message.reply("I failed to find the user.");
+            RequestBuffer.request(() -> {
+                message.reply("I failed to find the user.");
+            });
             return false;
         }
         message.getGuild().kickUser(data.user, data.reason);
@@ -224,7 +251,9 @@ public class ModUtils {
      */
     public static boolean unbanHandler(InternalDataForwarder data, IMessage message) {
         if (!data.hasUID()) {
-            message.reply("You need a valid UID to do that.");
+            RequestBuffer.request(() -> {
+                message.reply("You need a valid UID to do that.");
+            });
             return false;
         }
         message.getGuild().pardonUser(data.id);

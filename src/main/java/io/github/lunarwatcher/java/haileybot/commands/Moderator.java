@@ -27,20 +27,16 @@ import java.util.Map;
 
 public class Moderator {
     public static final String KEY = "moderator";
-    private static final Logger logger = LoggerFactory.getLogger(Moderator.class);
-
     public static final String INVITE_FEATURE = "invite_spam_blocking";
     public static final String AUDIT_FEATURE = "audit_channel";
     public static final String WELCOME_LOGGING = "welcome_logging";
     public static final String LEAVE_LOGGING = "leave_logging";
-
     public static final String JOIN_MESSAGE = "join_message";
     public static final String LEAVE_MESSAGE = "leave_message";
     public static final String JOIN_DM = "join_dm";
     public static final String DELETION_WATCHER = "deletion_watcher";
-
     public static final String BAN_MONITORING_FEATURE = "ban_monitoring";
-
+    private static final Logger logger = LoggerFactory.getLogger(Moderator.class);
     private static final String features = combine(INVITE_FEATURE, WELCOME_LOGGING, AUDIT_FEATURE, LEAVE_LOGGING,
             JOIN_MESSAGE, LEAVE_MESSAGE, JOIN_DM, DELETION_WATCHER, BAN_MONITORING_FEATURE);
 
@@ -53,6 +49,41 @@ public class Moderator {
         load();
 
         logger.info("Successfully loaded the moderator.");
+    }
+
+    public static String getFeatures() {
+        return features;
+    }
+
+    private static String combine(String... args) {
+        StringBuilder res = new StringBuilder();
+        for (String arg : args) {
+            res.append(arg);
+            if (args.length != args.length - 1) {
+                res.append(", ");
+            }
+        }
+        return res.toString();
+    }
+
+    // Events
+
+    public static String getUsername(IUser user) {
+        return user.getName() + "#" + user.getDiscriminator();
+    }
+
+    public static EmbedObject banEmbed(String usernameAndDiscriminator, Long uid, String banner, long bannerUid, String reason) {
+        return new EmbedBuilder()
+                .withTitle("User banned")
+                .withDesc(concenateDetails("Name", usernameAndDiscriminator))
+                .appendDesc(concenateDetails("UID", String.valueOf(uid)))
+                .appendDesc(concenateDetails("Banned by", banner + " (UID " + (bannerUid == 0 ? "Unknown" : bannerUid) + ")"))
+                .appendDesc(concenateDetails("Reason", reason))
+                .build();
+    }
+
+    public static String concenateDetails(String title, String content) {
+        return "**" + title + "**: " + content + "\n";
     }
 
     public void save() {
@@ -82,7 +113,7 @@ public class Moderator {
         }
     }
 
-    // Events
+    // Meta
 
     public void userJoined(UserJoinEvent event) {
         try {
@@ -118,7 +149,6 @@ public class Moderator {
         // TODO create edit watcher
     }
 
-
     public void userLeft(UserLeaveEvent event) {
         ModGuild guild = enabledGuilds.get(event.getGuild().getLongID());
         if (guild == null)
@@ -133,8 +163,6 @@ public class Moderator {
 
         // TODO create message deletion watcher
     }
-
-    // Meta
 
     public boolean registerGuild(IGuild guild) {
         if (enabledGuilds.containsKey(guild.getLongID()))
@@ -163,21 +191,6 @@ public class Moderator {
     @Nullable
     public ModGuild getGuild(IGuild guild) {
         return getGuild(guild.getLongID());
-    }
-
-    public static String getFeatures() {
-        return features;
-    }
-
-    private static String combine(String... args) {
-        StringBuilder res = new StringBuilder();
-        for (String arg : args) {
-            res.append(arg);
-            if (args.length != args.length - 1) {
-                res.append(", ");
-            }
-        }
-        return res.toString();
     }
 
     public void userBanned(UserBanEvent event) {
@@ -251,21 +264,9 @@ public class Moderator {
         }).start();
     }
 
-    public static String getUsername(IUser user) {
-        return user.getName() + "#" + user.getDiscriminator();
-    }
-
-    public static EmbedObject banEmbed(String usernameAndDiscriminator, Long uid, String banner, long bannerUid, String reason) {
-        return new EmbedBuilder()
-                .withTitle("User banned")
-                .withDesc(concenateDetails("Name", usernameAndDiscriminator))
-                .appendDesc(concenateDetails("UID", String.valueOf(uid)))
-                .appendDesc(concenateDetails("Banned by", banner + " (UID " + (bannerUid == 0 ? "Unknown" : bannerUid) + ")"))
-                .appendDesc(concenateDetails("Reason", reason))
-                .build();
-    }
-
-    public static String concenateDetails(String title, String content) {
-        return "**" + title + "**: " + content + "\n";
+    public void refreshGuildLogs() {
+        for(ModGuild i : enabledGuilds.values()){
+            i.processCache();
+        }
     }
 }

@@ -37,13 +37,13 @@ public class RegexMatch {
         patternify();
     }
 
-    public boolean doesLocationMatch(IMessage message){
-        if(message.getChannel() instanceof PrivateChannel || message.getGuild() == null){
+    public boolean doesLocationMatch(IMessage message) {
+        if (message.getChannel() instanceof PrivateChannel || message.getGuild() == null) {
             logger.warn("Ignoring matching. Channel is a: " + message.getChannel().getClass().getName());
             return false;
         }
         long id;
-        if(guild) id = message.getGuild().getLongID();
+        if (guild) id = message.getGuild().getLongID();
         else id = message.getChannel().getLongID();
 
         return locationId == id;
@@ -68,7 +68,7 @@ public class RegexMatch {
         return match;
     }
 
-    public List<String> getRegex(){
+    public List<String> getRegex() {
         return regex;
     }
 
@@ -76,7 +76,7 @@ public class RegexMatch {
         return locationId;
     }
 
-    public boolean getGuild(){
+    public boolean getGuild() {
         return guild;
     }
 }

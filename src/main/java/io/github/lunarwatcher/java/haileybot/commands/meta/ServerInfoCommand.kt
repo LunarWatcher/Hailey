@@ -12,6 +12,7 @@ import sx.blah.discord.handle.impl.obj.Embed
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
 import sx.blah.discord.util.EmbedBuilder
+import sx.blah.discord.util.RequestBuffer
 import java.awt.Color
 import java.util.*
 
@@ -35,7 +36,9 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
         if (message.channel is IPrivateChannel) {
-            message.channel.sendMessage("This is a DM channel. No server info is available.");
+            RequestBuffer.request {
+                message.channel.sendMessage("This is a DM channel. No server info is available.")
+            };
             return;
         }
         val guild = message.guild
@@ -110,7 +113,9 @@ class ServerInfoCommand(private val bot: HaileyBot) : Command {
 
             serverInfo.appendField(modInfoEmbed);
         }
-        message.channel.sendMessage(serverInfo.build())
+        RequestBuffer.request {
+            message.channel.sendMessage(serverInfo.build())
+        }
     }
 }
 

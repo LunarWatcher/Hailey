@@ -6,14 +6,14 @@ public class SizeLimitedList<T> extends ArrayList<T> {
     private int maxCap;
 
     public SizeLimitedList(int maxCap) {
-        if(maxCap <= 0)
+        if (maxCap <= 0)
             throw new IllegalArgumentException("The size cannot be negative.");
         this.maxCap = maxCap;
     }
 
     @Override
     public boolean add(T item) {
-        if(this.size() > maxCap) {
+        if (this.size() > maxCap) {
 
             if (size() - maxCap > 0) {
                 super.subList(0, size() - maxCap).clear();

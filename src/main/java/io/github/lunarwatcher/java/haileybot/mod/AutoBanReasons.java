@@ -10,11 +10,11 @@ public enum AutoBanReasons {
 
     private final String reason;
 
-    AutoBanReasons(String reason){
+    AutoBanReasons(String reason) {
         this.reason = reason;
     }
 
-    public String getReason(){
+    public String getReason() {
         return reason;
     }
 }

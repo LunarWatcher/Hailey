@@ -4,6 +4,7 @@ import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.util.EmbedBuilder
+import sx.blah.discord.util.RequestBuffer
 import java.awt.Color
 
 class HelpCommand(val bot: HaileyBot) : Command {
@@ -20,7 +21,9 @@ class HelpCommand(val bot: HaileyBot) : Command {
                 }
             }.firstOrNull { it != null }
             if (command == null) {
-                message.channel.sendMessage("Command not found: $rawMessage");
+                RequestBuffer.request {
+                    message.channel.sendMessage("Command not found: $rawMessage");
+                }
                 return;
             }
             val embed = EmbedBuilder()
@@ -31,10 +34,14 @@ class HelpCommand(val bot: HaileyBot) : Command {
                 withColor(Color(1f, 0f, .2f))
                 withFooterText("Made with Java, Kotlin, and ♥")
             }
-            message.channel.sendMessage(embed.build())
+            RequestBuffer.request {
+                message.channel.sendMessage(embed.build())
+            }
             return;
         }
-        message.channel.sendMessage(generateHelpMessage())
+        RequestBuffer.request {
+            message.channel.sendMessage(generateHelpMessage())
+        }
 
     }
 

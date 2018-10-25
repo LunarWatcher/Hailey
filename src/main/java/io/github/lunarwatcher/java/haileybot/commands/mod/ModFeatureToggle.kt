@@ -12,6 +12,7 @@ import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
 import org.slf4j.LoggerFactory
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
+import sx.blah.discord.util.RequestBuffer
 
 /**
  * The primary feature toggle command. It's accessed by the
@@ -38,7 +39,9 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
         if (message.channel is IPrivateChannel) {
-            message.channel.sendMessage("This is a DM channel. No mod tools available.");
+            RequestBuffer.request {
+                message.channel.sendMessage("This is a DM channel. No mod tools available.")
+            };
             return;
         }
         if (!message.canUserRunAdminCommand(bot)) {
@@ -46,18 +49,24 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
             return
         }
         if (rawMessage.isEmpty()) {
-            message.channel.sendMessage("You have to tell me which feature you want to toggle.")
+            RequestBuffer.request {
+                message.channel.sendMessage("You have to tell me which feature you want to toggle.")
+            }
             return
         }
 
         if (!bot.moderator.isGuildEnabled(message.guild)) {
-            message.channel.sendMessage("Guild moderation not enabled. Please run `" + Constants.TRIGGER + "enableMod` to enable it.")
+            RequestBuffer.request {
+                message.channel.sendMessage("Guild moderation not enabled. Please run `" + Constants.TRIGGER + "enableMod` to enable it.")
+            }
             return
         }
 
         val splitBySpace = rawMessage.split(" ".toRegex(), 2).toTypedArray()
         if (splitBySpace.size != 2) {
-            message.channel.sendMessage("You need to arguments to run this command")
+            RequestBuffer.request {
+                message.channel.sendMessage("You need to arguments to run this command")
+            }
             return
         }
         val feature = splitBySpace[0].trim()
@@ -71,114 +80,168 @@ class ModFeatureToggle(private val bot: HaileyBot) : Command {
         when (feature.toLowerCase()) {
             INVITE_FEATURE -> try {
                 val toggle = boolean(guild, INVITE_FEATURE, mode)
-                message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " invite spam protection")
+                RequestBuffer.request {
+                    message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " invite spam protection")
+                }
             } catch (e: ClassCastException) {
-                message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled)")
+                RequestBuffer.request {
+                    message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled)")
+                }
             } catch (e: NullPointerException) {
-                message.channel.sendMessage("Caught an NPE.")
+                RequestBuffer.request {
+                    message.channel.sendMessage("Caught an NPE.")
+                }
             }
             BAN_MONITORING_FEATURE -> try {
                 val toggle = boolean(guild, BAN_MONITORING_FEATURE, mode);
-                message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " ban monitoring.");
+                RequestBuffer.request {
+                    message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " ban monitoring.")
+                };
             } catch (e: ClassCastException) {
-                message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled).");
+                RequestBuffer.request {
+                    message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled).")
+                };
             }
             AUDIT_FEATURE -> try {
 
-                val channel = if(mode == "null") -1 else if (mode.toLongOrNull() == null) {
+                val channel = if (mode == "null") -1 else if (mode.toLongOrNull() == null) {
                     ConversionUtils.parseChannel(mode);
                 } else mode.toLong()
                 if (channel == -2L) {
                     // -2 is triggered by failed parsing; -1 is used for no channel. That's why only -2 is handled here.
-                    message.channel.sendMessage("Failed to parse channel.");
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Failed to parse channel.")
+                    };
                     return;
                 }
-                if(channel != -1L)
+                if (channel != -1L)
                     message.guild.getChannelByID(channel)
                             .sendMessage("Audit channel set.");
 
                 guild.set(AUDIT_FEATURE, channel)
-                if(channel != -1L)
-                    message.channel.sendMessage("Successfully set the audit channel.");
+                if (channel != -1L)
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Successfully set the audit channel.")
+                    };
                 else
-                    message.channel.sendMessage("Removed the audit channel.");
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Removed the audit channel.")
+                    };
 
             } catch (e: ClassCastException) {
-                message.channel.sendMessage("Failed to convert channel to a long ID.")
+                RequestBuffer.request {
+                    message.channel.sendMessage("Failed to convert channel to a long ID.")
+                }
             }
             WELCOME_LOGGING -> try {
-                val channel = if(mode == "null") -1 else if (mode.toLongOrNull() == null) {
+                val channel = if (mode == "null") -1 else if (mode.toLongOrNull() == null) {
                     ConversionUtils.parseChannel(mode);
                 } else mode.toLong()
                 if (channel == -2L) {
-                    message.channel.sendMessage("Failed to parse channel.");
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Failed to parse channel.")
+                    };
                     return;
                 }
-                if(channel != -1L)
+                if (channel != -1L)
                     message.guild.getChannelByID(channel)
                             .sendMessage("Welcome channel set to <#$channel>.");
                 guild.set(WELCOME_LOGGING, channel)
-                if(channel != -1L)
-                    message.channel.sendMessage("Successfully set the welcome channel.");
-                else message.channel.sendMessage("Removed the welcome channel.");
+                if (channel != -1L)
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Successfully set the welcome channel.")
+                    };
+                RequestBuffer.request {
+                    message.channel.sendMessage("Removed the welcome channel.")
+                };
             } catch (e: ClassCastException) {
-                message.channel.sendMessage("Failed to convert channel to a long ID.")
+                RequestBuffer.request {
+                    message.channel.sendMessage("Failed to convert channel to a long ID.")
+                }
             }
             LEAVE_LOGGING -> try {
-                val channel = if(mode == "null") -1 else if (mode.toLongOrNull() == null) {
+                val channel = if (mode == "null") -1 else if (mode.toLongOrNull() == null) {
                     ConversionUtils.parseChannel(mode);
                 } else mode.toLong()
                 if (channel == -2L) {
-                    message.channel.sendMessage("Failed to parse channel.");
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Failed to parse channel.")
+                    };
                     return;
                 }
-                if(channel != -1L)
+                if (channel != -1L)
                     message.guild.getChannelByID(channel)
                             .sendMessage("Leave channel set to <#$channel>.");
                 guild.set(LEAVE_LOGGING, channel)
-                if(channel != -1L)
-                    message.channel.sendMessage("Successfully set the leave message channel. Please run the `set` command using leave_message to specify a custom message. <user> is a placeholder if you want to add the user's username to the message");
-                else message.channel.sendMessage("Removed the leave logging channel.");
+                if (channel != -1L)
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Successfully set the leave message channel. Please run the `set` command using leave_message to specify a custom message. <user> is a placeholder if you want to add the user's username to the message")
+                    };
+                RequestBuffer.request {
+                    message.channel.sendMessage("Removed the leave logging channel.")
+                };
             } catch (e: ClassCastException) {
-                message.channel.sendMessage("Failed to convert channel to a long ID.")
+                RequestBuffer.request {
+                    message.channel.sendMessage("Failed to convert channel to a long ID.")
+                }
             }
             JOIN_MESSAGE -> try {
 
                 guild.set(JOIN_MESSAGE, mode)
-                if(!mode.equals("null", true))
-                    message.channel.sendMessage("Set join message to: \"$mode\"")
+                if (!mode.equals("null", true))
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Set join message to: \"$mode\"")
+                    }
                 else
-                    message.channel.sendMessage("Removed the join message.");
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Removed the join message.")
+                    };
 
             } catch (e: Exception) {
                 CrashHandler.error(e);
-                message.channel.sendMessage("Something went wrong. Check the logs.");
+                RequestBuffer.request {
+                    message.channel.sendMessage("Something went wrong. Check the logs.")
+                };
             }
 
             LEAVE_MESSAGE -> try {
 
                 guild.set(LEAVE_MESSAGE, mode)
-                if(!mode.equals("null", true))
-                    message.channel.sendMessage("Set leave message to: \"$mode\"")
+                if (!mode.equals("null", true))
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Set leave message to: \"$mode\"")
+                    }
                 else
-                    message.channel.sendMessage("Removed the leave message.");
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Removed the leave message.")
+                    };
             } catch (e: Exception) {
                 CrashHandler.error(e);
-                message.channel.sendMessage("Something went wrong. Check the logs.");
+                RequestBuffer.request {
+                    message.channel.sendMessage("Something went wrong. Check the logs.")
+                };
             }
 
             JOIN_DM -> try {
                 guild.set(JOIN_DM, mode)
-                if(!mode.equals("null", true))
-                    message.channel.sendMessage("Set join dm to: \"$mode\"")
+                if (!mode.equals("null", true))
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Set join dm to: \"$mode\"")
+                    }
                 else
-                    message.channel.sendMessage("Removed the join dm.");
+                    RequestBuffer.request {
+                        message.channel.sendMessage("Removed the join dm.")
+                    };
             } catch (e: Exception) {
                 CrashHandler.error(e);
-                message.channel.sendMessage("Something went wrong. Check the logs.");
+                RequestBuffer.request {
+                    message.channel.sendMessage("Something went wrong. Check the logs.")
+                };
             }
-
-            else -> message.channel.sendMessage("Could not find the feature `$feature` (note: checks are case-insensitive)")
+            else ->
+                RequestBuffer.request {
+                    message.channel.sendMessage("Could not find the feature `$feature` (note: checks are case-insensitive)")
+                }
         }
     }
 

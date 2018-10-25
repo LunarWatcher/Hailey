@@ -13,6 +13,7 @@ import sx.blah.discord.handle.obj.IPrivateChannel
 import sx.blah.discord.handle.obj.Permissions
 import sx.blah.discord.util.EmbedBuilder
 import sx.blah.discord.util.MissingPermissionsException
+import sx.blah.discord.util.RequestBuffer
 
 class PruneCommand(private val bot: HaileyBot) : Command {
 
@@ -20,32 +21,41 @@ class PruneCommand(private val bot: HaileyBot) : Command {
         return "prune"
     }
 
+    @Suppress("RedundantCompanionReference")
     override fun getAliases() = Companion.aliases
 
     override fun getHelp(): String? {
-        return "Command usage: `${Constants.TRIGGER}prune [messages (int)] [optional user (long id)] [optional reason (string)]`. Run without brackets, with a matching type. The amount of messages should match the wanted deletion count: 1 is added to the count to compensate for the current message."
+        return "Command usage: `${Constants.TRIGGER}prune [messages (int)] [optional reason (string)]`. Run without brackets, with a matching type. The amount of messages should match the wanted deletion count: 1 is added to the count to compensate for the current message."
     }
 
     override fun getDescription() = "Deletes some recent messages (defined by command usage)"
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
         if (message.channel is IPrivateChannel) {
-            message.channel.sendMessage("This is a DM channel. No mod tools available.");
+            RequestBuffer.request {
+                message.channel.sendMessage("This is a DM channel. No mod tools available.")
+            };
             return;
         }
         if (!message.canUserRunAdminCommand(bot, Permissions.MANAGE_MESSAGES)) {
-            message.channel.sendMessage("You can't run that. You need to have the \"manage messages\" or \"administrator\" permission to do that.");
+            RequestBuffer.request {
+                message.channel.sendMessage("You can't run that. You need to have the \"manage messages\" or \"administrator\" permission to do that.")
+            };
             return;
         }
         val guild = bot.moderator.getGuild(message.guild.longID)
         if (guild == null) {
-            message.channel.sendMessage("Please run `${Constants.TRIGGER}enableMod` before using this command.");
+            RequestBuffer.request {
+                message.channel.sendMessage("Please run `${Constants.TRIGGER}enableMod` before using this command.")
+            };
             return;
         }
         val data = rawMessage.split(" ", limit = 2)
-        val count = if (data.size == 0) null else data[0].toIntOrNull()
+        val count = if (data.isEmpty()) null else data[0].toIntOrNull()
         if (count == null) {
-            message.channel.sendMessage("That's not a valid number.")
+            RequestBuffer.request {
+                message.channel.sendMessage("That's not a valid number.")
+            }
             return;
         }
         val deletionCount = count + 1
@@ -58,8 +68,10 @@ class PruneCommand(private val bot: HaileyBot) : Command {
         try {
 
             messageHistory.bulkDelete()
-        }catch(e: MissingPermissionsException){
-            message.channel.sendMessage("I do not have the appropriate permissions to delete messages. Unfortunately, due to a bug in the API I use, the \"manage messages\" permission needs to be explcitly declared.")
+        } catch (e: MissingPermissionsException) {
+            RequestBuffer.request {
+                message.channel.sendMessage("I do not have the appropriate permissions to delete messages. Unfortunately, due to a bug in the API I use, the \"manage messages\" permission needs to be explcitly declared.")
+            }
             return;
         }
         message.reply("deleted ${messageHistory.size - 1} messages. \uD83D\uDC3A")

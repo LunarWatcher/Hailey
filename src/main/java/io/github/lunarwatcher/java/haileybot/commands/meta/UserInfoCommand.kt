@@ -7,6 +7,7 @@ import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils
 import sx.blah.discord.handle.impl.obj.Embed
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.util.EmbedBuilder
+import sx.blah.discord.util.RequestBuffer
 
 class UserInfoCommand(val bot: HaileyBot) : Command {
 
@@ -28,7 +29,9 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
 
         val user = if (uid == -2L) message.author else message.client.getUserByID(uid)
         if (user == null) {
-            message.channel.sendMessage("Failed to find a user with the UID $uid")
+            RequestBuffer.request {
+                message.channel.sendMessage("Failed to find a user with the UID $uid")
+            }
             return;
         }
         val watches = bot.matcher.getWatchesForUser(user.longID);
@@ -70,7 +73,9 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
                 .appendField(permissionEmbed)
                 .appendField(watchesEmbed)
                 .build()
-        message.channel.sendMessage(embed)
+        RequestBuffer.request {
+            message.channel.sendMessage(embed)
+        }
 
     }
 }

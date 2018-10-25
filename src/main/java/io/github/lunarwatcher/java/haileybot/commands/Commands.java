@@ -36,17 +36,14 @@ import java.util.regex.Pattern;
 
 public class Commands {
     private static final Logger logger = LoggerFactory.getLogger(Commands.class);
-
-    private HaileyBot bot;
-    private Pattern ping;
-
     public List<Command> moderationCommands;
     public List<Command> funCommands;
     public List<Command> metaCommands;
     public List<Command> botCommands;
     public List<Command> roleCommands;
-
     public List<List<Command>> commandSets;
+    private HaileyBot bot;
+    private Pattern ping;
 
 
     public Commands(HaileyBot bot) {

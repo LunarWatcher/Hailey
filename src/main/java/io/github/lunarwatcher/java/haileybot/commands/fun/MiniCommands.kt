@@ -5,6 +5,7 @@ import io.github.lunarwatcher.java.haileybot.utils.messageFormat
 import io.github.lunarwatcher.java.haileybot.utils.randomItem
 import sx.blah.discord.handle.impl.obj.ReactionEmoji
 import sx.blah.discord.handle.obj.IMessage
+import sx.blah.discord.util.RequestBuffer
 
 class AliveCommand : Command {
     override fun getName(): String = "alive"
@@ -16,7 +17,9 @@ class AliveCommand : Command {
     override fun getDescription(): String = help
 
     override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
-        message.channel.sendMessage(replies.randomItem())
+        RequestBuffer.request {
+            message.channel.sendMessage(replies.randomItem())
+        }
     }
 
     companion object {
@@ -39,7 +42,7 @@ abstract class ActionCommand(val replies: List<String>, val emojis: List<String>
         }
 
         val result = message.mentions
-                .filter { it.longID != message.client.ourUser.longID && it.longID != message.author.longID}
+                .filter { it.longID != message.client.ourUser.longID && it.longID != message.author.longID }
                 .map {
                     it.getDisplayName(message.guild)
                 }.toHashSet()
@@ -48,15 +51,19 @@ abstract class ActionCommand(val replies: List<String>, val emojis: List<String>
             onEmptyMessage.invoke(message)
             return;
         }
-        message.channel.sendMessage("**${message.author.getDisplayName(message.guild)}** " + replies.randomItem()?.messageFormat(result, message.author.getDisplayName(message.guild))
-                + " ${emojis.randomItem() ?: ""}")
+        RequestBuffer.request {
+            message.channel.sendMessage("**${message.author.getDisplayName(message.guild)}** " + replies.randomItem()?.messageFormat(result, message.author.getDisplayName(message.guild) + " ${emojis.randomItem() ?: ""}"))
+        }
+
     }
 
 }
 
 class ShootCommand : ActionCommand(replies, listOf(), { message ->
-    message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)))
-            .addReaction(ReactionEmoji.of("\uD83C\uDDF7"));
+    RequestBuffer.request {
+        message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)))
+                .addReaction(ReactionEmoji.of("\uD83C\uDDF7"));
+    }
 }) {
     override fun getName(): String = "shoot"
     override fun getAliases(): MutableList<String>? = null;
@@ -82,7 +89,9 @@ class ShootCommand : ActionCommand(replies, listOf(), { message ->
 }
 
 class HugCommand : ActionCommand(replies, listOf(), { message ->
-    message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)));
+    RequestBuffer.request {
+        message.channel.sendMessage(self.messageFormat(message.author.getDisplayName(message.guild)))
+    };
 }) {
     override fun getName(): String = "hug"
     override fun getAliases(): MutableList<String>? = null;

@@ -9,6 +9,9 @@ import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
 import io.github.lunarwatcher.java.haileybot.data.Config;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
 import io.github.lunarwatcher.java.haileybot.data.Database;
+import io.github.lunarwatcher.java.haileybot.mod.ModGuild;
+import io.github.lunarwatcher.java.haileybot.utils.Method0;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sx.blah.discord.api.ClientBuilder;
@@ -45,28 +48,26 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings({"unused", "FieldCanBeLocal"})
 public class HaileyBot {
     private static final Logger logger = LoggerFactory.getLogger(HaileyBot.class);
-    private boolean running;
-    private IDiscordClient client;
-    private Database database;
-
-    private Commands commands;
-    private Moderator moderator;
-    private RegexWatcher matcher;
-    private RoleAssignmentManager assigner;
-    private BlacklistStorage blacklistStorage;
-
     private static List<Long> botAdmins;
-
-    private Config config;
-
-    private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    ScheduledFuture<?> autoSaver;
 
     static {
         botAdmins = new ArrayList<>();
 
         botAdmins.add(363018555081359360L);
     }
+
+    ScheduledFuture<?> autoSaver;
+    private boolean running;
+    private IDiscordClient client;
+    private Database database;
+    private Commands commands;
+    private Moderator moderator;
+    private RegexWatcher matcher;
+    private RoleAssignmentManager assigner;
+    private BlacklistStorage blacklistStorage;
+    private Config config;
+    // TODO replace with multiple threads if the amount of tasks grow
+    private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
 
     public HaileyBot() {
@@ -99,6 +100,8 @@ public class HaileyBot {
 
         autoSaver = executor.scheduleAtFixedRate(this::save, 1, 1, TimeUnit.HOURS);
 
+        registerShutdownHook();
+        registerTasks();
     }
 
     @EventSubscriber
@@ -117,7 +120,7 @@ public class HaileyBot {
             event.getGuild().leave();
             return;
         }
-        if(matcher != null) {
+        if (matcher != null) {
             /*
              * If the matcher != null, that means we've initialized. It could be any of the other fields initialized
              * in on-ready. It was picked at random, there's no special meaning to it.
@@ -213,7 +216,7 @@ public class HaileyBot {
         if (event.getAuthor().getLongID() == client.getOurUser().getLongID())
             return;
 
-        if(matcher == null || commands == null){
+        if (matcher == null || commands == null) {
             logger.debug("Mather or commands not initialized yet. {}, {}", matcher, commands);
             return;
         }
@@ -226,7 +229,7 @@ public class HaileyBot {
             CrashHandler.error(e);
             e.printStackTrace();
 
-            if(event.getMessage().getContent().startsWith(Constants.TRIGGER)){
+            if (event.getMessage().getContent().startsWith(Constants.TRIGGER)) {
                 event.getChannel().sendMessage(new EmbedBuilder().withColor(Color.RED).withTitle(":warning: Error :warning:")
                         .withDesc("Something bad happened when processing that :c My devs are probably on it already").build());
             }
@@ -238,7 +241,7 @@ public class HaileyBot {
         if (event.getAuthor().getLongID() == client.getOurUser().getLongID())
             return;
 
-        if(matcher == null || commands == null){
+        if (matcher == null || commands == null) {
             logger.debug("Mather or commands not initialized yet. {}, {}", matcher, commands);
             return;
         }
@@ -256,7 +259,7 @@ public class HaileyBot {
             CrashHandler.error(e);
             e.printStackTrace();
 
-            if(event.getMessage().getContent().startsWith(Constants.TRIGGER)){
+            if (event.getMessage().getContent().startsWith(Constants.TRIGGER)) {
                 event.getChannel().sendMessage(new EmbedBuilder().withColor(Color.RED).withTitle(":warning: Error :warning:")
                         .withDesc("Something bad happened when processing that :c My devs are probably on it already").build());
             }
@@ -280,11 +283,11 @@ public class HaileyBot {
     }
 
     public void save() {
-        if(moderator != null)
+        if (moderator != null)
             moderator.save();
-        if(matcher != null)
+        if (matcher != null)
             matcher.save();
-        if(assigner != null)
+        if (assigner != null)
             assigner.save();
 
 
@@ -330,5 +333,31 @@ public class HaileyBot {
 
     public Config getConfig() {
         return config;
+    }
+
+    private void registerShutdownHook(){
+        Runtime.getRuntime().addShutdownHook(new ControlHook());
+    }
+
+    private void registerTasks(){
+        executor.scheduleAtFixedRate(this::refreshLogsInGuilds, 30000, 30000, TimeUnit.MILLISECONDS);
+    }
+
+    public void refreshLogsInGuilds(){
+        moderator.refreshGuildLogs();
+    }
+
+    public class ControlHook extends Thread {
+        public ControlHook(){
+            super("ShutdownHook:HaileyBot.java)");
+        }
+
+        public void run(){
+            // Necessary call to log out the client. This is a second attempt in case something fails, but to make sure
+            // it shuts down properly. This also controls some threads
+            if(client.isLoggedIn()){
+                client.logout();
+            }
+        }
     }
 }

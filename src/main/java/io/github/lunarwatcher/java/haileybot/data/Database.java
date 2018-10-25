@@ -250,7 +250,7 @@ public class Database {
     }
 
     public void remove(String baseKey) {
-        if(!cache.containsKey(baseKey))
+        if (!cache.containsKey(baseKey))
             return;
         cache.remove(baseKey);
     }

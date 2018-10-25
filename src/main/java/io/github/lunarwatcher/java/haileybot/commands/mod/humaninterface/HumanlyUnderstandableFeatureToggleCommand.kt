@@ -8,6 +8,7 @@ import io.github.lunarwatcher.java.haileybot.data.Constants
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.handle.obj.IPrivateChannel
+import sx.blah.discord.util.RequestBuffer
 
 const val messageRemoval = "Messages can be removed by writing `null`. This will also remove channels" +
         " where applicable.";
@@ -23,7 +24,9 @@ abstract class HumanlyUnderstandableFeatureToggleCommand(private val cmdName: St
 
     override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
         if (message.channel is IPrivateChannel) {
-            message.channel.sendMessage("This is a DM channel. No mod tools available.");
+            RequestBuffer.request {
+                message.channel.sendMessage("This is a DM channel. No mod tools available.")
+            };
             return;
         }
         if (!message.canUserRunAdminCommand(bot)) {
@@ -32,11 +35,13 @@ abstract class HumanlyUnderstandableFeatureToggleCommand(private val cmdName: St
         }
 
         if (!bot.moderator.isGuildEnabled(message.guild)) {
-            message.channel.sendMessage("Guild moderation not enabled. Please run `${Constants.TRIGGER}enableMod` to enable it.")
+            RequestBuffer.request {
+                message.channel.sendMessage("Guild moderation not enabled. Please run `${Constants.TRIGGER}enableMod` to enable it.")
+            }
             return
         }
 
-        if(rawMessage.equals("null", true)){
+        if (rawMessage.equals("null", true)) {
             for (i in 0 until features.size) {
                 val featureName = features[i];
                 toggleCommand.onMessage(message, "$featureName null", commandName);
@@ -46,7 +51,9 @@ abstract class HumanlyUnderstandableFeatureToggleCommand(private val cmdName: St
         }
         val splitBySpace = rawMessage.split(" ", limit = features.size);
         if (splitBySpace.size != features.size) {
-            message.channel.sendMessage("You seem to be missing one or more arguments. See the help command for more information on required arguments")
+            RequestBuffer.request {
+                message.channel.sendMessage("You seem to be missing one or more arguments. See the help command for more information on required arguments")
+            }
             return;
         }
         for (i in 0 until features.size) {
