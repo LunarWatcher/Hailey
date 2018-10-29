@@ -87,17 +87,17 @@ public class Commands {
 
         moderationCommands.add(new WatchCommand());
         moderationCommands.add(new UnwatchCommand());
-        moderationCommands.add(new DisableModCommand(bot));
+        moderationCommands.add(new DisableModCommand());
         moderationCommands.add(new EnableModCommand());
 
         moderationCommands.add(modFeatureToggle);
-        moderationCommands.add(new SetAuditChannelFeature(bot, modFeatureToggle));
-        moderationCommands.add(new SetJoinDMCommand(bot, modFeatureToggle));
-        moderationCommands.add(new SetJoinMessageCommand(bot, modFeatureToggle));
+        moderationCommands.add(new SetAuditChannelFeature(modFeatureToggle));
+        moderationCommands.add(new SetJoinDMCommand(modFeatureToggle));
+        moderationCommands.add(new SetJoinMessageCommand(modFeatureToggle));
 
-        moderationCommands.add(new SetLeaveMessageCommand(bot, modFeatureToggle));
-        moderationCommands.add(new SetInviteSpamProtection(bot, modFeatureToggle));
-        moderationCommands.add(new SetBanMonitoringFeature(bot, modFeatureToggle));
+        moderationCommands.add(new SetLeaveMessageCommand(modFeatureToggle));
+        moderationCommands.add(new SetInviteSpamProtection(modFeatureToggle));
+        moderationCommands.add(new SetBanMonitoringFeature(modFeatureToggle));
         moderationCommands.add(new PruneCommand());
 
         moderationCommands.add(new ModerationCommand("ban", null, "Bans a user (@ mention or UID)", null, Permissions.BAN, ModUtils::banHandler));
@@ -121,31 +121,31 @@ public class Commands {
 
         // Meta commands
 
-        metaCommands.add(new HelpCommand(bot));
-        metaCommands.add(new AboutCommand(bot));
-        metaCommands.add(new ErrorLogsCommand(bot));
-        metaCommands.add(new ServerInfoCommand(bot));
+        metaCommands.add(new HelpCommand());
+        metaCommands.add(new AboutCommand());
+        metaCommands.add(new ErrorLogsCommand());
+        metaCommands.add(new ServerInfoCommand());
 
         metaCommands.add(new ModFeaturesCommand());
-        metaCommands.add(new UserInfoCommand(bot));
+        metaCommands.add(new UserInfoCommand());
 
         // Bot commands
 
-        botCommands.add(new ShutdownCommand(bot));
+        botCommands.add(new ShutdownCommand());
         botCommands.add(new JoinCommand());
-        botCommands.add(new BlacklistGuildCommand(bot));
-        botCommands.add(new UnblacklistGuildCommand(bot));
+        botCommands.add(new BlacklistGuildCommand());
+        botCommands.add(new UnblacklistGuildCommand());
 
-        botCommands.add(new ListGuildsCommand(bot));
+        botCommands.add(new ListGuildsCommand());
 
         // Self-assign commands
 
-        roleCommands.add(new AddAssignableRoleCommand(bot));
-        roleCommands.add(new AssignCommand(bot));
-        roleCommands.add(new UnassignCommand(bot));
+        roleCommands.add(new AddAssignableRoleCommand());
+        roleCommands.add(new AssignCommand());
+        roleCommands.add(new UnassignCommand());
         roleCommands.add(new ListRolesCommand());
 
-        roleCommands.add(new RemoveAssignableRoleCommand(bot));
+        roleCommands.add(new RemoveAssignableRoleCommand());
         roleCommands.add(new AutoAssignCommand());
         roleCommands.add(new RemoveAutoAssignCommand());
 

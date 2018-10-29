@@ -65,7 +65,7 @@ class BlacklistStorage(var guilds: ArrayList<Long>) {
 
 }
 
-class ListGuildsCommand(val bot: HaileyBot) : Command {
+class ListGuildsCommand : Command {
     override fun getName(): String = "listGuilds"
     override fun getHelp(): String? = "Sends a DM containing joined guilds. Bot admins only!"
     override fun getDescription(): String? = help
@@ -104,7 +104,7 @@ class ListGuildsCommand(val bot: HaileyBot) : Command {
 
 }
 
-class BlacklistGuildCommand(val bot: HaileyBot) : Command {
+class BlacklistGuildCommand : Command {
     override fun getName(): String = "blacklistGuild"
     override fun getAliases(): MutableList<String>? = null
 
@@ -146,7 +146,7 @@ class BlacklistGuildCommand(val bot: HaileyBot) : Command {
 
 }
 
-class UnblacklistGuildCommand(val bot: HaileyBot) : Command {
+class UnblacklistGuildCommand : Command {
     override fun getName(): String = "unblacklistGuild"
     override fun getAliases(): MutableList<String>? = null
 

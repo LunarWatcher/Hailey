@@ -62,7 +62,7 @@ class EnableModCommand : Command {
 
 }
 
-class DisableModCommand(val bot: HaileyBot) : Command {
+class DisableModCommand : Command {
     override fun getName(): String = "disableMod"
     override fun getAliases(): MutableList<String>? = null;
     override fun getHelp(): String = "Just run the command. You need to be an administrator, the owner of the server, or a bot admin to use it"

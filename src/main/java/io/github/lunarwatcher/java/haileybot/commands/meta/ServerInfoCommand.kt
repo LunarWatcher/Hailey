@@ -42,7 +42,7 @@ import sx.blah.discord.util.RequestBuffer
 import java.awt.Color
 import java.util.*
 
-class ServerInfoCommand(private val bot: HaileyBot) : Command {
+class ServerInfoCommand : Command {
 
     override fun getName(): String {
         return "serverInfo"

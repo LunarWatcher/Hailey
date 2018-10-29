@@ -35,7 +35,7 @@ import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.util.EmbedBuilder
 import sx.blah.discord.util.RequestBuffer
 
-class UserInfoCommand(val bot: HaileyBot) : Command {
+class UserInfoCommand : Command {
 
     override fun getName(): String {
         return "userInfo"
@@ -64,7 +64,7 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
         val username = user.name + "#" + user.discriminator
         val nick = user.getNicknameForGuild(message.guild) ?: "None"
         val formattedCreationDate = dateFormatter.format(user.creationDate)
-        val bot: Boolean = user.isBot
+        val isUserBot: Boolean = user.isBot
         val presence = ConversionUtils.convertStatusToString(user.presence.status);
         val roles = user.getRolesForGuild(message.guild).filter { !it.isEveryoneRole }.sortedBy { it.position }.map { it.name }
         val stringRoles = roles.joinToString(", ");
@@ -76,7 +76,7 @@ class UserInfoCommand(val bot: HaileyBot) : Command {
 
         val uidEmbed = Embed.EmbedField("User ID", user.stringID, true)
         val nicknameEmbed = Embed.EmbedField("Server nickname", nick, true)
-        val botStatusEmbed = Embed.EmbedField("Bot", if (bot) "Yes" else "No", true)
+        val botStatusEmbed = Embed.EmbedField("Bot", if (isUserBot) "Yes" else "No", true)
         val accountCreationEmbed = Embed.EmbedField("Creation date", formattedCreationDate, false)
         val presenceEmbed = Embed.EmbedField("Presence", presence, false)
         val activityEmbed = Embed.EmbedField("Activity", activity, false)

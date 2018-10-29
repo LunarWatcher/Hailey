@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("unchecked")
 public class Moderator {
     public static final String KEY = "moderator";
     public static final String INVITE_FEATURE = "invite_spam_blocking";
