@@ -128,7 +128,7 @@ public class Commands {
 
         metaCommands.add(new ModFeaturesCommand());
         metaCommands.add(new UserInfoCommand());
-
+        metaCommands.add(new DebugBotIssuesCommand());
         // Bot commands
 
         botCommands.add(new ShutdownCommand());
