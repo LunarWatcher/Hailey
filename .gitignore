@@ -26,6 +26,7 @@ logs/
 # Gradle
 .idea/**/gradle.xml
 .idea/**/libraries
+.idea/copyright/
 
 # CMake
 cmake-build-debug/

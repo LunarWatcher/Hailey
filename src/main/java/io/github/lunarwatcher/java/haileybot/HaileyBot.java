@@ -1,3 +1,29 @@
+
+/*
+ * MIT License
+ *
+ * Copyright (c) 2018 Olivia Zoe
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
 package io.github.lunarwatcher.java.haileybot;
 
 import io.github.lunarwatcher.java.haileybot.botmeta.BlacklistStorage;
@@ -9,9 +35,6 @@ import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
 import io.github.lunarwatcher.java.haileybot.data.Config;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
 import io.github.lunarwatcher.java.haileybot.data.Database;
-import io.github.lunarwatcher.java.haileybot.mod.ModGuild;
-import io.github.lunarwatcher.java.haileybot.utils.Method0;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sx.blah.discord.api.ClientBuilder;
@@ -66,11 +89,10 @@ public class HaileyBot {
     private RoleAssignmentManager assigner;
     private BlacklistStorage blacklistStorage;
     private Config config;
-    // TODO replace with multiple threads if the amount of tasks grow
     private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-
     public HaileyBot() {
+
         ModUtils.initialize(this);
         CrashHandler.injectBotClass(this);
         try {

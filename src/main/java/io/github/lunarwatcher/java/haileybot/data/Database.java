@@ -1,20 +1,42 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2018 Olivia Zoe
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
 package io.github.lunarwatcher.java.haileybot.data;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.lunarwatcher.java.haileybot.utils.JacksonParser;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is the memory core of the bot, it saves all the data it gets into a .json database.
@@ -22,14 +44,12 @@ import java.util.*;
  */
 @SuppressWarnings("unchecked")
 public class Database {
-    public Path file;
+    private static final Logger logger = LoggerFactory.getLogger(Database.class);
+    public final Path file;
     private Map<String, Object> cache = new HashMap<>();
-    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.DATE_FORMAT);
     private boolean changed = false;
 
-    public Database(Path file) throws IOException {
-        if (file == null)
-            throw new RuntimeException("File cannot be null!");
+    public Database(@NotNull Path file) throws IOException {
         this.file = file;
 
         if (Files.exists(file)) {
@@ -37,7 +57,7 @@ public class Database {
                 load();
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println("Ignored load failing.");
+                logger.warn("Failed to load database.");
             }
         } else {
 
@@ -51,69 +71,15 @@ public class Database {
      * @throws IOException if there's a problem reading the file
      */
     private void load() throws IOException {
-        JsonNode root;
-        ObjectMapper mapper = new ObjectMapper();
-        try (Reader reader = Files.newBufferedReader(file)) {
-            root = mapper.readTree(reader);
-        }
-
-        Iterator<String> it = root.fieldNames();
-        while (it.hasNext()) {
-            String fieldName = it.next();
-            JsonNode field = root.get(fieldName);
-            Object value = parseNode(field);
-            cache.put(fieldName, value);
-        }
-    }
-
-    private Object parseNode(JsonNode node) {
-        if (node.isArray()) {
-            List<Object> list = new ArrayList<>();
-            Iterator<JsonNode> it = node.elements();
-            while (it.hasNext()) {
-                JsonNode element = it.next();
-                Object parsedElement = parseNode(element);
-                list.add(parsedElement);
-            }
-            return list;
-        } else if (node.isObject()) {
-            Map<String, Object> map = new HashMap<>();
-            Iterator<String> it = node.fieldNames();
-            while (it.hasNext()) {
-                String fieldName = it.next();
-                JsonNode field = node.get(fieldName);
-                Object parsedElement = parseNode(field);
-                map.put(fieldName, parsedElement);
-            }
-            return map;
-        } else if (node.isInt()) {
-            return node.asInt();
-        } else if (node.isLong()) {
-            return node.asLong();
-        } else if (node.isDouble()) {
-            return node.asDouble();
-        } else if (node.isFloat()) {
-            return node.floatValue();
-        } else if (node.isBoolean()) {
-            return node.asBoolean();
-        } else if (node.isNull()) {
-            return null;
-        }
-
-        String text = node.asText();
-
-        try {
-            return LocalDateTime.parse(text, formatter);
-        } catch (DateTimeParseException e) {
-            return text;
-        }
+        cache = JacksonParser.getJsonParser()
+                .parse(Files.newInputStream(file));
     }
 
     /**
      * Get a value
      *
      * @param key The key to retrieve
-     * @return a value or null if key not found
+     * @return a value, or null if key not found
      */
     public Object get(String key) {
         return cache.get(key);
@@ -122,8 +88,8 @@ public class Database {
     /**
      * Put something into the data. Does not update until {@link #commit()} is called
      *
-     * @param key
-     * @param value
+     * @param key The key of the value to add
+     * @param value The associated value
      */
     public void put(String key, Object value) {
         cache.put(key, value);
@@ -147,105 +113,29 @@ public class Database {
             options = new StandardOpenOption[]{};
         }
 
-        try (Writer writer = Files.newBufferedWriter(file, options)) {
-            JsonFactory factory = new JsonFactory();
-            try (JsonGenerator generator = factory.createGenerator(writer)) {
-                generator.writeStartObject();
-
-                for (Map.Entry<String, Object> entry : cache.entrySet()) {
-                    String fieldName = entry.getKey();
-                    Object value = entry.getValue();
-
-                    generator.writeFieldName(fieldName);
-                    write(generator, value);
-                }
-
-                generator.writeEndObject();
-            }
+        try {
+            JacksonParser.getJsonParser()
+                    .saveData(cache, Files.newBufferedWriter(file, options), false);
         } catch (IOException e) {
-            System.err.println("Could not save data!");
-            return;
+            e.printStackTrace();
         }
-
         changed = false;
     }
 
-    /**
-     * The method for the actual writing, does not include the names of fields with the exception for maps
-     *
-     * @param generator The generator
-     * @param value     The value to write
-     * @throws IOException If something goes wrong
-     */
-    private void write(JsonGenerator generator, Object value) throws IOException {
-        if (value instanceof Map) {
-            Map<?, ?> map = (Map<?, ?>) value;
-            generator.writeStartObject();
-
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                String fieldName = entry.getKey().toString();
-                Object v = entry.getValue();
-
-                generator.writeFieldName(fieldName);
-                write(generator, v);
-            }
-
-            generator.writeEndObject();
-            return;
-        } else if (value instanceof Collection) {
-            Collection<?> list = (Collection<?>) value;
-            generator.writeStartArray();
-
-            for (Object item : list) {
-                write(generator, item);
-            }
-
-            generator.writeEndArray();
-            return;
-        } else if (value instanceof LocalDateTime) {
-            LocalDateTime date = (LocalDateTime) value;
-            generator.writeString(date.format(formatter));
-            return;
-        } else if (value instanceof Integer) {
-            Integer integer = (Integer) value;
-            generator.writeNumber(integer);
-            return;
-        } else if (value instanceof Long) {
-            Long integer = (Long) value;
-            generator.writeNumber(integer);
-            return;
-        } else if (value instanceof Boolean) {
-            Boolean bool = (Boolean) value;
-            generator.writeBoolean(bool);
-            return;
-        } else if (value == null) {
-            generator.writeNull();
-            return;
-        }
-
-        String string = value.toString();
-        generator.writeString(string);
-    }
 
     public Map<String, Object> getMap(String key) {
         return (Map<String, Object>) get(key);
     }
 
-
     public List<Object> getList(String key) {
         return (List<Object>) get(key);
-    }
-
-    public void purge() {
-        cache.clear();
-        cache = new HashMap<>();
     }
 
     public boolean isEmpty() {
         return cache.isEmpty();
     }
 
-    public int getItems() {
+    public int size() {
         return cache.size();
     }
 

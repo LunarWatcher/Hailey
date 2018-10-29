@@ -1,3 +1,28 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2018 Olivia Zoe
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
 package io.github.lunarwatcher.java.haileybot.commands;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
@@ -58,12 +83,12 @@ public class Commands {
 
         //////////////////////////////////
 
-        ModFeatureToggle modFeatureToggle = new ModFeatureToggle(bot);
+        ModFeatureToggle modFeatureToggle = new ModFeatureToggle();
 
-        moderationCommands.add(new WatchCommand(bot));
-        moderationCommands.add(new UnwatchCommand(bot));
+        moderationCommands.add(new WatchCommand());
+        moderationCommands.add(new UnwatchCommand());
         moderationCommands.add(new DisableModCommand(bot));
-        moderationCommands.add(new EnableModCommand(bot));
+        moderationCommands.add(new EnableModCommand());
 
         moderationCommands.add(modFeatureToggle);
         moderationCommands.add(new SetAuditChannelFeature(bot, modFeatureToggle));
@@ -73,12 +98,12 @@ public class Commands {
         moderationCommands.add(new SetLeaveMessageCommand(bot, modFeatureToggle));
         moderationCommands.add(new SetInviteSpamProtection(bot, modFeatureToggle));
         moderationCommands.add(new SetBanMonitoringFeature(bot, modFeatureToggle));
-        moderationCommands.add(new PruneCommand(bot));
+        moderationCommands.add(new PruneCommand());
 
         moderationCommands.add(new ModerationCommand("ban", null, "Bans a user (@ mention or UID)", null, Permissions.BAN, ModUtils::banHandler));
         moderationCommands.add(new ModerationCommand("unban", null, "Unbans a user (requires a UID)", null, Permissions.BAN, ModUtils::unbanHandler));
         moderationCommands.add(new ModerationCommand("kick", null, "Kicks a user", null, Permissions.KICK, ModUtils::kickHandler));
-        moderationCommands.add(new ListWatches(bot));
+        moderationCommands.add(new ListWatches());
 
         // Fun commands
 
@@ -118,11 +143,11 @@ public class Commands {
         roleCommands.add(new AddAssignableRoleCommand(bot));
         roleCommands.add(new AssignCommand(bot));
         roleCommands.add(new UnassignCommand(bot));
-        roleCommands.add(new ListRolesCommand(bot));
+        roleCommands.add(new ListRolesCommand());
 
         roleCommands.add(new RemoveAssignableRoleCommand(bot));
-        roleCommands.add(new AutoAssignCommand(bot));
-        roleCommands.add(new RemoveAutoAssignCommand(bot));
+        roleCommands.add(new AutoAssignCommand());
+        roleCommands.add(new RemoveAutoAssignCommand());
 
         // Commandset concat
 
@@ -154,7 +179,7 @@ public class Commands {
                     list.forEach((command) -> {
                         if (command.matchesCommand(commandName)) {
                             logger.info("Running onMessage for " + command.getClass().getSimpleName());
-                            command.onMessage(message, stripTriggerAndName(message.getContent()), commandName);
+                            command.onMessage(bot, message, stripTriggerAndName(message.getContent()), commandName);
                         }
                     });
                 });

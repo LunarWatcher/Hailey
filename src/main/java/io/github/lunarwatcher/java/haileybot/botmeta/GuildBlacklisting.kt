@@ -1,9 +1,35 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2018 Olivia Zoe
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
 package io.github.lunarwatcher.java.haileybot.botmeta
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.data.Database
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunBotAdminCommand
+import org.jetbrains.annotations.NotNull
 import sx.blah.discord.handle.obj.IGuild
 import sx.blah.discord.handle.obj.IMessage
 import sx.blah.discord.util.RequestBuffer
@@ -43,7 +69,7 @@ class ListGuildsCommand(val bot: HaileyBot) : Command {
     override fun getName(): String = "listGuilds"
     override fun getHelp(): String? = "Sends a DM containing joined guilds. Bot admins only!"
     override fun getDescription(): String? = help
-    override fun onMessage(message: IMessage, rawMessage: String?, commandName: String?) {
+    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
         if (!message.canUserRunBotAdminCommand(bot)) {
             RequestBuffer.request {
                 message.channel.sendMessage("You can't ue this command.")
@@ -84,7 +110,7 @@ class BlacklistGuildCommand(val bot: HaileyBot) : Command {
 
     override fun getHelp(): String? = "Blacklists a guild by ID."
     override fun getDescription(): String? = help
-    override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
+    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
         if (!message.canUserRunBotAdminCommand(bot)) {
             RequestBuffer.request {
                 message.channel.sendMessage("You can't do that.")
@@ -126,7 +152,7 @@ class UnblacklistGuildCommand(val bot: HaileyBot) : Command {
 
     override fun getHelp(): String? = "Blacklists a guild by ID."
     override fun getDescription(): String? = help
-    override fun onMessage(message: IMessage, rawMessage: String, commandName: String) {
+    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
         if (!message.canUserRunBotAdminCommand(bot)) {
             RequestBuffer.request {
                 message.channel.sendMessage("You can't do that.")
