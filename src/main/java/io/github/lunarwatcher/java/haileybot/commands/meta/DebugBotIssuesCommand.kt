@@ -97,7 +97,7 @@ class DebugBotIssuesCommand : Command {
                 " of the text channels.").nl()
                 .append("Ignoring permissions in voice channels; no voice features are currently used.").nl()
                 .append("For this guild, there's a combined number of ${ watcher.getWatchesInGuild(message.guild).size } watches for this guild.").nl()
-                .append("In addition, the database currently has ${ database.size() } items in it. ")
+                .append("In addition, the database currently has ${ database.size() } items in it. ").nl().nl()
         modGuild?.auditChannel?.let {
             if(it >= 0) {
                 stringBuilder.append("Checking the audit channel (<#$it>) for validity. ")
@@ -169,11 +169,11 @@ class DebugBotIssuesCommand : Command {
         RequestBuffer.request {
             message.channel.sendMessage(builder.build())
                     .scheduleDeletion(TIMEOUT) //Auto-deletes the message after 20 minutes, to avoid clutter in chat.
-        }
+        }.get()
         if(dumpChannels){
             val unusableChannels = message.guild.channels.filter { it !in usableChannels }
             stringBuilder = StringBuilder()
-            stringBuilder.append("Unusable channels:\n```")
+            stringBuilder.append("```\nUnusable channels:\n")
             for(channel in unusableChannels){
                 stringBuilder.append("${channel.name} + (<#${channel.longID}>)").nl()
             }
