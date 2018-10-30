@@ -51,9 +51,7 @@ class ShutdownCommand : Command {
             return
         }
         bot.save();
-        RequestBuffer.request {
-            message.channel.sendMessage("Goodbye cruel world!")
-        };
+        message.channel.sendMessage("Goodbye cruel world!")
         try {
             bot.client.logout()
         } catch (e: Exception) {
