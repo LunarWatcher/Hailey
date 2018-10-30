@@ -37,11 +37,11 @@ public class NumberUtils {
         long tens = abs % 10;
         long hundreds = abs % 100;
 
-        if (equalsPlusMinus(tens, 1) && hundreds != 11)
+        if (equalsPlusMinus(tens, 1) && !equalsPlusMinus(hundreds, 11))
             return stringify(value, ONE);
-        else if (equalsPlusMinus(tens, 2) && hundreds != 12)
+        else if (equalsPlusMinus(tens, 2) && !equalsPlusMinus(hundreds, 11))
             return stringify(value, TWO);
-        else if (equalsPlusMinus(tens, 3) && hundreds != 13)
+        else if (equalsPlusMinus(tens, 3) && !equalsPlusMinus(hundreds, 11))
             return stringify(value, THREE);
 
         return stringify(value, NTH);

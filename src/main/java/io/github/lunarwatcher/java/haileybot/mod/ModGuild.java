@@ -478,4 +478,14 @@ public class ModGuild {
         return bot;
     }
 
+    public long getWelcomeChannel(){
+        return welcomeChannel;
+    }
+
+    public long getUserLeaveChannel(){
+        return userLeaveChannel;
+    }
+    public long getAuditChannel(){
+        return auditChannel;
+    }
 }
