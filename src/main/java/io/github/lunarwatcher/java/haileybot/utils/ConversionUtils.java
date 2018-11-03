@@ -26,10 +26,13 @@
 package io.github.lunarwatcher.java.haileybot.utils;
 
 import net.dv8tion.jda.core.OnlineStatus;
+import net.dv8tion.jda.core.Region;
 import net.dv8tion.jda.core.entities.Game;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
+import org.apache.commons.lang3.text.WordUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -161,5 +164,51 @@ public class ConversionUtils {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    @NotNull
+    public static String parseRegionName(@NotNull Region region) {
+        switch(region){
+            case AMSTERDAM:
+            case BRAZIL:
+            case JAPAN:
+            case LONDON:
+            case FRANKFURT:
+            case RUSSIA:
+            case SINGAPORE:
+            case SYDNEY:
+            case UNKNOWN:
+            case HONG_KONG:
+            case SOUTH_AFRICA:
+                // These are the regions with "sensible" naming; the rest (assuming they're not new and simply not added)
+                // follow different naming. I.e. EU_CENTRAL should be EU Central, not Eu Central.
+                return title(region.getName(), "_", 0);
+
+            default:
+                return title(region.getName(), "_", 1);
+
+        }
+    }
+
+    public static String title(String raw, int offset){
+        return title(raw, " ", offset);
+    }
+    public static String title(String raw, String delimiter, int offset){
+        if(delimiter == null)
+            delimiter = " ";
+        if(offset >= raw.length())
+            throw new IllegalArgumentException();
+
+        String[] pieces = raw.split(delimiter);
+        StringBuilder result = new StringBuilder();
+        for(int i = offset; i < pieces.length; i++){
+            String active = pieces[i];
+            char first = Character.toUpperCase(active.charAt(0));
+            String rest = active.substring(1).toLowerCase();
+            result.append(first + rest);
+            if(i != pieces.length - 1)
+                result.append(" ");
+        }
+        return result.toString();
     }
 }

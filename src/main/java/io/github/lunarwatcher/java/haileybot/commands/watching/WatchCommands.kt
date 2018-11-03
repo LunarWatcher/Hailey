@@ -199,7 +199,7 @@ class ListWatches : Command {
                 message.channel.sendMessage("Check your DM's!").queue()
             }
         }, { err ->
-            message.channel.sendMessage("Doesn't look like I can DM you :c ${err.message}");
+            message.channel.sendMessage("Doesn't look like I can DM you :c ${err.message}").queue();
         })
     }
 

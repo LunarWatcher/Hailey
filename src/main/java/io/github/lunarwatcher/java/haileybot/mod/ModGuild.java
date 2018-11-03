@@ -164,7 +164,8 @@ public class ModGuild {
                                 event.getUser().getName() + "#" + event.getUser().getDiscriminator(),
                                 event.getGuild().getName(),
                                 Integer.toString(event.getGuild().getMembers().size()),
-                                getNumberWithNth(event.getGuild().getMembers().size())));
+                                getNumberWithNth(event.getGuild().getMembers().size())))
+                        .queue();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -181,7 +182,7 @@ public class ModGuild {
                                         event.getGuild().getName(),
                                         Integer.toString(event.getGuild().getMembers().size())))
                                 .queue();
-                    });
+                    }, err -> audit("Failed to send welcome DM to user " + event.getUser().getName() + "#" + event.getUser().getDiscriminator() + ": " + err.getMessage()));
         }
     }
 

@@ -384,12 +384,6 @@ public class HaileyBot implements EventListener {
             this.onMessageReceivedEvent((MessageReceivedEvent) event);
         } else if(event instanceof MessageDeleteEvent){
             this.onMessageDeletedEvent((MessageDeleteEvent) event);
-        } else if(event instanceof PrivateMessageReceivedEvent){
-            PrivateMessageReceivedEvent pEvent = (PrivateMessageReceivedEvent) event;
-            this.onMessageReceivedEvent(new MessageReceivedEvent(pEvent.getJDA(), pEvent.getResponseNumber(), pEvent.getMessage()));
-        } else if(event instanceof PrivateMessageUpdateEvent){
-            PrivateMessageUpdateEvent pEvent = (PrivateMessageUpdateEvent) event;
-            this.onMessageEditedEvent(new MessageUpdateEvent(pEvent.getJDA(), pEvent.getResponseNumber(), pEvent.getMessage()));
         } else if(event instanceof GuildLeaveEvent){
             this.onGuildLeaveEvent((GuildLeaveEvent) event);
         }

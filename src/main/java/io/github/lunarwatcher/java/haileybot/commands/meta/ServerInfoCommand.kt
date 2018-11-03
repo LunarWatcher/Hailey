@@ -92,15 +92,15 @@ class ServerInfoCommand : Command {
                 .setColor(getRandomColor())
                 .setAuthor("Hailey", null, guild.iconUrl)
                 .addField(MessageEmbed.Field("Self- and auto-assignable roles",
-                        "There are $selfAssignable self-assignable roles, and $autoAssignable roles that get automatically assigned. " +
-                                (if (roleInfo.length > 1200)
+                        "There are $selfAssignable self-assignable roles, and $autoAssignable roles that get automatically assigned.\n" +
+                                (if (roleInfo.length > 600)
                                     "Too many roles to display. Use `${Constants.TRIGGER}roles` to see self-assignable roles."
-                                else roleInfo) + "\nAuto-assignable: " +
-                                (if (autoInfo.length > 1200) "Too many roles to display."
+                                else "Self-assignable: $roleInfo") + "\nAuto-assignable: " +
+                                (if (autoInfo.length > 600) "Too many roles to display."
                                 else autoInfo),
                         true))
                 .addField(MessageEmbed.Field("Verification level", ConversionUtils.parseVerificationLevel(message.guild.verificationLevel), true))
-                .addField(MessageEmbed.Field("Location", message.guild.region.name, true))
+                .addField(MessageEmbed.Field("Location", ConversionUtils.parseRegionName(message.guild.region), true))
                 .addField(MessageEmbed.Field("Channels", "${message.guild.channels.size} channels in ${message.guild.categories.size} categories. ${message.guild.voiceChannels.size} voice channels.", true))
                 .addField(MessageEmbed.Field("Info", content, false));
 
@@ -125,7 +125,7 @@ class ServerInfoCommand : Command {
                     modInfo.append("\n")
                 }
             } else {
-                modInfo.append("|### Guild moderation module disabled. ###|").append(StringUtils.repeat(" ", 4))
+                modInfo.append("# Guild moderation module disabled. #")
             }
 
 

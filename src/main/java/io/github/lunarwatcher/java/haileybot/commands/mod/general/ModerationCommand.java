@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class ModerationCommand implements Command {
     @NotNull
@@ -50,10 +51,10 @@ public class ModerationCommand implements Command {
     private Permission permission;
 
     @NotNull
-    private Factory2<Boolean, ModUtils.InternalDataForwarder, Message> handler;
+    private BiConsumer<ModUtils.InternalDataForwarder, Message> handler;
 
     public ModerationCommand(@NotNull String name, @Nullable List<String> aliases, @Nullable String help,
-                             @Nullable String description, @NotNull Permission permission, @NotNull Factory2<Boolean, ModUtils.InternalDataForwarder, Message> handler) {
+                             @Nullable String description, @NotNull Permission permission, @NotNull BiConsumer<ModUtils.InternalDataForwarder, Message> handler) {
         this.name = name;
         this.aliases = aliases;
         this.help = help;

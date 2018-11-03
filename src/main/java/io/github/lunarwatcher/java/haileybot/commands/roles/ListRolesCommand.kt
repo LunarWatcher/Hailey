@@ -57,7 +57,7 @@ class ListRolesCommand : Command {
                             }
                             .setColor(message.member.color)
                             .build()
-            )
+            ).queue()
             return;
         }
 
@@ -108,7 +108,7 @@ class ListRolesCommand : Command {
             }
 
         }, {
-            message.channel.sendMessage("An error occured when attempting to get the DM channel. I might not be able to DM you.")
+            message.channel.sendMessage("An error occured when attempting to get the DM channel: ${it.message} I might not be able to DM you.").queue()
 
         })
     }
@@ -126,6 +126,6 @@ class ListRolesCommand : Command {
                         }
                         .setColor(message.member.color)
                         .build()
-        )
+        ).queue()
     }
 }

@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class ModUtils {
     private static ModUtils instance;
@@ -73,7 +74,7 @@ public class ModUtils {
      *                   is a {@link ModGuild}
      */
     public static void onMessageRun(Message message, String rawMessage, Permission permission,
-                                    Factory2<Boolean, InternalDataForwarder, Message> handleUser) {
+                                    BiConsumer<InternalDataForwarder, Message> handleUser) {
         if (getInstance().bot.getModerator().getGuild(message.getGuild()) == null) {
 
             message.getChannel().sendMessage("this isn't a mod-enabled guild. Please run `" + Constants.TRIGGER + "enableMod` to access this feature.").queue();
@@ -143,11 +144,8 @@ public class ModUtils {
 
                     }
                     Member member = message.getGuild().getMember(user);
-                    boolean result = safeAccept(handleUser, new InternalDataForwarder(user, member, mutableReason), message);
-                    handleResult(result, message);
-                }, err -> {
-                    message.getChannel().sendMessage("Failed to retrieve the user: " + err.getMessage()).queue();
-                });
+                    safeAccept(handleUser, new InternalDataForwarder(user, member, mutableReason), message);
+                }, err -> message.getChannel().sendMessage("Failed to retrieve the user: " + err.getMessage()).queue());
 
             } catch (Exception e) {
                 unknownUsageMessage(message);
@@ -170,9 +168,9 @@ public class ModUtils {
                 return;
             }
 
-            boolean result = safeAccept(handleUser, new InternalDataForwarder(member.getUser(), member, reason), message);
-            handleResult(result, message);
+            safeAccept(handleUser, new InternalDataForwarder(member.getUser(), member, reason), message);
         }
+
     }
 
     /**
@@ -184,27 +182,13 @@ public class ModUtils {
     }
 
     /**
-     * Handles the result of a ban, kick, or unban, sends a message that has a timer, and deletes the original message
-     * that triggered the command. This is to keep chat clean.
-     */
-    private static void handleResult(boolean result, Message message) {
-        if (result)
-            message.getChannel().sendMessage("successfully completed the action.").queue(msg -> ExtensionsKt.scheduleDeletion(msg, 10000));
-
-        else
-            message.getChannel().sendMessage("failed to complete the action.").queue(msg -> ExtensionsKt.scheduleDeletion(msg, 10000));
-
-        message.delete().queue();
-    }
-
-    /**
      * Utility method for accepting a Factory2&lt;Boolean, InternalDataForwarder, Message&gt;, and handling
      * any failure.
      */
-    private static boolean safeAccept(Factory2<Boolean, InternalDataForwarder, Message> fun, InternalDataForwarder data, Message message) {
+    private static void safeAccept(BiConsumer<InternalDataForwarder, Message> fun, InternalDataForwarder data, Message message) {
 
         try {
-            return fun.accept(data, message);
+            fun.accept(data, message);
         } catch (Exception e) {
             String errorMessage = e.getMessage();
             /*
@@ -220,56 +204,58 @@ public class ModUtils {
              */
             if (errorMessage.contains("higher position")) {
                 message.getChannel().sendMessage("Seems like I couldn't ban them: `" + errorMessage + "`. My highest role needs to be above" +
-                        " the role of the person you're trying to ban. So if it's i.e. a member, please move my role up" +
+                        " the highest  role of the person you're trying to ban. So if it's i.e. a member, please move my role up" +
                         " before attempting to use this command again.").queue();
-                return false;
+                return;
             }
             message.getChannel().sendMessage("Failed: " + e.getMessage()).queue();
 
             CrashHandler.error(e);
-            return false;
         }
     }
 
     /**
      * Bans a user with a specified reason
      */
-    public static boolean banHandler(InternalDataForwarder data, Message message) {
+    public static void banHandler(InternalDataForwarder data, Message message) {
 
         message.getGuild().getController().ban(data.user, 7, data.reason).queue(
-                v -> audit(message.getGuild(), createEmbedLog("Ban", data, message.getAuthor())),
+                v -> {
+                    audit(message.getGuild(), createEmbedLog("Ban", data, message.getAuthor()));
+                    message.getChannel().sendMessage("Successfully banned them. :snowflake:").queue(msg -> ExtensionsKt.scheduleDeletion(msg, 10000));
+                    message.delete().queue();
+                },
                 err -> message.getChannel().sendMessage("Failed to ban the user: " + err.getMessage()).queue());
 
-        return true;
     }
 
     /**
      * Kicks a user with a specified reason
      */
-    public static boolean kickHandler(InternalDataForwarder data, Message message) {
-        Member member = message.getGuild().getMember(data.user);
-        if (member == null) {
-            message.getChannel().sendMessage("The member is null; I can't kick them.").queue();
-            return false;
-        }
+    public static void kickHandler(InternalDataForwarder data, Message message) {
         if (data.member == null) {
             message.getChannel().sendMessage("I failed to find that member; are they in the server?").queue();
-            return false;
+            return;
         }
-        message.getGuild().getController().kick(data.member, data.reason).queue();
-        audit(message.getGuild(), createEmbedLog("Kick", data, message.getAuthor()));
-        return true;
+        message.getGuild().getController().kick(data.member, data.reason).queue(v0id -> {
+            audit(message.getGuild(), createEmbedLog("Kick", data, message.getAuthor()));
+            message.getChannel().sendMessage("Successfully kicked them. :wolf:").queue(msg -> ExtensionsKt.scheduleDeletion(msg, 10000));
+            message.delete().queue();
+        }, err -> message.getChannel().sendMessage("<@" + message.getAuthor().getIdLong() + ">, I could not kick them: " + err.getMessage()).queue() );
+
     }
 
     /**
      * Note that the API doesn't care about unbanning reasons; only kick and ban has a reason field in it. The reason
      * for unbanning is only posted in chat by the bot.
      */
-    public static boolean unbanHandler(InternalDataForwarder data, Message message) {
-        message.getGuild().getController().unban(data.user).queue();
-        audit(message.getGuild(), createEmbedLog("Unban", data, message.getAuthor()));
-
-        return true;
+    public static void unbanHandler(InternalDataForwarder data, Message message) {
+        message.getGuild().getController().unban(data.user).queue(v0id ->{
+                    audit(message.getGuild(), createEmbedLog("Unban", data, message.getAuthor()));
+                    message.getChannel().sendMessage("Successfully unbanned them. :gay_pride_flag:").queue(msg -> ExtensionsKt.scheduleDeletion(msg, 10000));
+                    message.delete().queue();
+                },
+                err -> message.getChannel().sendMessage("<@" + message.getAuthor().getIdLong() + ">, I could not unban them: " + err.getMessage()).queue());
     }
 
     private static MessageEmbed createEmbedLog(String mode, InternalDataForwarder forwarder, User handler) {
@@ -279,14 +265,6 @@ public class ModUtils {
                 .appendDescription("**Moderator:** " + handler.getName() + "#" + handler.getDiscriminator() + " (UID " + handler.getIdLong() + ")\n")
                 .appendDescription("**Reason:** " + forwarder.reason)
                 .build();
-    }
-
-    private static void audit(Guild guild, String message) {
-        ModGuild modGuild = getInstance().bot.getModerator().getGuild(guild);
-        if (modGuild == null)
-            return;
-
-        modGuild.audit(message);
     }
 
     private static void audit(Guild guild, MessageEmbed message) {
@@ -327,9 +305,6 @@ public class ModUtils {
             return member;
         }
 
-        public long getUid() {
-            return user.getIdLong();
-        }
     }
 
 }

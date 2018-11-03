@@ -80,7 +80,7 @@ class PruneCommand : Command {
 
             return;
         } else if (count <= 1) {
-            message.channel.sendMessage("You have to delete more than one message.")
+            message.channel.sendMessage("You have to delete more than one message.").queue()
             return;
         }
         val deletionCount = count + 1
@@ -111,7 +111,7 @@ class PruneCommand : Command {
                             .build()
                     guild.audit(embed)
                 }, {
-                    message.channel.sendMessage("<@${message.author.idLong}>, I could not delete the messages; an internal error occured: ${it.message}")
+                    message.channel.sendMessage("<@${message.author.idLong}>, I could not delete the messages; an internal error occured: ${it.message}").queue()
                 })
             } catch (e: Exception) {
                 message.channel.sendMessage("Something bad happened when attempting to bulk delete. The exception is: " + e.message).queue()
@@ -120,7 +120,7 @@ class PruneCommand : Command {
             }
 
         }, { err ->
-            message.channel.sendMessage("Failed to bulk delete messages: " + err.message);
+            message.channel.sendMessage("Failed to bulk delete messages: " + err.message).queue();
         });
     }
 
