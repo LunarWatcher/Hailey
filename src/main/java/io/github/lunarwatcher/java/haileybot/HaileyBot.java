@@ -166,8 +166,9 @@ public class HaileyBot implements EventListener {
     }
 
     public void onGuildLeaveEvent(GuildLeaveEvent event) {
+        logger.info("I've left a guild. Nuking config...");
         matcher.clearWatchesForGuild(event.getGuild().getIdLong());
-
+        moderator.removeGuild(event.getGuild());
         presenceManager.refresh();
     }
 

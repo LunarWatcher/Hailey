@@ -105,16 +105,15 @@ class DebugBotIssuesCommand : Command {
                 .append("Ignoring permissions in voice channels; no voice features are currently used.").nl()
                 .append("For this guild, there's a combined number of ${watcher.getWatchesInGuild(message.guild).size} watches for this guild.").nl()
                 .append("In addition, the database currently has ${database.size()} items in it. ").nl().nl()
-        modGuild?.auditChannel?.let {
-            if (it >= 0) {
-                stringBuilder.append("Checking the audit channel (<#$it>) for validity. ")
-                val channel: Channel? = bot.client.getTextChannelById(it)
-                val valid = !(channel?.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->
+        modGuild?.auditChannel?.let {channelId ->
+            if (channelId >= 0) {
+                stringBuilder.append("Checking the audit channel (<#$channelId>) for validity. ")
+                val channel: Channel? = bot.client.getTextChannelById(channelId)
+
+                val valid = channel != null && (channel.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->
                     perms.allowed.contains(Permission.MESSAGE_READ) && perms.allowed.contains(Permission.MESSAGE_WRITE)
-                } ?: run {
-                    stringBuilder.append("This channel has been removed, or I cannot find it. ")
-                    false
-                })
+                } ?: hasReadWrite)
+
                 stringBuilder.append("It is ${if (valid) "valid" else "not valid. I will remove this channel"}")
                         .nl()
 
@@ -123,16 +122,14 @@ class DebugBotIssuesCommand : Command {
                 }
             }
         }
-        modGuild?.welcomeChannel?.let {
-            if (it >= 0) {
-                stringBuilder.append("Checking the greeting channel (<#$it>) for validity. ");
-                val channel: Channel? = bot.client.getTextChannelById(it)
-                val valid = !(channel?.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->
+        modGuild?.welcomeChannel?.let {channelId->
+            if (channelId >= 0) {
+                stringBuilder.append("Checking the greeting channel (<#$channelId>) for validity. ");
+                val channel: Channel? = bot.client.getTextChannelById(channelId)
+                val valid = channel != null && (channel.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->
                     perms.allowed.contains(Permission.MESSAGE_READ) && perms.allowed.contains(Permission.MESSAGE_WRITE)
-                } ?: run {
-                    stringBuilder.append("This channel has been removed, or I cannot find it. ")
-                    false
-                })
+                } ?: hasReadWrite)
+
                 stringBuilder.append("It is ${if (valid) "valid" else "not valid. I will remove this channel"}")
                         .nl()
                 if (!valid) {
@@ -140,16 +137,13 @@ class DebugBotIssuesCommand : Command {
                 }
             }
         }
-        modGuild?.userLeaveChannel?.let {
-            if (it >= 0) {
-                stringBuilder.append("Checking the user leave channel (<#$it>) for validity. ");
-                val channel: Channel? = bot.client.getTextChannelById(it)
-                val valid = !(channel?.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->
+        modGuild?.userLeaveChannel?.let {channelId ->
+            if (channelId >= 0) {
+                stringBuilder.append("Checking the user leave channel (<#$channelId>) for validity. ");
+                val channel: Channel? = bot.client.getTextChannelById(channelId)
+                val valid = channel != null && (channel.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->
                     perms.allowed.contains(Permission.MESSAGE_READ) && perms.allowed.contains(Permission.MESSAGE_WRITE)
-                } ?: run {
-                    stringBuilder.append("This channel has been removed, or I cannot find it. ")
-                    false
-                })
+                } ?: hasReadWrite)
                 stringBuilder.append("It is ${if (valid) "valid" else "not valid. I will remove this channel"}")
                         .nl()
                 if (!valid) {
