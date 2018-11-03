@@ -27,13 +27,13 @@ package io.github.lunarwatcher.java.haileybot.commands;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.watching.RegexMatch;
+import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.entities.Channel;
+import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.Message;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sx.blah.discord.api.IDiscordClient;
-import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IGuild;
-import sx.blah.discord.handle.obj.IMessage;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -131,20 +131,20 @@ public class RegexWatcher {
         return false;
     }
 
-    public void checkMessageForMatch(IMessage message) {
+    public void checkMessageForMatch(Message message) {
         if (stored.size() == 0)
             return;
 
         for (Map.Entry<Long, List<RegexMatch>> entry : stored.entrySet()) {
 
             long user = entry.getKey();
-            if (user == message.getAuthor().getLongID())
+            if (user == message.getAuthor().getIdLong())
                 continue;
             for (RegexMatch match : entry.getValue()) {
                 if (!match.doesLocationMatch(message))
                     continue;
-                if (match.matches(message.getContent())) {
-                    message.getChannel().sendMessage("Regex match. /cc <@" + entry.getKey() + "> ");
+                if (match.matches(message.getContentRaw())) {
+                    message.getChannel().sendMessage("Regex match. /cc <@" + entry.getKey() + "> ").queue();
                 }
             }
         }
@@ -209,7 +209,7 @@ public class RegexWatcher {
 
 
     public void clearWatchesForGuild(long guildId) {
-        IDiscordClient client = bot.getClient();
+        JDA client = bot.getClient();
 
         for (Map.Entry<Long, List<RegexMatch>> entry : stored.entrySet()) {
             List<RegexMatch> matches = entry.getValue();
@@ -219,8 +219,8 @@ public class RegexWatcher {
                         match.getRegex().clear();
                     }
                 } else {
-                    IChannel channel = client.getChannelByID(match.getLocationId());
-                    if (channel.getGuild().getLongID() == guildId) {
+                    Channel channel = client.getTextChannelById(match.getLocationId());
+                    if (channel.getGuild().getIdLong() == guildId) {
                         match.getRegex().clear();
                     }
                 }
@@ -239,8 +239,8 @@ public class RegexWatcher {
                     match.getRegex().clear();
                 }
             } else {
-                IChannel channel = bot.getClient().getChannelByID(match.getLocationId());
-                if (channel.getGuild().getLongID() == guildId) {
+                Channel channel = bot.getClient().getTextChannelById(match.getLocationId());
+                if (channel.getGuild().getIdLong() == guildId) {
                     match.getRegex().clear();
                 }
             }
@@ -270,19 +270,19 @@ public class RegexWatcher {
     }
 
     @NotNull
-    public Map<Long, List<RegexMatch>> getWatchesInGuild(@NotNull IGuild guild) {
+    public Map<Long, List<RegexMatch>> getWatchesInGuild(@NotNull Guild guild) {
         Map<Long, List<RegexMatch>> watches = new HashMap<>();
 
-        stored.forEach ((key, val) -> {
-            List<RegexMatch> matches = val.stream().filter (it -> {
-                if(it.getGuild()){
-                    return guild.getLongID() == it.getLocationId();
-                }else {
-                    IChannel channel = bot.getClient().getChannelByID(it.getLocationId());
-                    return channel != null && channel.getGuild().getLongID() == it.getLocationId();
+        stored.forEach((key, val) -> {
+            List<RegexMatch> matches = val.stream().filter(it -> {
+                if (it.getGuild()) {
+                    return guild.getIdLong() == it.getLocationId();
+                } else {
+                    Channel channel = bot.getClient().getTextChannelById(it.getLocationId());
+                    return channel != null && channel.getGuild().getIdLong() == it.getLocationId();
                 }
             }).collect(Collectors.toList());
-            if(matches != null && !matches.isEmpty()){
+            if (matches != null && !matches.isEmpty()) {
                 watches.put(key, matches);
             }
         });

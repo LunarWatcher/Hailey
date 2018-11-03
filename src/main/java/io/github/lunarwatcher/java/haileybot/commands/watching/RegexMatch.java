@@ -25,10 +25,10 @@
 
 package io.github.lunarwatcher.java.haileybot.commands.watching;
 
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.PrivateChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sx.blah.discord.handle.impl.obj.PrivateChannel;
-import sx.blah.discord.handle.obj.IMessage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,14 +62,14 @@ public class RegexMatch {
         patternify();
     }
 
-    public boolean doesLocationMatch(IMessage message) {
+    public boolean doesLocationMatch(Message message) {
         if (message.getChannel() instanceof PrivateChannel || message.getGuild() == null) {
             logger.debug("Ignoring matching. Channel is a: " + message.getChannel().getClass().getName());
             return false;
         }
         long id;
-        if (guild) id = message.getGuild().getLongID();
-        else id = message.getChannel().getLongID();
+        if (guild) id = message.getGuild().getIdLong();
+        else id = message.getChannel().getIdLong();
 
         return locationId == id;
     }

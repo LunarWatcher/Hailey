@@ -25,22 +25,25 @@
 
 package io.github.lunarwatcher.java.haileybot.mod;
 
+
+import net.dv8tion.jda.core.entities.Member;
 import org.jetbrains.annotations.NotNull;
-import sx.blah.discord.handle.obj.IUser;
 
 public class AutoBannedUser {
-    private final @NotNull IUser bannedUser;
+    private final @NotNull Member bannedUser;
     private final @NotNull AutoBanReasons internalReason;
 
-    public AutoBannedUser(@NotNull IUser bannedUser, @NotNull AutoBanReasons internalReason) {
+    public AutoBannedUser(@NotNull Member bannedUser, @NotNull AutoBanReasons internalReason) {
         this.bannedUser = bannedUser;
         this.internalReason = internalReason;
     }
 
-    public IUser getBannedUser() {
+    @NotNull
+    public Member getBannedUser() {
         return bannedUser;
     }
 
+    @NotNull
     public AutoBanReasons getBanReason() {
         return internalReason;
     }

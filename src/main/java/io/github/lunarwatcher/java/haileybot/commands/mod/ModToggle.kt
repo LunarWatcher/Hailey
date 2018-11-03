@@ -28,11 +28,11 @@ package io.github.lunarwatcher.java.haileybot.commands.mod
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
+import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.PrivateChannel
 import org.jetbrains.annotations.NotNull
-import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.handle.obj.IPrivateChannel
-import sx.blah.discord.handle.obj.Permissions
-import sx.blah.discord.util.RequestBuffer
+
 
 class EnableModCommand : Command {
     override fun getName(): String = "enableMod"
@@ -40,23 +40,21 @@ class EnableModCommand : Command {
     override fun getHelp(): String = "Just run the command. You need to be an administrator, the owner of the server, or a bot admin to use it"
     override fun getDescription(): String = "Enables moderation features for this guild."
 
-    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
-        if (message.channel is IPrivateChannel) {
-            RequestBuffer.request {
-                message.channel.sendMessage("This is a DM channel. No mod tools available.")
-            };
+    override fun onMessage(bot: HaileyBot, message: @NotNull Message, rawMessage: String, commandName: String) {
+        if (message.channel is PrivateChannel) {
+            message.channel.sendMessage("This is a DM channel. No mod tools available.").queue();
             return;
         }
-        if (!message.author.getPermissionsForGuild(message.guild).contains(Permissions.ADMINISTRATOR) &&
-                !bot.botAdmins.contains(message.author.longID) &&
-                message.author.longID != message.guild.ownerLongID) {
-            message.reply("You need to be a bot admin or have the administrator permission to do that.")
+        if (!message.member.permissions.contains(Permission.ADMINISTRATOR) &&
+                !bot.botAdmins.contains(message.author.idLong) &&
+                message.author.idLong != message.guild.ownerIdLong) {
+            message.channel.sendMessage("You need to be a bot admin or have the administrator permission to do that.").queue();
             return
         }
         if (bot.moderator.registerGuild(message.guild)) {
-            message.reply("Added guild to the list of moderation guilds")
+            message.channel.sendMessage("Added guild to the list of moderation guilds").queue();
         } else {
-            message.reply("Already enabled.")
+            message.channel.sendMessage("Already enabled.").queue();
         }
     }
 
@@ -68,22 +66,20 @@ class DisableModCommand : Command {
     override fun getHelp(): String = "Just run the command. You need to be an administrator, the owner of the server, or a bot admin to use it"
     override fun getDescription(): String = "Disables moderation features for this guild."
 
-    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
-        if (message.channel is IPrivateChannel) {
-            RequestBuffer.request {
-                message.channel.sendMessage("This is a DM channel. No mod tools available.")
-            };
+    override fun onMessage(bot: HaileyBot, message: @NotNull Message, rawMessage: String, commandName: String) {
+        if (message.channel is PrivateChannel) {
+            message.channel.sendMessage("This is a DM channel. No mod tools available.").queue();
             return;
         }
 
         if (!message.canUserRunAdminCommand(bot)) {
-            message.reply("You need to be a bot admin or have the administrator permission to do that.")
+            message.channel.sendMessage("You need to be a bot admin or have the administrator permission to do that.").queue();
             return
         }
         if (bot.moderator.removeGuild(message.guild)) {
-            message.reply("Removed guild to the list of moderation guilds")
+            message.channel.sendMessage("Removed guild to the list of moderation guilds").queue();
         } else {
-            message.reply("Already disabled.")
+            message.channel.sendMessage("Already disabled.").queue();
         }
     }
 

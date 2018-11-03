@@ -28,9 +28,8 @@ package io.github.lunarwatcher.java.haileybot.commands.mod;
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;
 import io.github.lunarwatcher.java.haileybot.commands.Moderator;
-import org.jetbrains.annotations.NotNull;
+import net.dv8tion.jda.core.entities.Message;
 import org.jetbrains.annotations.Nullable;
-import sx.blah.discord.handle.obj.IMessage;
 
 import java.util.List;
 
@@ -60,8 +59,8 @@ public class ModFeaturesCommand implements Command {
     }
 
     @Override
-    public void onMessage(HaileyBot bot, @NotNull IMessage message, String rawMessage, String commandName) {
+    public void onMessage(HaileyBot bot, Message message, String rawMessage, String commandName) {
 
-        message.getChannel().sendMessage(Moderator.getFeatures());
+        message.getChannel().sendMessage(Moderator.getFeatures()).queue();
     }
 }

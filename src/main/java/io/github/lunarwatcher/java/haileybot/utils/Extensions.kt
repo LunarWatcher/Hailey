@@ -27,50 +27,51 @@ package io.github.lunarwatcher.java.haileybot.utils
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.mod.ModGuild
-import org.apache.commons.lang3.StringUtils
-import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.handle.obj.Permissions
+import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.User
 import java.text.MessageFormat
 import java.util.*
 
 private val random = Random(System.currentTimeMillis())
 
 fun <T> List<T>.randomItem(): T? = if (this.isEmpty()) null else this[random.nextInt(this.size)];
+fun <T> List<T>.randomItem(fallback: T): T = if (this.isEmpty()) fallback else this[random.nextInt(this.size)];
 
 fun String.messageFormat(vararg objects: Any): String = MessageFormat.format(this.replace("'", "''"), *objects)
 
-fun IMessage.canUserRunAdminCommand(bot: HaileyBot): Boolean =
-        author.getPermissionsForGuild(guild).contains(Permissions.ADMINISTRATOR) ||
+fun Message.canUserRunAdminCommand(bot: HaileyBot): Boolean =
+        member.hasPermission(Permission.ADMINISTRATOR) ||
                 this.canUserRunBotAdminCommand(bot) ||
-                author.longID == guild.ownerLongID
+                author.idLong == guild.ownerIdLong
 
-fun IMessage.canUserRunAdminCommand(bot: HaileyBot, permission: Permissions): Boolean = canUserRunAdminCommand(bot) || author.getPermissionsForGuild(guild).contains(permission)
+fun Message.canUserRunAdminCommand(bot: HaileyBot, permission: Permission): Boolean = canUserRunAdminCommand(bot) || member.hasPermission(permission)
 
-fun IMessage.canUserRunAdminCommand(bot: HaileyBot, permissions: Array<Permissions>): Boolean = permissions.map { this.canUserRunAdminCommand(bot, it) }.any { it }
+fun Message.canUserRunAdminCommand(bot: HaileyBot, permissions: Array<Permission>): Boolean = permissions.map { this.canUserRunAdminCommand(bot, it) }.any { it }
 
-fun IMessage.canUserRunBotAdminCommand(bot: HaileyBot): Boolean = bot.botAdmins.contains(author.longID)
-fun IMessage.getModGuild(bot: HaileyBot): ModGuild? = bot.moderator.getGuild(this.guild.longID)
+fun Message.canUserRunBotAdminCommand(bot: HaileyBot): Boolean = bot.botAdmins.contains(author.idLong)
+fun Message.getModGuild(bot: HaileyBot): ModGuild? = bot.moderator.getGuild(this.guild.idLong)
 
-fun IMessage.scheduleDeletion(time: Long) {
+fun Message.scheduleDeletion(time: Long) {
     Thread() {
         try {
             Thread.sleep(time);
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
-        if (!this.isDeleted)
-            this.delete()
+        this.delete()
     }.start()
 }
 
 fun StringBuilder.newLine() = this.nl()
-fun StringBuilder.nl() = this.append("\n");
+fun StringBuilder.nl(): StringBuilder = this.append("\n");
 
 fun StringBuilder.newLines(count: Int) = this.nl(count);
-fun StringBuilder.nl(count: Int) = this.append(StringUtils.repeat("\n", if (count <= 0) throw IllegalArgumentException() else count))
+fun StringBuilder.nl(count: Int): StringBuilder = this.append("\n".repeat(if (count <= 0) throw IllegalArgumentException() else count))
 
 fun StringBuilder.appendLine(data: String) = this.appendln(data)
-fun StringBuilder.appendln(data: String) = this.append(data).nl()
+fun StringBuilder.appendln(data: String): StringBuilder = this.append(data).nl()
 
 fun String.fitDiscordLengthRequirements(allowedLen: Int): List<String> {
     if (this.isEmpty() || this.isBlank() || this.equals("``````"))
@@ -101,4 +102,16 @@ fun String.fitDiscordLengthRequirements(allowedLen: Int): List<String> {
     }
 
     return result;
+}
+
+fun User.hasPermissions(guild: Guild, any: Boolean, vararg permissions: Permission): Boolean {
+    val member = guild.getMember(this) ?: return false
+    if (any) {
+        for (permission in permissions)
+            if (member.hasPermission(permission))
+                return true;
+        return false;
+    } else {
+        return member.hasPermission(*permissions)
+    }
 }

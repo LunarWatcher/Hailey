@@ -69,11 +69,11 @@ public class JacksonParser {
 
     public void saveData(Map<String, Object> data, BufferedWriter writer, boolean prettyPrint) throws IOException {
         JsonGenerator generator = factory.createGenerator(writer);
-        if(prettyPrint){
+        if (prettyPrint) {
             generator.setPrettyPrinter(new DefaultPrettyPrinter());
         }
         generator.writeStartObject();
-        for (Map.Entry<String, Object> entry : data.entrySet()){
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
             generator.writeFieldName(entry.getKey());
             packTree(generator, entry.getValue());
         }
@@ -82,7 +82,7 @@ public class JacksonParser {
         generator.close();
     }
 
-    private void packTree(JsonGenerator generator, Object value) throws IOException{
+    private void packTree(JsonGenerator generator, Object value) throws IOException {
         if (value instanceof Map) {
             Map<?, ?> map = (Map<?, ?>) value;
             generator.writeStartObject();
@@ -97,7 +97,7 @@ public class JacksonParser {
 
             generator.writeEndObject();
             return;
-        }else if (value instanceof Collection) {
+        } else if (value instanceof Collection) {
             Collection<?> list = (Collection<?>) value;
             generator.writeStartArray();
 
@@ -107,25 +107,25 @@ public class JacksonParser {
 
             generator.writeEndArray();
             return;
-        }else if (value instanceof Integer) {
+        } else if (value instanceof Integer) {
             generator.writeNumber((Integer) value);
             return;
-        }else if (value instanceof Long) {
+        } else if (value instanceof Long) {
             generator.writeNumber((Long) value);
             return;
-        }else if(value instanceof Boolean) {
+        } else if (value instanceof Boolean) {
             generator.writeBoolean((Boolean) value);
             return;
-        }else if (value == null) {
+        } else if (value == null) {
             generator.writeNull();
             return;
-        }else if(value instanceof Double){
+        } else if (value instanceof Double) {
             generator.writeNumber((Double) value);
             return;
-        }else if(value instanceof Float){
+        } else if (value instanceof Float) {
             generator.writeNumber((Float) value);
             return;
-        }else if(value instanceof Serializable){
+        } else if (value instanceof Serializable) {
             generator.writeObject(value);
             return;
         }
@@ -134,40 +134,40 @@ public class JacksonParser {
 
     }
 
-    private Map<String, Object> unpackTree(JsonNode root){
-        if(root == null)
+    private Map<String, Object> unpackTree(JsonNode root) {
+        if (root == null)
             return new HashMap<>();
 
         Iterator<String> it = root.fieldNames();
         Map<String, Object> cache = new HashMap<>();
 
-        if(it == null){
+        if (it == null) {
             return cache;
         }
 
-        while(it.hasNext()){
+        while (it.hasNext()) {
             String fieldName = it.next();
             JsonNode node = root.get(fieldName);
             Object value = parseNode(node);
 
-            if(fieldName != null && value != null)
+            if (fieldName != null && value != null)
                 cache.put(fieldName, value);
         }
 
         return cache;
     }
 
-    private Object parseNode(JsonNode node){
-        if(node.isArray()){
+    private Object parseNode(JsonNode node) {
+        if (node.isArray()) {
             List<Object> list = new ArrayList<>();
             Iterator<JsonNode> it = node.elements();
-            while(it.hasNext()){
+            while (it.hasNext()) {
                 JsonNode item = it.next();
                 Object parsedItem = parseNode(item);
                 list.add(parsedItem);
             }
             return list;
-        }else if(node.isObject()) {
+        } else if (node.isObject()) {
             Map<String, Object> map = new HashMap<>();
             Iterator<String> fieldNames = node.fieldNames();
             while (fieldNames.hasNext()) {
@@ -177,19 +177,19 @@ public class JacksonParser {
                 map.put(fieldName, parsed);
             }
             return map;
-        }else if(node.isInt())
+        } else if (node.isInt())
             return node.asInt();
-        else if(node.isLong())
+        else if (node.isLong())
             return node.asLong();
-        else if(node.isDouble())
+        else if (node.isDouble())
             return node.doubleValue();
-        else if(node.isFloat())
+        else if (node.isFloat())
             return node.floatValue();
-        else if(node.isBigDecimal())
+        else if (node.isBigDecimal())
             return new BigDecimal(node.asText());
-        else if(node.isBigInteger())
+        else if (node.isBigInteger())
             return node.bigIntegerValue();
-        else if(node.isBoolean())
+        else if (node.isBoolean())
             return node.asBoolean();
 
         return node.asText();
@@ -198,7 +198,8 @@ public class JacksonParser {
     public static JacksonParser getJsonParser() {
         return jsonParser;
     }
-    public JsonFactory getFactory(){
+
+    public JsonFactory getFactory() {
         return factory;
     }
 

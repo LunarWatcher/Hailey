@@ -27,10 +27,8 @@ package io.github.lunarwatcher.java.haileybot.commands.bot;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;
-import org.jetbrains.annotations.NotNull;
+import net.dv8tion.jda.core.entities.Message;
 import org.jetbrains.annotations.Nullable;
-import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.util.RequestBuffer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -58,9 +56,8 @@ public class JoinCommand implements Command {
     }
 
     @Override
-    public void onMessage(HaileyBot bot, @NotNull IMessage message, String rawMessage, String commandName) {
-        RequestBuffer.request(() -> {
-            message.getChannel().sendMessage("Click this link to authorize me: https://discordapp.com/oauth2/authorize?client_id=" + message.getClient().getApplicationClientID() + "&scope=bot&permissions=8");
-        });
+    public void onMessage(HaileyBot bot, Message message, String rawMessage, String commandName) {
+        message.getChannel().sendMessage("Click this link to authorize me: https://discordapp.com/oauth2/authorize?client_id=" + message.getJDA().getSelfUser().getIdLong() + "&scope=bot&permissions=8").queue();
+
     }
 }

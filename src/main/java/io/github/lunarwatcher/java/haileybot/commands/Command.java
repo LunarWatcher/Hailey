@@ -26,9 +26,8 @@
 package io.github.lunarwatcher.java.haileybot.commands;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
-import org.jetbrains.annotations.NotNull;
+import net.dv8tion.jda.core.entities.Message;
 import org.jetbrains.annotations.Nullable;
-import sx.blah.discord.handle.obj.IMessage;
 
 import java.util.List;
 
@@ -44,7 +43,7 @@ public interface Command {
     @Nullable
     String getDescription();
 
-    void onMessage(HaileyBot bot, @NotNull IMessage message, String rawMessage, String commandName);
+    void onMessage(HaileyBot bot, Message message, String rawMessage, String commandName);
 
     default boolean matchesCommand(String commandName) {
         return getName().equalsIgnoreCase(commandName) || (getAliases() != null && getAliases().stream().anyMatch(commandName::equalsIgnoreCase));

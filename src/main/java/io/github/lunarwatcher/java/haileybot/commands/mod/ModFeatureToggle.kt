@@ -34,11 +34,10 @@ import io.github.lunarwatcher.java.haileybot.data.Constants
 import io.github.lunarwatcher.java.haileybot.mod.ModGuild
 import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.PrivateChannel
 import org.jetbrains.annotations.NotNull
 import org.slf4j.LoggerFactory
-import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.handle.obj.IPrivateChannel
-import sx.blah.discord.util.RequestBuffer
 
 /**
  * The primary feature toggle command. It's accessed by the
@@ -63,36 +62,28 @@ class ModFeatureToggle : Command {
         return "Toggles moderation features"
     }
 
-    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
-        if (message.channel is IPrivateChannel) {
-            RequestBuffer.request {
-                message.channel.sendMessage("This is a DM channel. No mod tools available.")
-            };
+    override fun onMessage(bot: HaileyBot, message: @NotNull Message, rawMessage: String, commandName: String) {
+        if (message.channel is PrivateChannel) {
+            message.channel.sendMessage("This is a DM channel. No mod tools available.").queue();
             return;
         }
         if (!message.canUserRunAdminCommand(bot)) {
-            message.reply("You need to be a bot admin or have the administrator permission to do that.")
+            message.getChannel().sendMessage("You need to be a bot admin or have the administrator permission to do that.").queue();
             return
         }
         if (rawMessage.isEmpty()) {
-            RequestBuffer.request {
-                message.channel.sendMessage("You have to tell me which feature you want to toggle.")
-            }
+            message.channel.sendMessage("You have to tell me which feature you want to toggle.").queue()
             return
         }
 
         if (!bot.moderator.isGuildEnabled(message.guild)) {
-            RequestBuffer.request {
-                message.channel.sendMessage("Guild moderation not enabled. Please run `" + Constants.TRIGGER + "enableMod` to enable it.")
-            }
+            message.channel.sendMessage("Guild moderation not enabled. Please run `" + Constants.TRIGGER + "enableMod` to enable it.").queue()
             return
         }
 
         val splitBySpace = rawMessage.split(" ".toRegex(), 2).toTypedArray()
         if (splitBySpace.size != 2) {
-            RequestBuffer.request {
-                message.channel.sendMessage("You need to arguments to run this command")
-            }
+            message.channel.sendMessage("You need to arguments to run this command").queue()
             return
         }
         val feature = splitBySpace[0].trim()
@@ -101,32 +92,22 @@ class ModFeatureToggle : Command {
 
         logger.info("**Enabling features**")
 
-        val guild = bot.moderator.getGuild(message.guild.longID)!!
+        val guild = bot.moderator.getGuild(message.guild.idLong)!!
 
         when (feature.toLowerCase()) {
             INVITE_FEATURE -> try {
                 val toggle = boolean(guild, INVITE_FEATURE, mode)
-                RequestBuffer.request {
-                    message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " invite spam protection")
-                }
+                message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " invite spam protection").queue()
             } catch (e: ClassCastException) {
-                RequestBuffer.request {
-                    message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled)")
-                }
+                message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled)").queue()
             } catch (e: NullPointerException) {
-                RequestBuffer.request {
-                    message.channel.sendMessage("Caught an NPE.")
-                }
+                message.channel.sendMessage("Caught an NPE.").queue()
             }
             BAN_MONITORING_FEATURE -> try {
                 val toggle = boolean(guild, BAN_MONITORING_FEATURE, mode);
-                RequestBuffer.request {
-                    message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " ban monitoring.")
-                };
+                message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " ban monitoring.").queue();
             } catch (e: ClassCastException) {
-                RequestBuffer.request {
-                    message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled).")
-                };
+                message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled).").queue();
             }
             AUDIT_FEATURE -> try {
 
@@ -135,139 +116,95 @@ class ModFeatureToggle : Command {
                 } else mode.toLong()
                 if (channel == -2L) {
                     // -2 is triggered by failed parsing; -1 is used for no channel. That's why only -2 is handled here.
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Failed to parse channel.")
-                    };
+                    message.channel.sendMessage("Failed to parse channel.").queue();
                     return;
                 }
                 if (channel != -1L)
-                    message.guild.getChannelByID(channel)
-                            .sendMessage("Audit channel set.");
+                    message.guild.getTextChannelById(channel)
+                            .sendMessage("Audit channel set.").queue();
 
                 guild.set(AUDIT_FEATURE, channel)
                 if (channel != -1L)
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Successfully set the audit channel.")
-                    };
+                    message.channel.sendMessage("Successfully set the audit channel.").queue();
                 else
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Removed the audit channel.")
-                    };
+                    message.channel.sendMessage("Removed the audit channel.").queue();
 
             } catch (e: ClassCastException) {
-                RequestBuffer.request {
-                    message.channel.sendMessage("Failed to convert channel to a long ID.")
-                }
+                message.channel.sendMessage("Failed to convert channel to a long ID.").queue()
             }
             WELCOME_LOGGING -> try {
                 val channel = if (mode == "null") -1 else if (mode.toLongOrNull() == null) {
                     ConversionUtils.parseChannel(mode);
                 } else mode.toLong()
                 if (channel == -2L) {
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Failed to parse channel.")
-                    };
+                    message.channel.sendMessage("Failed to parse channel.").queue();
                     return;
                 }
                 if (channel != -1L)
-                    message.guild.getChannelByID(channel)
-                            .sendMessage("Welcome channel set to <#$channel>.");
+                    message.guild.getTextChannelById(channel)
+                            .sendMessage("Welcome channel set to <#$channel>.").queue();
                 guild.set(WELCOME_LOGGING, channel)
                 if (channel != -1L)
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Successfully set the welcome channel.")
-                    };
-                RequestBuffer.request {
-                    message.channel.sendMessage("Removed the welcome channel.")
-                };
+                    message.channel.sendMessage("Successfully set the welcome channel.").queue();
+                message.channel.sendMessage("Removed the welcome channel.").queue();
             } catch (e: ClassCastException) {
-                RequestBuffer.request {
-                    message.channel.sendMessage("Failed to convert channel to a long ID.")
-                }
+                message.channel.sendMessage("Failed to convert channel to a long ID.").queue()
             }
             LEAVE_LOGGING -> try {
                 val channel = if (mode == "null") -1 else if (mode.toLongOrNull() == null) {
                     ConversionUtils.parseChannel(mode);
                 } else mode.toLong()
                 if (channel == -2L) {
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Failed to parse channel.")
-                    };
+                    message.channel.sendMessage("Failed to parse channel.").queue();
                     return;
                 }
                 if (channel != -1L)
-                    message.guild.getChannelByID(channel)
-                            .sendMessage("Leave channel set to <#$channel>.");
+                    message.guild.getTextChannelById(channel)
+                            .sendMessage("Leave channel set to <#$channel>.").queue();
                 guild.set(LEAVE_LOGGING, channel)
                 if (channel != -1L)
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Successfully set the leave message channel. Please run the `set` command using leave_message to specify a custom message. <user> is a placeholder if you want to add the user's username to the message")
-                    };
-                RequestBuffer.request {
-                    message.channel.sendMessage("Removed the leave logging channel.")
-                };
+                    message.channel.sendMessage("Successfully set the leave message channel. Please run the `set` command using leave_message to specify a custom message. <user> is a placeholder if you want to add the user's username to the message").queue();
+                message.channel.sendMessage("Removed the leave logging channel.").queue();
             } catch (e: ClassCastException) {
-                RequestBuffer.request {
-                    message.channel.sendMessage("Failed to convert channel to a long ID.")
-                }
+                message.channel.sendMessage("Failed to convert channel to a long ID.").queue()
             }
             JOIN_MESSAGE -> try {
 
                 guild.set(JOIN_MESSAGE, mode)
                 if (!mode.equals("null", true))
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Set join message to: \"$mode\"")
-                    }
+                    message.channel.sendMessage("Set join message to: \"$mode\"").queue()
                 else
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Removed the join message.")
-                    };
+                    message.channel.sendMessage("Removed the join message.").queue();
 
             } catch (e: Exception) {
                 CrashHandler.error(e);
-                RequestBuffer.request {
-                    message.channel.sendMessage("Something went wrong. Check the logs.")
-                };
+                message.channel.sendMessage("Something went wrong. Check the logs.").queue();
             }
 
             LEAVE_MESSAGE -> try {
 
                 guild.set(LEAVE_MESSAGE, mode)
                 if (!mode.equals("null", true))
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Set leave message to: \"$mode\"")
-                    }
+                    message.channel.sendMessage("Set leave message to: \"$mode\"").queue()
                 else
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Removed the leave message.")
-                    };
+                    message.channel.sendMessage("Removed the leave message.").queue();
             } catch (e: Exception) {
                 CrashHandler.error(e);
-                RequestBuffer.request {
-                    message.channel.sendMessage("Something went wrong. Check the logs.")
-                };
+                message.channel.sendMessage("Something went wrong. Check the logs.").queue();
             }
 
             JOIN_DM -> try {
                 guild.set(JOIN_DM, mode)
                 if (!mode.equals("null", true))
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Set join dm to: \"$mode\"")
-                    }
+                    message.channel.sendMessage("Set join dm to: \"$mode\"").queue()
                 else
-                    RequestBuffer.request {
-                        message.channel.sendMessage("Removed the join dm.")
-                    };
+                    message.channel.sendMessage("Removed the join dm.").queue();
             } catch (e: Exception) {
                 CrashHandler.error(e);
-                RequestBuffer.request {
-                    message.channel.sendMessage("Something went wrong. Check the logs.")
-                };
+                message.channel.sendMessage("Something went wrong. Check the logs.").queue();
             }
             else ->
-                RequestBuffer.request {
-                    message.channel.sendMessage("Could not find the feature `$feature` (note: checks are case-insensitive)")
-                }
+                message.channel.sendMessage("Could not find the feature `$feature` (note: checks are case-insensitive)").queue()
         }
     }
 

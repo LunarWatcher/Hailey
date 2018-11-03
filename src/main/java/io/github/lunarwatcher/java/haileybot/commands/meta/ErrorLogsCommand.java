@@ -28,9 +28,8 @@ package io.github.lunarwatcher.java.haileybot.commands.meta;
 import io.github.lunarwatcher.java.haileybot.CrashHandler;
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;
-import org.jetbrains.annotations.NotNull;
+import net.dv8tion.jda.core.entities.Message;
 import org.jetbrains.annotations.Nullable;
-import sx.blah.discord.handle.obj.IMessage;
 
 import java.util.List;
 
@@ -56,22 +55,23 @@ public class ErrorLogsCommand implements Command {
     }
 
     @Override
-    public void onMessage(HaileyBot bot, @NotNull IMessage message, String rawMessage, String commandName) {
-        if (!bot.getBotAdmins().contains(message.getAuthor().getLongID())) {
-            message.reply("no. Bot admins only.");
+    public void onMessage(HaileyBot bot, Message message, String rawMessage, String commandName) {
+        if (!bot.getBotAdmins().contains(message.getAuthor().getIdLong())) {
+            message.getChannel().sendMessage("no. Bot admins only.").queue();
+
             return;
         }
 
         List<String> errorHandler = CrashHandler.splitErrors();
         CrashHandler.clear();
         if (errorHandler.size() == 0) {
-            message.getChannel().sendMessage("No logs.");
+            message.getChannel().sendMessage("No logs.").queue();
             return;
         }
         for (String error : errorHandler) {
             if (error.length() == 0)
                 continue;
-            message.getChannel().sendMessage(error);
+            message.getChannel().sendMessage(error).queue();
         }
 
     }

@@ -48,11 +48,11 @@ import io.github.lunarwatcher.java.haileybot.commands.watching.ListWatches;
 import io.github.lunarwatcher.java.haileybot.commands.watching.UnwatchCommand;
 import io.github.lunarwatcher.java.haileybot.commands.watching.WatchCommand;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
+import net.dv8tion.jda.core.Permission;
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.PrivateChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.handle.obj.IPrivateChannel;
-import sx.blah.discord.handle.obj.Permissions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +73,7 @@ public class Commands {
 
     public Commands(HaileyBot bot) {
         this.bot = bot;
-        ping = Pattern.compile("<@!?" + bot.getClient().getOurUser().getLongID() + ">");
+        ping = Pattern.compile("<@!?" + bot.getClient().getSelfUser().getIdLong() + ">");
 
         moderationCommands = new ArrayList<>();
         funCommands = new ArrayList<>();
@@ -100,9 +100,9 @@ public class Commands {
         moderationCommands.add(new SetBanMonitoringFeature(modFeatureToggle));
         moderationCommands.add(new PruneCommand());
 
-        moderationCommands.add(new ModerationCommand("ban", null, "Bans a user (@ mention or UID)", null, Permissions.BAN, ModUtils::banHandler));
-        moderationCommands.add(new ModerationCommand("unban", null, "Unbans a user (requires a UID)", null, Permissions.BAN, ModUtils::unbanHandler));
-        moderationCommands.add(new ModerationCommand("kick", null, "Kicks a user", null, Permissions.KICK, ModUtils::kickHandler));
+        moderationCommands.add(new ModerationCommand("ban", null, "Bans a user (@ mention or UID)", null, Permission.BAN_MEMBERS, ModUtils::banHandler));
+        moderationCommands.add(new ModerationCommand("unban", null, "Unbans a user (requires a UID)", null, Permission.BAN_MEMBERS, ModUtils::unbanHandler));
+        moderationCommands.add(new ModerationCommand("kick", null, "Kicks a user", null, Permission.KICK_MEMBERS, ModUtils::kickHandler));
         moderationCommands.add(new ListWatches());
 
         // Fun commands
@@ -161,17 +161,17 @@ public class Commands {
         logger.info("Successfully loaded the commands");
     }
 
-    public void onCommand(IMessage message) {
+    public void onCommand(Message message) {
         if (!triggered(message))
             return;
 
         if (message.getAuthor().isBot())
             return;
-        String rawMessage = stripTrigger(message.getContent());
-        if (message.getChannel() instanceof IPrivateChannel)
-            logMessage(message.getChannel().getName(), message.getChannel().getLongID(), message.getAuthor().getName(), message.getAuthor().getLongID(), message.getContent());
+        String rawMessage = stripTrigger(message.getContentRaw());
+        if (message.getChannel() instanceof PrivateChannel)
+            logMessage(message.getChannel().getName(), message.getChannel().getIdLong(), message.getAuthor().getName(), message.getAuthor().getIdLong(), message.getContentRaw());
         else
-            logMessage(message.getGuild().getName(), message.getGuild().getLongID(), message.getAuthor().getName(), message.getAuthor().getLongID(), message.getContent());
+            logMessage(message.getGuild().getName(), message.getGuild().getIdLong(), message.getAuthor().getName(), message.getAuthor().getIdLong(), message.getContentRaw());
 
         String commandName = rawMessage.split(" ")[0].trim();
         commandSets
@@ -179,7 +179,7 @@ public class Commands {
                     list.forEach((command) -> {
                         if (command.matchesCommand(commandName)) {
                             logger.info("Running onMessage for " + command.getClass().getSimpleName());
-                            command.onMessage(bot, message, stripTriggerAndName(message.getContent()), commandName);
+                            command.onMessage(bot, message, stripTriggerAndName(message.getContentRaw()), commandName);
                         }
                     });
                 });
@@ -221,8 +221,8 @@ public class Commands {
         return matcher.replaceFirst("").trim();
     }
 
-    private boolean triggered(IMessage message) {
-        String content = message.getContent().split(" ", 2)[0];
+    private boolean triggered(Message message) {
+        String content = message.getContentRaw().split(" ", 2)[0];
         return content.toLowerCase().startsWith(Constants.TRIGGER) || (Constants.ALLOW_MENTION_TRIGGER && ping.matcher(content).find());
     }
 

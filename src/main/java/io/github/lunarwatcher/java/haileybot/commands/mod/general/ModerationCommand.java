@@ -29,10 +29,10 @@ import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;
 import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
 import io.github.lunarwatcher.java.haileybot.utils.Factory2;
+import net.dv8tion.jda.core.Permission;
+import net.dv8tion.jda.core.entities.Message;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.handle.obj.Permissions;
 
 import java.util.List;
 
@@ -47,13 +47,13 @@ public class ModerationCommand implements Command {
     private String description;
 
     @NotNull
-    private Permissions permission;
+    private Permission permission;
 
     @NotNull
-    private Factory2<Boolean, ModUtils.InternalDataForwarder, IMessage> handler;
+    private Factory2<Boolean, ModUtils.InternalDataForwarder, Message> handler;
 
     public ModerationCommand(@NotNull String name, @Nullable List<String> aliases, @Nullable String help,
-                             @Nullable String description, @NotNull Permissions permission, @NotNull Factory2<Boolean, ModUtils.InternalDataForwarder, IMessage> handler) {
+                             @Nullable String description, @NotNull Permission permission, @NotNull Factory2<Boolean, ModUtils.InternalDataForwarder, Message> handler) {
         this.name = name;
         this.aliases = aliases;
         this.help = help;
@@ -87,7 +87,7 @@ public class ModerationCommand implements Command {
     }
 
     @Override
-    public void onMessage(HaileyBot bot, @NotNull IMessage message, String rawMessage, String commandName) {
+    public void onMessage(HaileyBot bot, Message message, String rawMessage, String commandName) {
         ModUtils.onMessageRun(message, rawMessage, permission, handler);
     }
 

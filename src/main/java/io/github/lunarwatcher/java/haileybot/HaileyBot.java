@@ -35,27 +35,28 @@ import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
 import io.github.lunarwatcher.java.haileybot.data.Config;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
 import io.github.lunarwatcher.java.haileybot.data.Database;
+import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.entities.Role;
+import net.dv8tion.jda.core.entities.SelfUser;
+import net.dv8tion.jda.core.events.DisconnectEvent;
+import net.dv8tion.jda.core.events.Event;
+import net.dv8tion.jda.core.events.ReadyEvent;
+import net.dv8tion.jda.core.events.guild.GuildBanEvent;
+import net.dv8tion.jda.core.events.guild.GuildJoinEvent;
+import net.dv8tion.jda.core.events.guild.GuildLeaveEvent;
+import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent;
+import net.dv8tion.jda.core.events.message.MessageDeleteEvent;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.events.message.MessageUpdateEvent;
+import net.dv8tion.jda.core.events.role.RoleDeleteEvent;
+import net.dv8tion.jda.core.hooks.EventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sx.blah.discord.api.ClientBuilder;
-import sx.blah.discord.api.IDiscordClient;
-import sx.blah.discord.api.events.EventSubscriber;
-import sx.blah.discord.handle.impl.events.ReadyEvent;
-import sx.blah.discord.handle.impl.events.guild.GuildCreateEvent;
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageDeleteEvent;
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageEditEvent;
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
-import sx.blah.discord.handle.impl.events.guild.member.UserBanEvent;
-import sx.blah.discord.handle.impl.events.guild.member.UserJoinEvent;
-import sx.blah.discord.handle.impl.events.guild.member.UserLeaveEvent;
-import sx.blah.discord.handle.impl.events.guild.role.RoleDeleteEvent;
-import sx.blah.discord.handle.impl.events.shard.DisconnectedEvent;
-import sx.blah.discord.handle.obj.ActivityType;
-import sx.blah.discord.handle.obj.IRole;
-import sx.blah.discord.handle.obj.IUser;
-import sx.blah.discord.handle.obj.StatusType;
-import sx.blah.discord.util.EmbedBuilder;
 
+import javax.security.auth.login.LoginException;
 import java.awt.*;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -69,19 +70,22 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings({"unused", "FieldCanBeLocal"})
-public class HaileyBot {
+public class HaileyBot implements EventListener {
     private static final Logger logger = LoggerFactory.getLogger(HaileyBot.class);
+    private static final long PRESENCE_UPDATE_TIME = 60 * 30 * 1000; // 30 minutes
     private static List<Long> botAdmins;
+
 
     static {
         botAdmins = new ArrayList<>();
 
         botAdmins.add(363018555081359360L);
+
     }
 
     ScheduledFuture<?> autoSaver;
     private boolean running;
-    private IDiscordClient client;
+    private JDA client;
     private Database database;
     private Commands commands;
     private Moderator moderator;
@@ -110,13 +114,25 @@ public class HaileyBot {
             e.printStackTrace();
         }
         final String token = config.getToken();
-        client = new ClientBuilder()
-                .withToken(token)
-                .withRecommendedShardCount()
-                .registerListener(this)
-                .login();
-        changePresence();
-        logger.info("App ID: {}", client.getApplicationClientID());
+        try {
+            client = new JDABuilder(token)
+                    .addEventListener(this)
+                    .build();
+        } catch (LoginException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public void onReady(ReadyEvent event) {
+        logger.info("Bot running!");
+        // Initialize stuff that needs the API here
+        matcher = new RegexWatcher(this);
+        commands = new Commands(this);
+        moderator = new Moderator(this);
+        assigner = new RoleAssignmentManager(this);
+
+        logger.info("Bot ID: {}", client.getSelfUser().getIdLong());
 
         logger.info("Initializing systems...");
 
@@ -126,67 +142,49 @@ public class HaileyBot {
         registerTasks();
     }
 
-    @EventSubscriber
-    public void onGuildCreateEvent(GuildCreateEvent event) {
+
+    public void onGuildCreateEvent(GuildJoinEvent event) {
         logger.info("Joined guild: {}. Owner: {}",
                 event.getGuild().getName(),
-                event.getGuild().getOwner().getName());
+                event.getGuild().getOwner().getUser().getName() + "#" + event.getGuild().getOwner().getUser().getDiscriminator());
 
         if (blacklistStorage.isBlacklisted(event.getGuild())) {
             logger.warn("Joined blacklisted guild! Leaving...");
             logger.warn("Dumping info. Guild: {} (UID {}), owned by {} (UID {}).",
                     event.getGuild().getName(),
-                    event.getGuild().getStringID(),
-                    event.getGuild().getOwner().getName(),
-                    event.getGuild().getOwner().getStringID());
-            event.getGuild().leave();
-            return;
-        }
-        if (matcher != null) {
-            /*
-             * If the matcher != null, that means we've initialized. It could be any of the other fields initialized
-             * in on-ready. It was picked at random, there's no special meaning to it.
-             *
-             * The presence is updated in onReady to avoid rate limiting, so once it's initialized, any new guilds
-             * will update it, instead of spam-updating on boot.
-             */
-            changePresence();
+                    event.getGuild().getId(),
+                    event.getGuild().getOwner().getUser().getName(),
+                    event.getGuild().getOwner().getUser().getId());
+            event.getGuild().leave()
+                    .queue(null, CrashHandler::error);
+
         }
 
     }
 
-    @EventSubscriber
-    public void onReady(ReadyEvent event) {
-        logger.info("Bot running!");
-        // Initialize stuff that needs the API here
-        matcher = new RegexWatcher(this);
-        commands = new Commands(this);
-        moderator = new Moderator(this);
-        assigner = new RoleAssignmentManager(this);
+    public void onGuildLeaveEvent(GuildLeaveEvent event) {
+        matcher.clearWatchesForGuild(event.getGuild().getIdLong());
 
-        changePresence();
     }
 
-
-    @EventSubscriber
     public void onRoleDeleteEvent(RoleDeleteEvent event) {
         try {
-            List<IRole> selfAssignable = assigner.getRolesForGuild(event.getGuild().getLongID());
-            if (selfAssignable != null && selfAssignable.stream().anyMatch(r -> r.getLongID() == event.getRole().getLongID())) {
-                assigner.removeRole(event.getGuild().getLongID(), event.getRole());
+            List<Role> selfAssignable = assigner.getRolesForGuild(event.getGuild().getIdLong());
+            if (selfAssignable != null && selfAssignable.stream().anyMatch(r -> r.getIdLong() == event.getRole().getIdLong())) {
+                assigner.removeRole(event.getGuild().getIdLong(), event.getRole());
                 if (moderator.isGuildEnabled(event.getGuild())) {
                     //noinspection ConstantConditions
-                    moderator.getGuild(event.getGuild().getLongID()).audit("A self-assignable role was deleted. Removed from self-assign: " + event.getRole().getName());
+                    moderator.getGuild(event.getGuild().getIdLong()).audit("A self-assignable role was deleted. Removed from self-assign: " + event.getRole().getName());
                 }
 
             }
 
-            List<IRole> autoAssignable = assigner.getRolesForGuild(event.getGuild().getLongID());
-            if (autoAssignable != null && autoAssignable.stream().anyMatch(r -> r.getLongID() == event.getRole().getLongID())) {
-                assigner.removeAutoRole(event.getGuild().getLongID(), event.getRole());
+            List<Role> autoAssignable = assigner.getRolesForGuild(event.getGuild().getIdLong());
+            if (autoAssignable != null && autoAssignable.stream().anyMatch(r -> r.getIdLong() == event.getRole().getIdLong())) {
+                assigner.removeAutoRole(event.getGuild().getIdLong(), event.getRole());
                 if (moderator.isGuildEnabled(event.getGuild())) {
                     //noinspection ConstantConditions
-                    moderator.getGuild(event.getGuild().getLongID()).audit("An auto-assignable role was deleted. Removed from auto-assign: " + event.getRole().getName());
+                    moderator.getGuild(event.getGuild().getIdLong()).audit("An auto-assignable role was deleted. Removed from auto-assign: " + event.getRole().getName());
                 }
 
             }
@@ -196,8 +194,7 @@ public class HaileyBot {
         }
     }
 
-    @EventSubscriber
-    public void onUserJoinEvent(UserJoinEvent event) {
+    public void onUserJoinEvent(GuildMemberJoinEvent event) {
         try {
             moderator.userJoined(event);
         } catch (Throwable e) {
@@ -206,8 +203,7 @@ public class HaileyBot {
         }
     }
 
-    @EventSubscriber
-    public void onUserBanEvent(UserBanEvent event) {
+    public void onUserBanEvent(GuildBanEvent event) {
         try {
             moderator.userBanned(event);
         } catch (Throwable e) {
@@ -216,14 +212,9 @@ public class HaileyBot {
         }
     }
 
-    @EventSubscriber
-    public void onUserLeaveEvent(UserLeaveEvent event) {
-        if (event.getUser().getLongID() == client.getOurUser().getLongID()) {
-            matcher.clearWatchesForGuild(event.getGuild().getLongID());
-            return;
-        }
+    public void onUserLeaveEvent(GuildMemberLeaveEvent event) {
 
-        matcher.clearWatchesForUser(event.getUser().getLongID(), event.getGuild().getLongID());
+        matcher.clearWatchesForUser(event.getUser().getIdLong(), event.getGuild().getIdLong());
         try {
             moderator.userLeft(event);
         } catch (Throwable e) {
@@ -232,39 +223,37 @@ public class HaileyBot {
         }
     }
 
-
-    @EventSubscriber
-    public void onMessageEditedEvent(MessageEditEvent event) {
-        if (event.getAuthor().getLongID() == client.getOurUser().getLongID())
+    public void onMessageEditedEvent(MessageUpdateEvent event) {
+        if (event.getAuthor().getIdLong() == client.getSelfUser().getIdLong())
             return;
 
         if (matcher == null || commands == null) {
-            logger.debug("Mather or commands not initialized yet. {}, {}", matcher, commands);
+            logger.debug("Matcher or commands not initialized yet. {}, {}", matcher, commands);
             return;
         }
 
         try {
-            onMessageReceivedEvent(new MessageReceivedEvent(event.getMessage()));
+            onMessageReceivedEvent(new MessageReceivedEvent(event.getJDA(), event.getResponseNumber(), event.getMessage()));
             moderator.messageEdited(event);
 
         } catch (Throwable e) {
             CrashHandler.error(e);
             e.printStackTrace();
 
-            if (event.getMessage().getContent().startsWith(Constants.TRIGGER)) {
-                event.getChannel().sendMessage(new EmbedBuilder().withColor(Color.RED).withTitle(":warning: Error :warning:")
-                        .withDesc("Something bad happened when processing that :c My devs are probably on it already").build());
+            if (event.getMessage().getContentRaw().startsWith(Constants.TRIGGER)) {
+                event.getChannel().sendMessage(new EmbedBuilder().setColor(Color.RED).setTitle(":warning: Error :warning:")
+                        .setDescription("Something bad happened when processing that :c My devs are probably on it already").build())
+                        .queue();
             }
         }
     }
 
-    @EventSubscriber
     public void onMessageReceivedEvent(MessageReceivedEvent event) {
-        if (event.getAuthor().getLongID() == client.getOurUser().getLongID())
+        if (event.getAuthor().getIdLong() == client.getSelfUser().getIdLong())
             return;
 
         if (matcher == null || commands == null) {
-            logger.debug("Mather or commands not initialized yet. {}, {}", matcher, commands);
+            logger.debug("Matcher or commands not initialized yet. {}, {}", matcher, commands);
             return;
         }
 
@@ -281,27 +270,22 @@ public class HaileyBot {
             CrashHandler.error(e);
             e.printStackTrace();
 
-            if (event.getMessage().getContent().startsWith(Constants.TRIGGER)) {
-                event.getChannel().sendMessage(new EmbedBuilder().withColor(Color.RED).withTitle(":warning: Error :warning:")
-                        .withDesc("Something bad happened when processing that :c My devs are probably on it already").build());
+            if (event.getMessage().getContentRaw().startsWith(Constants.TRIGGER)) {
+                event.getChannel().sendMessage(new EmbedBuilder().setColor(Color.RED).setTitle(":warning: Error :warning:")
+                        .setDescription("Something bad happened when processing that :c My devs are probably on it already").build())
+                        .queue();
             }
         }
     }
 
-    @EventSubscriber
     public void onMessageDeletedEvent(MessageDeleteEvent event) {
         moderator.messageDeleted(event);
 
     }
 
 
-    @EventSubscriber
-    public void onDisconnectedEvent(DisconnectedEvent event) {
+    public void onDisconnectedEvent(DisconnectEvent event) {
         save();
-    }
-
-    private void changePresence() {
-        client.changePresence(StatusType.ONLINE, ActivityType.WATCHING, client.getGuilds().size() + " guilds");
     }
 
     public void save() {
@@ -317,8 +301,8 @@ public class HaileyBot {
     }
 
 
-    public IUser getBotUser() {
-        return client.getOurUser();
+    public SelfUser getBotUser() {
+        return client.getSelfUser();
     }
 
     public Database getDatabase() {
@@ -341,7 +325,7 @@ public class HaileyBot {
         return botAdmins;
     }
 
-    public IDiscordClient getClient() {
+    public JDA getClient() {
         return client;
     }
 
@@ -357,29 +341,48 @@ public class HaileyBot {
         return config;
     }
 
-    private void registerShutdownHook(){
+    private void registerShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new ControlHook());
     }
 
-    private void registerTasks(){
+    private void registerTasks() {
         executor.scheduleAtFixedRate(this::refreshLogsInGuilds, 30000, 30000, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(this::updatePresence, PRESENCE_UPDATE_TIME, PRESENCE_UPDATE_TIME, TimeUnit.MILLISECONDS);
     }
 
-    public void refreshLogsInGuilds(){
+    public void updatePresence() {
+
+    }
+
+    public void refreshLogsInGuilds() {
         moderator.refreshGuildLogs();
     }
 
+    @Override
+    public void onEvent(Event event) {
+        if (event instanceof ReadyEvent) {
+            this.onReady((ReadyEvent) event);
+        } else if (event instanceof GuildBanEvent) {
+            this.onUserBanEvent((GuildBanEvent) event);
+        } else if (event instanceof GuildMemberJoinEvent) {
+            this.onUserJoinEvent((GuildMemberJoinEvent) event);
+        } else if (event instanceof GuildMemberLeaveEvent) {
+            this.onUserLeaveEvent((GuildMemberLeaveEvent) event);
+        } else if (event instanceof MessageUpdateEvent) {
+            this.onMessageEditedEvent((MessageUpdateEvent) event);
+        } else if (event instanceof GuildJoinEvent) {
+            this.onGuildCreateEvent((GuildJoinEvent) event);
+        }
+    }
+
     public class ControlHook extends Thread {
-        public ControlHook(){
+        public ControlHook() {
             super("ShutdownHook:HaileyBot.java)");
         }
 
-        public void run(){
-            // Necessary call to log out the client. This is a second attempt in case something fails, but to make sure
-            // it shuts down properly. This also controls some threads
-            if(client.isLoggedIn()){
-                client.logout();
-            }
+        public void run() {
+            save();
         }
     }
+
 }

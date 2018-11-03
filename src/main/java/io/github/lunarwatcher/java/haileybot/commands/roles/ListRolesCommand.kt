@@ -27,12 +27,11 @@ package io.github.lunarwatcher.java.haileybot.commands.roles
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
+import net.dv8tion.jda.core.EmbedBuilder
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.MessageEmbed
+import net.dv8tion.jda.core.entities.PrivateChannel
 import org.jetbrains.annotations.NotNull
-import sx.blah.discord.handle.impl.obj.Embed
-import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.handle.obj.IPrivateChannel
-import sx.blah.discord.util.EmbedBuilder
-import sx.blah.discord.util.RequestBuffer
 
 class ListRolesCommand : Command {
 
@@ -42,89 +41,90 @@ class ListRolesCommand : Command {
     override fun getHelp(): String = "Lists all the self-assignable roles on the server"
     override fun getDescription(): String = help
 
-    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
-        if (message.channel is IPrivateChannel) {
-            RequestBuffer.request {
-                message.channel.sendMessage("This is a DM channel. No roles are available.")
-            };
+    override fun onMessage(bot: HaileyBot, message: @NotNull Message, rawMessage: String, commandName: String) {
+        if (message.channel is PrivateChannel) {
+            message.channel.sendMessage("This is a DM channel. No roles are available.").queue();
             return;
         }
-        val selfAssignable = bot.assigner.getRolesForGuild(message.guild.longID)?.map { it.name }
+        val selfAssignable = bot.assigner.getRolesForGuild(message.guild.idLong)?.map { it.name }
         if (selfAssignable == null || selfAssignable.isEmpty()) {
             message.channel.sendMessage(
                     EmbedBuilder()
-                            .withTitle("Assignable roles for " + message.guild.name)
+                            .setTitle("Assignable roles for " + message.guild.name)
                             .apply {
-                                appendField(Embed.EmbedField("Self-assignable roles", "No self-assignable roles", true))
-                                //appendField(Embed.EmbedField("Server roles (not necessarily assignable)", serverRolesString, true))
+                                fields.add(MessageEmbed.Field("Self-assignable roles", "No self-assignable roles", true))
+                                //addField(MessageEmbed.Field("Server roles (not necessarily assignable)", serverRolesString, true))
                             }
-                            .withColor(message.author.getColorForGuild(message.guild))
+                            .setColor(message.member.color)
                             .build()
             )
             return;
         }
 
+        message.author.openPrivateChannel().queue({
+            var current = ""
+            var currentEmbed = EmbedBuilder()
+                    .setColor(message.member.color)
 
-        var current = ""
-        var currentEmbed = EmbedBuilder()
-                .withColor(message.author.getColorForGuild(message.guild))
+            for (i in 0 until selfAssignable.size) {
+                val role = selfAssignable[i];
 
-        currentEmbed.totalVisibleCharacters
-        for (i in 0 until selfAssignable.size) {
-            val role = selfAssignable[i];
+                val appendix = role + if (i != selfAssignable.size - 1) {
+                    ", "
+                } else "."
+                if (appendix.length + current.length >= 1000) {
+                    val field = MessageEmbed.Field("Roles", current, false)
 
-            val appendix = role + if (i != selfAssignable.size - 1) {
-                ", "
-            } else "."
-            if (appendix.length + current.length >= 1000) {
-                val field = Embed.EmbedField("Roles", current, false)
+                    val currentChars = currentEmbed.length()
+                    if (currentChars + current.length >= 6000) {
+                        it.sendMessage(currentEmbed.build()).queue()
 
-                val currentChars = currentEmbed.totalVisibleCharacters
-                if (currentChars + current.length >= 6000) {
-                    message.author.orCreatePMChannel.sendMessage(currentEmbed.build())
-                    currentEmbed = EmbedBuilder()
-                            .withColor(message.author.getColorForGuild(message.guild))
+                        currentEmbed = EmbedBuilder()
+                                .setColor(message.member.color)
+                    }
+                    currentEmbed.addField(field)
+                    current = "";
                 }
-                currentEmbed.appendField(field)
-                current = "";
-            }
-            current += appendix
-        }
-
-
-        if (current != "") {
-            if (currentEmbed.totalVisibleCharacters != 0) {
-                val field = Embed.EmbedField("Roles", current, false)
-
-                val currentChars = currentEmbed.totalVisibleCharacters
-                if (currentChars + current.length >= 6000) {
-                    message.author.orCreatePMChannel.sendMessage(currentEmbed.build())
-
-                } else {
-                    currentEmbed.appendField(field)
-                    message.author.orCreatePMChannel.sendMessage(currentEmbed.build());
-                    return;
-                }
+                current += appendix
             }
 
-            sendEmbed(message, current);
-        }
 
+            if (current != "") {
+                if (currentEmbed.length() != 0) {
+                    val field = MessageEmbed.Field("Roles", current, false)
 
+                    val currentChars = currentEmbed.length()
+                    if (currentChars + current.length >= 6000) {
+                        it.sendMessage(currentEmbed.build()).queue()
+
+                    } else {
+                        currentEmbed.addField(field)
+                        it.sendMessage(currentEmbed.build()).queue();
+                        return@queue;
+                    }
+                }
+
+                sendEmbed(message, current, it);
+            }
+
+        }, {
+            message.channel.sendMessage("An error occured when attempting to get the DM channel. I might not be able to DM you.")
+
+        })
     }
 
-    private fun sendEmbed(message: IMessage, content: String) {
+    private fun sendEmbed(message: Message, content: String, channel: PrivateChannel) {
         if (content.isEmpty() || content.isBlank())
             return;
 
-        message.author.orCreatePMChannel.sendMessage(
+        channel.sendMessage(
                 EmbedBuilder()
-                        .withTitle("Assignable roles for " + message.guild.name)
+                        .setTitle("Assignable roles for " + message.guild.name)
                         .apply {
-                            withDesc(content)
-                            //appendField(Embed.EmbedField("Server roles (not necessarily assignable)", serverRolesString, true))
+                            setDescription(content)
+                            //addField(MessageEmbed.Field("Server roles (not necessarily assignable)", serverRolesString, true))
                         }
-                        .withColor(message.author.getColorForGuild(message.guild))
+                        .setColor(message.member.color)
                         .build()
         )
     }

@@ -23,8 +23,7 @@ dependencies {
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 
     // discord
-
-    implementation "com.discord4j:Discord4J:2.10.1"
+    implementation "net.dv8tion:JDA:3.8.1_439"
 
     // Jackson
     implementation 'com.fasterxml.jackson.core:jackson-core:2.9.4'
@@ -32,11 +31,13 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.9.4'
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.4"
 
+    // Utils
+    implementation 'org.apache.commons:commons-lang3:3.8.1'
+    implementation 'org.jetbrains:annotations:16.0.2'
+    
     // Logging
     implementation "org.slf4j:slf4j-api:$slf4jVersion@jar"
     implementation "ch.qos.logback:logback-classic:$logbackVersion"
-
-    implementation 'org.jetbrains:annotations:16.0.2'
 
 }
 

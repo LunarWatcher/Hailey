@@ -27,10 +27,9 @@ package io.github.lunarwatcher.java.haileybot.commands.meta
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
+import net.dv8tion.jda.core.EmbedBuilder
+import net.dv8tion.jda.core.entities.Message
 import org.jetbrains.annotations.NotNull
-import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.util.EmbedBuilder
-import sx.blah.discord.util.RequestBuffer
 import java.awt.Color
 
 @Suppress("RedundantCompanionReference")
@@ -40,35 +39,29 @@ class HelpCommand : Command {
     override fun getAliases(): List<String>? = Companion.aliases
     override fun getDescription(): String = "Lists all the bots commands, or shows the help for a specific one"
 
-    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
+    override fun onMessage(bot: HaileyBot, message: @NotNull Message, rawMessage: String, commandName: String) {
         if (rawMessage.isNotEmpty()) {
             val command: Command? = bot.commands.commandSets.asSequence().map {
-                it.firstOrNull {second ->
+                it.firstOrNull { second ->
                     second.matchesCommand(rawMessage)
                 }
             }.firstOrNull { it != null }
             if (command == null) {
-                RequestBuffer.request {
-                    message.channel.sendMessage("Command not found: $rawMessage");
-                }
+                message.channel.sendMessage("Command not found: $rawMessage").queue();
                 return;
             }
             val embed = EmbedBuilder()
             embed.apply {
-                withTitle(command.name)
-                withDesc("Aliases: ${command.aliases ?: "None"}\n\nDescription: ${command.description
+                setTitle(command.name)
+                setDescription("Aliases: ${command.aliases ?: "None"}\n\nDescription: ${command.description
                         ?: "None"}\n\nHelp: ${command.help ?: "No help"}")
-                withColor(Color(1f, 0f, .2f))
-                withFooterText("Made with Java, Kotlin, and ♥")
+                setColor(Color(1f, 0f, .2f))
+                setFooter("Made with Java, Kotlin, and ♥", null)
             }
-            RequestBuffer.request {
-                message.channel.sendMessage(embed.build())
-            }
+            message.channel.sendMessage(embed.build()).queue()
             return;
         }
-        RequestBuffer.request {
-            message.channel.sendMessage(generateHelpMessage(bot))
-        }
+        message.channel.sendMessage(generateHelpMessage(bot)).queue()
 
     }
 

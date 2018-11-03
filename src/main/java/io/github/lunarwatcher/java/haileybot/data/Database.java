@@ -88,7 +88,7 @@ public class Database {
     /**
      * Put something into the data. Does not update until {@link #commit()} is called
      *
-     * @param key The key of the value to add
+     * @param key   The key of the value to add
      * @param value The associated value
      */
     public void put(String key, Object value) {

@@ -32,13 +32,12 @@ import io.github.lunarwatcher.java.haileybot.data.Constants
 import io.github.lunarwatcher.java.haileybot.data.Constants.dateFormatter
 import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunBotAdminCommand
+import net.dv8tion.jda.core.EmbedBuilder
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.MessageEmbed
+import net.dv8tion.jda.core.entities.PrivateChannel
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.NotNull
-import sx.blah.discord.handle.impl.obj.Embed
-import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.handle.obj.IPrivateChannel
-import sx.blah.discord.util.EmbedBuilder
-import sx.blah.discord.util.RequestBuffer
 import java.awt.Color
 import java.util.*
 
@@ -60,29 +59,25 @@ class ServerInfoCommand : Command {
         return help
     }
 
-    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
-        if (message.channel is IPrivateChannel) {
-            RequestBuffer.request {
-                message.channel.sendMessage("This is a DM channel. No server info is available.")
-            };
+    override fun onMessage(bot: HaileyBot, message: @NotNull Message, rawMessage: String, commandName: String) {
+        if (message.channel is PrivateChannel) {
+            message.channel.sendMessage("This is a DM channel. No server info is available.").queue();
             return;
         }
         val guild = message.guild
 
-        val users = message.guild.users;
-        val bots = users.filter { it.isBot }.size
+        val users = message.guild.members;
+        val bots = users.filter { it.user.isBot }.size
         val members = users.size - bots;
 
-        val content = "**Owner:** ${guild.owner.name} (${guild.owner.longID})\n" +
-                "**Server created at:** ${dateFormatter.format(guild.creationDate)}\n" +
+        val content = "**Owner:** ${guild.owner.user.name}#${guild.owner.user.discriminator} (${guild.owner.user.idLong})\n" +
+                "**Server created at:** ${dateFormatter.format(guild.creationTime)}\n" +
                 "**Members:** ${users.size} ($members members, $bots bots)\n" + "\n" +
-                "**Meta:** ID ${guild.longID} at shard " + (guild.shard.info[0] + 1) +
-                "/${guild.shard.info[1]}\n\n" /*+
-                "**Roles (${guildRoles?.size ?: 0})**: ${guildRoles?.map { it.name }?.joinToString(", ") ?: "No roles"}"*/
+                "**Meta:** ID ${guild.idLong}"
 
 
         val roleInfo = bot.assigner
-                .getRolesForGuild(message.guild.longID)
+                .getRolesForGuild(message.guild.idLong)
                 ?.joinToString(", ") { it.name } ?: "No self-assignable roles"
 
         val autoInfo = bot.assigner
@@ -93,11 +88,10 @@ class ServerInfoCommand : Command {
         val autoAssignable = bot.assigner.getAutoRolesForGuild(message.guild)?.size ?: 0
 
         val serverInfo = EmbedBuilder()
-                .withTitle("Server info for **${guild.name}**")
-                .withColor(getRandomColor())
-                .withAuthorIcon(guild.iconURL)
-                .withAuthorName("Hailey")
-                .appendField(Embed.EmbedField("Self- and auto-assignable roles",
+                .setTitle("Server info for **${guild.name}**")
+                .setColor(getRandomColor())
+                .setAuthor("Hailey", null, guild.iconUrl)
+                .addField(MessageEmbed.Field("Self- and auto-assignable roles",
                         "There are $selfAssignable self-assignable roles, and $autoAssignable roles that get automatically assigned. " +
                                 (if (roleInfo.length > 1200)
                                     "Too many roles to display. Use `${Constants.TRIGGER}roles` to see self-assignable roles."
@@ -105,13 +99,13 @@ class ServerInfoCommand : Command {
                                 (if (autoInfo.length > 1200) "Too many roles to display."
                                 else autoInfo),
                         true))
-                .appendField(Embed.EmbedField("Verification level", ConversionUtils.parseVerificationLevel(message.guild.verificationLevel), true))
-                .appendField(Embed.EmbedField("Location", message.guild.region.name, true))
-                .appendField(Embed.EmbedField("Channels", "${message.guild.channels.size} channels in ${message.guild.categories.size} categories. ${message.guild.voiceChannels.size} voice channels.", true))
-                .appendField(Embed.EmbedField("Info", content, false));
+                .addField(MessageEmbed.Field("Verification level", ConversionUtils.parseVerificationLevel(message.guild.verificationLevel), true))
+                .addField(MessageEmbed.Field("Location", message.guild.region.name, true))
+                .addField(MessageEmbed.Field("Channels", "${message.guild.channels.size} channels in ${message.guild.categories.size} categories. ${message.guild.voiceChannels.size} voice channels.", true))
+                .addField(MessageEmbed.Field("Info", content, false));
 
         if (message.canUserRunBotAdminCommand(bot)) {
-            val modGuild = bot.moderator.getGuild(guild.longID)
+            val modGuild = bot.moderator.getGuild(guild.idLong)
 
             val modInfo = StringBuilder()
             if (modGuild != null) {
@@ -135,13 +129,11 @@ class ServerInfoCommand : Command {
             }
 
 
-            val modInfoEmbed = Embed.EmbedField("Server mod info", modInfo.toString(), false);
+            val modInfoEmbed = MessageEmbed.Field("Server mod info", modInfo.toString(), false);
 
-            serverInfo.appendField(modInfoEmbed);
+            serverInfo.addField(modInfoEmbed);
         }
-        RequestBuffer.request {
-            message.channel.sendMessage(serverInfo.build())
-        }
+        message.channel.sendMessage(serverInfo.build()).queue()
     }
 }
 

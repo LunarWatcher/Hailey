@@ -27,12 +27,11 @@ package io.github.lunarwatcher.java.haileybot.commands.roles.self;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;
-import org.jetbrains.annotations.NotNull;
+import net.dv8tion.jda.core.Permission;
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.PrivateChannel;
+import net.dv8tion.jda.core.entities.Role;
 import org.jetbrains.annotations.Nullable;
-import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.handle.obj.IPrivateChannel;
-import sx.blah.discord.handle.obj.IRole;
-import sx.blah.discord.handle.obj.Permissions;
 
 import java.util.Arrays;
 import java.util.List;
@@ -60,24 +59,25 @@ public class AssignCommand implements Command {
     }
 
     @Override
-    public void onMessage(HaileyBot bot, @NotNull IMessage message, String rawMessage, String commandName) {
-        if (message.getChannel() instanceof IPrivateChannel) {
-            message.getChannel().sendMessage("This is a DM channel. No mod tools available.");
+    public void onMessage(HaileyBot bot, Message message, String rawMessage, String commandName) {
+        if (message.getChannel() instanceof PrivateChannel) {
+            message.getChannel().sendMessage("This is a DM channel. No mod tools available.").queue();
             return;
         }
-        List<IRole> roles = bot.getAssigner().getRolesForGuild(message.getGuild().getLongID());
+        List<Role> roles = bot.getAssigner().getRolesForGuild(message.getGuild().getIdLong());
         if (roles == null || roles.size() == 0) {
-            message.reply("There are no self-assignable roles.");
+            message.getChannel().sendMessage("There are no self-assignable roles.").queue();
+
             return;
         }
 
-        if (message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).stream().noneMatch((it) -> it == Permissions.MANAGE_ROLES || it == Permissions.ADMINISTRATOR)) {
-            message.getChannel().sendMessage("I don't have the \"manage roles\" or the \"administrator\" permission (I need one of them to assign roles).");
+        if (message.getGuild().getMember(message.getJDA().getSelfUser()).getPermissions().stream().noneMatch((it) -> it == Permission.MANAGE_ROLES || it == Permission.ADMINISTRATOR)) {
+            message.getChannel().sendMessage("I don't have the \"manage roles\" or the \"administrator\" permission (I need one of them to assign roles).").queue();
             return;
         }
 
         if (rawMessage.isEmpty()) {
-            message.getChannel().sendMessage("Which role do you want? Note: roles are case-sensitive.");
+            message.getChannel().sendMessage("Which role do you want? Note: roles are case-sensitive.").queue();
             return;
         }
 

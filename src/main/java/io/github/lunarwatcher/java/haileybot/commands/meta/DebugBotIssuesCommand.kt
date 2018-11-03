@@ -33,13 +33,12 @@ import io.github.lunarwatcher.java.haileybot.utils.canUserRunBotAdminCommand
 import io.github.lunarwatcher.java.haileybot.utils.fitDiscordLengthRequirements
 import io.github.lunarwatcher.java.haileybot.utils.nl
 import io.github.lunarwatcher.java.haileybot.utils.scheduleDeletion
+import net.dv8tion.jda.core.EmbedBuilder
+import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.core.entities.Channel
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.MessageEmbed
 import org.jetbrains.annotations.NotNull
-import sx.blah.discord.handle.impl.obj.Embed
-import sx.blah.discord.handle.obj.IChannel
-import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.handle.obj.Permissions
-import sx.blah.discord.util.EmbedBuilder
-import sx.blah.discord.util.RequestBuffer
 import java.awt.Color
 
 class DebugBotIssuesCommand : Command {
@@ -60,9 +59,9 @@ class DebugBotIssuesCommand : Command {
         return "Dumps debug data for the bot. Admins only."
     }
 
-    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
+    override fun onMessage(bot: HaileyBot, message: @NotNull Message, rawMessage: String, commandName: String) {
         if (!message.canUserRunBotAdminCommand(bot)) {
-            RequestBuffer.request { message.reply("only bot admins can do that.") }
+            message.channel.sendMessage("only bot admins can do that.").queue();
             return
         }
         val dumpChannels = rawMessage.contains("--with-invalid-channels")
@@ -73,45 +72,45 @@ class DebugBotIssuesCommand : Command {
         val botUser = bot.botUser
         val modGuild = bot.moderator.getGuild(message.guild)
         val builder = EmbedBuilder()
-                .withColor(Color.MAGENTA)
-        builder.withTitle("Bot debug")
-        builder.withDesc("Currently running version " + Constants.VERSION + "\n")
-                .appendDesc("Running under " + botUser.name + "#" + botUser.discriminator + "\n")
+                .setColor(Color.MAGENTA)
+        builder.setTitle("Bot debug")
+        builder.setDescription("Currently running version " + Constants.VERSION + "\n")
+                .appendDescription("Running under " + botUser.name + "#" + botUser.discriminator + "\n")
 
-        builder.appendField(Embed.EmbedField("Permissions for this guild",
-                botUser.getPermissionsForGuild(message.guild).joinToString(", "){ it.toString().toLowerCase().replace("_", " ")},
+        builder.addField(MessageEmbed.Field("Permissions for this guild",
+                message.guild.getMember(botUser).getPermissions().joinToString(", ") { it.toString().toLowerCase().replace("_", " ") },
                 true))
-        builder.appendField(Embed.EmbedField("Moderator", """
+        builder.addField(MessageEmbed.Field("Moderator", """
             There are currently ${moderator.size()} mod guilds.
-            This is ${ if (moderator.getGuild(message.guild) == null) "not one of them" else "one of them."}
-            ${ if (moderator.getGuild(message.guild) != null) "Enabled features can be seen using the `serverInfo` command" else ""}
+            This is ${if (moderator.getGuild(message.guild) == null) "not one of them" else "one of them."}
+            ${if (moderator.getGuild(message.guild) != null) "Enabled features can be seen using the `serverInfo` command" else ""}
         """.trimIndent(), true))
 
-        val usableChannels = message.guild.channels.filter { !it.isDeleted && it.getModifiedPermissions(bot.botUser).containsAll (readWritePerms)}
+        val usableChannels = message.guild.channels.filter {
+            it.getPermissionOverride(message.guild.getMember(botUser)).let { perms ->
+                perms.allowed.contains(Permission.MESSAGE_READ) && perms.allowed.contains(Permission.MESSAGE_WRITE)
+            }
+        }
 
         var stringBuilder = StringBuilder();
         stringBuilder.append("Dumping info for categories:").nl()
-        stringBuilder.append("I know of ${ message.guild.channels.size } text channels, and ${ message.guild.voiceChannels.size } voice channels.").nl()
+        stringBuilder.append("I know of ${message.guild.channels.size} text channels, and ${message.guild.voiceChannels.size} voice channels.").nl()
         stringBuilder.append("Of these, I can read and write in" +
-                " ${ usableChannels.size}" +
+                " ${usableChannels.size}" +
                 " of the text channels.").nl()
                 .append("Ignoring permissions in voice channels; no voice features are currently used.").nl()
-                .append("For this guild, there's a combined number of ${ watcher.getWatchesInGuild(message.guild).size } watches for this guild.").nl()
-                .append("In addition, the database currently has ${ database.size() } items in it. ").nl().nl()
+                .append("For this guild, there's a combined number of ${watcher.getWatchesInGuild(message.guild).size} watches for this guild.").nl()
+                .append("In addition, the database currently has ${database.size()} items in it. ").nl().nl()
         modGuild?.auditChannel?.let {
-            if(it >= 0) {
+            if (it >= 0) {
                 stringBuilder.append("Checking the audit channel (<#$it>) for validity. ")
-                val channel: IChannel? = bot.client.getChannelByID(it)
-                val valid = channel?.getModifiedPermissions(botUser)
-                        ?.containsAll(readWritePerms) ?: run {
+                val channel: Channel? = bot.client.getTextChannelById(it)
+                val valid = !(channel?.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->
+                    perms.allowed.contains(Permission.MESSAGE_READ) && perms.allowed.contains(Permission.MESSAGE_WRITE)
+                } ?: run {
                     stringBuilder.append("This channel has been removed, or I cannot find it. ")
                     false
-                } && channel?.isDeleted?.let { bool ->
-                    if(bool){
-                        stringBuilder.append("This channel has been removed.");
-                    }
-                    bool
-                } == false
+                })
                 stringBuilder.append("It is ${if (valid) "valid" else "not valid. I will remove this channel"}")
                         .nl()
 
@@ -121,19 +120,15 @@ class DebugBotIssuesCommand : Command {
             }
         }
         modGuild?.welcomeChannel?.let {
-            if(it >= 0) {
+            if (it >= 0) {
                 stringBuilder.append("Checking the greeting channel (<#$it>) for validity. ");
-                val channel: IChannel? = bot.client.getChannelByID(it)
-                val valid = channel?.getModifiedPermissions(botUser)
-                        ?.containsAll(readWritePerms) ?: run {
+                val channel: Channel? = bot.client.getTextChannelById(it)
+                val valid = !(channel?.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->
+                    perms.allowed.contains(Permission.MESSAGE_READ) && perms.allowed.contains(Permission.MESSAGE_WRITE)
+                } ?: run {
                     stringBuilder.append("This channel has been removed, or I cannot find it. ")
                     false
-                } && channel?.isDeleted?.let { bool ->
-                    if(bool){
-                        stringBuilder.append("This channel has been removed.");
-                    }
-                    bool
-                } == false
+                })
                 stringBuilder.append("It is ${if (valid) "valid" else "not valid. I will remove this channel"}")
                         .nl()
                 if (!valid) {
@@ -142,19 +137,15 @@ class DebugBotIssuesCommand : Command {
             }
         }
         modGuild?.userLeaveChannel?.let {
-            if(it >= 0) {
+            if (it >= 0) {
                 stringBuilder.append("Checking the user leave channel (<#$it>) for validity. ");
-                val channel: IChannel? = bot.client.getChannelByID(it)
-                val valid = channel?.getModifiedPermissions(botUser)
-                        ?.containsAll(readWritePerms) ?: run {
+                val channel: Channel? = bot.client.getTextChannelById(it)
+                val valid = !(channel?.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->
+                    perms.allowed.contains(Permission.MESSAGE_READ) && perms.allowed.contains(Permission.MESSAGE_WRITE)
+                } ?: run {
                     stringBuilder.append("This channel has been removed, or I cannot find it. ")
                     false
-                } && channel?.isDeleted?.let { bool ->
-                    if(bool){
-                        stringBuilder.append("This channel has been removed.");
-                    }
-                    bool
-                } == false
+                })
                 stringBuilder.append("It is ${if (valid) "valid" else "not valid. I will remove this channel"}")
                         .nl()
                 if (!valid) {
@@ -163,26 +154,22 @@ class DebugBotIssuesCommand : Command {
             }
         }
 
-
-
-        builder.appendField(Embed.EmbedField("Internal info", stringBuilder.toString(), true))
-        RequestBuffer.request {
-            message.channel.sendMessage(builder.build())
-                    .scheduleDeletion(TIMEOUT) //Auto-deletes the message after 20 minutes, to avoid clutter in chat.
-        }.get()
-        if(dumpChannels){
+        builder.addField(MessageEmbed.Field("Internal info", stringBuilder.toString(), true))
+        message.channel.sendMessage(builder.build()).queue {
+            it.scheduleDeletion(TIMEOUT)
+        }
+        if (dumpChannels) {
             val unusableChannels = message.guild.channels.filter { it !in usableChannels }
             stringBuilder = StringBuilder()
             stringBuilder.append("```\nUnusable channels:\n")
-            for(channel in unusableChannels){
-                stringBuilder.append("${channel.name} + (<#${channel.longID}>)").nl()
+            for (channel in unusableChannels) {
+                stringBuilder.append("${channel.name} + (<#${channel.idLong}>)").nl()
             }
             stringBuilder.append("```");
             val messages = stringBuilder.toString().fitDiscordLengthRequirements(2000)
-            for(channelMessage in messages){
-                RequestBuffer.request {
-                    message.channel.sendMessage(channelMessage)
-                            .scheduleDeletion(TIMEOUT)
+            for (channelMessage in messages) {
+                message.channel.sendMessage(channelMessage).queue {
+                    it.scheduleDeletion(TIMEOUT)
                 }
             }
         }
@@ -190,6 +177,5 @@ class DebugBotIssuesCommand : Command {
 
     companion object {
         const val TIMEOUT: Long = 60L * 20L * 1000L;
-        val readWritePerms = listOf(Permissions.READ_MESSAGES, Permissions.SEND_MESSAGES)
     }
 }

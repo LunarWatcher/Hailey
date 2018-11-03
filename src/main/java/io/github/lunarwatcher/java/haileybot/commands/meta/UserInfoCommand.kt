@@ -29,11 +29,10 @@ import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.data.Constants.dateFormatter
 import io.github.lunarwatcher.java.haileybot.utils.ConversionUtils
+import net.dv8tion.jda.core.EmbedBuilder
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.MessageEmbed
 import org.jetbrains.annotations.NotNull
-import sx.blah.discord.handle.impl.obj.Embed
-import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.util.EmbedBuilder
-import sx.blah.discord.util.RequestBuffer
 
 class UserInfoCommand : Command {
 
@@ -50,58 +49,55 @@ class UserInfoCommand : Command {
 
     override fun getDescription(): String? = null
 
-    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
+    override fun onMessage(bot: HaileyBot, message: @NotNull Message, rawMessage: String, commandName: String) {
         val uid = ConversionUtils.parseUser(rawMessage);
 
-        val user = if (uid == -2L) message.author else message.client.getUserByID(uid)
-        if (user == null) {
-            RequestBuffer.request {
-                message.channel.sendMessage("Failed to find a user with the UID $uid")
-            }
+        val member = if (uid == -2L) message.member else message.guild.getMember(message.jda.getUserById(uid))
+        if (member == null) {
+            message.channel.sendMessage("Failed to find a user with the UID $uid").queue()
             return;
         }
-        val watches = bot.matcher.getWatchesForUser(user.longID);
-        val username = user.name + "#" + user.discriminator
-        val nick = user.getNicknameForGuild(message.guild) ?: "None"
-        val formattedCreationDate = dateFormatter.format(user.creationDate)
-        val isUserBot: Boolean = user.isBot
-        val presence = ConversionUtils.convertStatusToString(user.presence.status);
-        val roles = user.getRolesForGuild(message.guild).filter { !it.isEveryoneRole }.sortedBy { it.position }.map { it.name }
+        val watches = bot.matcher.getWatchesForUser(member.user.idLong);
+        val username = member.user.name + "#" + member.user.discriminator
+        val nick = member.nickname ?: "None"
+        val formattedCreationDate = dateFormatter.format(member.joinDate)
+        val isUserBot: Boolean = member.user.isBot
+        val presence = ConversionUtils.convertStatusToString(member.onlineStatus);
+        val roles = member.roles.filter { !it.isPublicRole }.sortedBy { it.position }.map { it.name }
         val stringRoles = roles.joinToString(", ");
 
-        val activity = ConversionUtils.getGame(user)
-        val permissions = user.getPermissionsForGuild(message.guild)
-                .map { it.name.replace("_", " ").toLowerCase() }
+        val activity = ConversionUtils.getGame(member)
+        val permissions = member.permissions
+                .map {
+                    it.name.replace("_", " ").toLowerCase()
+                }
 
 
-        val uidEmbed = Embed.EmbedField("User ID", user.stringID, true)
-        val nicknameEmbed = Embed.EmbedField("Server nickname", nick, true)
-        val botStatusEmbed = Embed.EmbedField("Bot", if (isUserBot) "Yes" else "No", true)
-        val accountCreationEmbed = Embed.EmbedField("Creation date", formattedCreationDate, false)
-        val presenceEmbed = Embed.EmbedField("Presence", presence, false)
-        val activityEmbed = Embed.EmbedField("Activity", activity, false)
-        val roleEmbed = Embed.EmbedField("Roles (${roles.size})", if (stringRoles.length > 1200) "(Too many to display :c)" else stringRoles, false)
-        val permissionEmbed = Embed.EmbedField("Permissions", permissions.joinToString(", "), false)
-        val watchesEmbed = Embed.EmbedField("Watches", watches.filter { it.regex.isNotEmpty() }.flatMap { it.regex }.size.toString(), false)
+        val uidEmbed = MessageEmbed.Field("User ID", member.user.id, true)
+        val nicknameEmbed = MessageEmbed.Field("Server nickname", nick, true)
+        val botStatusEmbed = MessageEmbed.Field("Bot", if (isUserBot) "Yes" else "No", true)
+        val accountCreationEmbed = MessageEmbed.Field("Creation date", formattedCreationDate, false)
+        val presenceEmbed = MessageEmbed.Field("Presence", presence, false)
+        val activityEmbed = MessageEmbed.Field("Activity", activity, false)
+        val roleEmbed = MessageEmbed.Field("Roles (${roles.size})", if (stringRoles.length > 1200) "(Too many to display :c)" else stringRoles, false)
+        val permissionEmbed = MessageEmbed.Field("Permissions", permissions.joinToString(", "), false)
+        val watchesEmbed = MessageEmbed.Field("Watches", watches.filter { it.regex.isNotEmpty() }.flatMap { it.regex }.size.toString(), false)
 
         val embed = EmbedBuilder()
-                .withTitle("User info")
-                .withAuthorName(username)
-                .withAuthorIcon(user.avatarURL)
-                .withColor(user.getColorForGuild(message.guild))
-                .appendField(uidEmbed)
-                .appendField(nicknameEmbed)
-                .appendField(botStatusEmbed)
-                .appendField(accountCreationEmbed)
-                .appendField(presenceEmbed)
-                .appendField(activityEmbed)
-                .appendField(roleEmbed)
-                .appendField(permissionEmbed)
-                .appendField(watchesEmbed)
+                .setTitle("User info")
+                .setAuthor(username, null, member.user.avatarUrl)
+                .setColor(member.color)
+                .addField(uidEmbed)
+                .addField(nicknameEmbed)
+                .addField(botStatusEmbed)
+                .addField(accountCreationEmbed)
+                .addField(presenceEmbed)
+                .addField(activityEmbed)
+                .addField(roleEmbed)
+                .addField(permissionEmbed)
+                .addField(watchesEmbed)
                 .build()
-        RequestBuffer.request {
-            message.channel.sendMessage(embed)
-        }
+        message.channel.sendMessage(embed).queue()
 
     }
 }

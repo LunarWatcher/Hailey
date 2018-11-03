@@ -25,13 +25,11 @@
 
 package io.github.lunarwatcher.java.haileybot.commands.bot
 
-import io.github.lunarwatcher.java.haileybot.CrashHandler
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.utils.randomItem
+import net.dv8tion.jda.core.entities.Message
 import org.jetbrains.annotations.NotNull
-import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.util.RequestBuffer
 
 class ShutdownCommand : Command {
     override fun getName(): String = "shutdown"
@@ -42,25 +40,16 @@ class ShutdownCommand : Command {
 
     override fun getDescription(): String = "Shuts down the bot";
 
-    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
-        val user = message.author.longID
+    override fun onMessage(bot: HaileyBot, message: @NotNull Message, rawMessage: String, commandName: String) {
+        val user = message.author.idLong
         if (!bot.botAdmins.contains(user)) {
-            RequestBuffer.request {
-                message.channel.sendMessage(replies.randomItem())
-            }
+            message.channel.sendMessage(replies.randomItem()).queue()
+
             return
         }
         bot.save();
-        message.channel.sendMessage("Goodbye cruel world!")
-        try {
-            bot.client.logout()
-        } catch (e: Exception) {
-            if (bot.client.isLoggedIn)
-                RequestBuffer.request {
-                    message.channel.sendMessage("Graceful shutdown failed; still logged in. Error: `$e`")
-                }
-            CrashHandler.error(e, false); // This also dumps the logs, so the method call is just used as a shortcut
-        }
+        message.channel.sendMessage("Goodbye cruel world!").queue()
+        //TODO confirm that this is the appropriate way to shut down JDA. Couldn't find any logout methods, so I'm assuming it is.
         System.exit(0)
     }
 
@@ -73,3 +62,4 @@ class ShutdownCommand : Command {
     }
 
 }
+

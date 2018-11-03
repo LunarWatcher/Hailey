@@ -25,11 +25,11 @@
 
 package io.github.lunarwatcher.java.haileybot.utils;
 
+import net.dv8tion.jda.core.OnlineStatus;
+import net.dv8tion.jda.core.entities.Game;
+import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.Member;
 import org.jetbrains.annotations.NotNull;
-import sx.blah.discord.handle.obj.ActivityType;
-import sx.blah.discord.handle.obj.IUser;
-import sx.blah.discord.handle.obj.StatusType;
-import sx.blah.discord.handle.obj.VerificationLevel;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -95,14 +95,14 @@ public class ConversionUtils {
         return convertToLong(matcher.group(1));
     }
 
-    public static @NotNull String convertStatusToString(StatusType status) {
+    public static @NotNull String convertStatusToString(OnlineStatus status) {
 
         switch (status) {
             case ONLINE:
                 return "Online";
             case OFFLINE:
                 return "Offline";
-            case DND:
+            case DO_NOT_DISTURB:
                 return "Do not disturb";
             case IDLE:
                 return "Idle";
@@ -113,12 +113,14 @@ public class ConversionUtils {
         }
     }
 
-    public static @NotNull String getGame(IUser user) {
-        ActivityType activity = user.getPresence().getActivity().orElse(null);
+    public static @NotNull String getGame(Member user) {
+        Game game = user.getGame();
+        Game.GameType activity = game.getType();
+
         if (activity != null) {
             String type = activity.name().toLowerCase();
-            String what = user.getPresence().getText().orElse(null);
-            String url = user.getPresence().getStreamingUrl().orElse(null);
+            String what = game.getName();
+            String url = game.getUrl();
 
             String result = type;
             if (what != null)
@@ -131,7 +133,7 @@ public class ConversionUtils {
         } else return "None.";
     }
 
-    public static @NotNull String parseVerificationLevel(VerificationLevel level) {
+    public static @NotNull String parseVerificationLevel(Guild.VerificationLevel level) {
         switch (level) {
             case NONE:
                 return "None";
@@ -141,7 +143,7 @@ public class ConversionUtils {
                 return "Medium (needs to be registered for > 5 minutes)";
             case HIGH:
                 return "High (must also have been a member for > 10 minutes)";
-            case EXTREME:
+            case VERY_HIGH:
                 return "Extreme (must have a verified phone)";
             default:
                 return "Unknown";
@@ -149,12 +151,12 @@ public class ConversionUtils {
     }
 
     public static boolean isInt(String toVerify) {
-        if(toVerify.isEmpty() || toVerify.trim().isEmpty())
+        if (toVerify.isEmpty() || toVerify.trim().isEmpty())
             return false;
         try {
             Integer.parseInt(toVerify);
             return true;
-        }catch(Exception e){
+        } catch (Exception e) {
             return false;
         }
     }

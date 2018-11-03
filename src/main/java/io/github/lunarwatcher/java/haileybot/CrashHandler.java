@@ -26,10 +26,10 @@
 package io.github.lunarwatcher.java.haileybot;
 
 import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
+import net.dv8tion.jda.core.entities.User;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sx.blah.discord.handle.obj.IUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,10 +74,12 @@ public class CrashHandler {
             lastBugged = System.currentTimeMillis();
             // TODO better system?
             for (long uid : bot.getBotAdmins()) {
-                IUser user = bot.getClient().getUserByID(uid);
+                User user = bot.getClient().getUserById(uid);
                 if (user != null) {
                     try {
-                        user.getOrCreatePMChannel().sendMessage("Something bad happened :c");
+                        user.openPrivateChannel().queue((channel) -> channel.sendMessage("Something bad happened :c").queue(null, localErr -> {
+                            CrashHandler.error(localErr, false);
+                        }));
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }

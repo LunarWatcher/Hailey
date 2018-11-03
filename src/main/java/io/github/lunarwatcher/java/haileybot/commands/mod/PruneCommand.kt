@@ -32,14 +32,13 @@ import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.data.Constants
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
 import io.github.lunarwatcher.java.haileybot.utils.scheduleDeletion
+import net.dv8tion.jda.core.EmbedBuilder
+import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.PrivateChannel
+import net.dv8tion.jda.core.entities.TextChannel
 import org.jetbrains.annotations.NotNull
 import org.slf4j.LoggerFactory
-import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.handle.obj.IPrivateChannel
-import sx.blah.discord.handle.obj.Permissions
-import sx.blah.discord.util.EmbedBuilder
-import sx.blah.discord.util.MissingPermissionsException
-import sx.blah.discord.util.RequestBuffer
 
 class PruneCommand : Command {
 
@@ -56,32 +55,32 @@ class PruneCommand : Command {
 
     override fun getDescription() = "Deletes some recent messages (defined by command usage)"
 
-    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
-        if (message.channel is IPrivateChannel) {
-            RequestBuffer.request {
-                message.channel.sendMessage("This is a DM channel. No mod tools available.")
-            };
+    override fun onMessage(bot: HaileyBot, message: @NotNull Message, rawMessage: String, commandName: String) {
+        if (message.channel is PrivateChannel) {
+            message.channel.sendMessage("This is a DM channel. No mod tools available.").queue()
+            return;
+        } else if (message.channel !is TextChannel) {
             return;
         }
-        if (!message.canUserRunAdminCommand(bot, Permissions.MANAGE_MESSAGES)) {
-            RequestBuffer.request {
-                message.channel.sendMessage("You can't run that. You need to have the \"manage messages\" or \"administrator\" permission to do that.")
-            };
+        if (!message.canUserRunAdminCommand(bot, Permission.MESSAGE_MANAGE)) {
+            message.channel.sendMessage("You can't run that. You need to have the \"manage messages\" or \"administrator\" permission to do that.").queue()
+
             return;
         }
-        val guild = bot.moderator.getGuild(message.guild.longID)
+        val guild = bot.moderator.getGuild(message.guild.idLong)
         if (guild == null) {
-            RequestBuffer.request {
-                message.channel.sendMessage("Please run `${Constants.TRIGGER}enableMod` before using this command.")
-            };
+            message.channel.sendMessage("Please run `${Constants.TRIGGER}enableMod` before using this command.").queue()
+
             return;
         }
         val data = rawMessage.split(" ", limit = 2)
         val count = if (data.isEmpty()) null else data[0].toIntOrNull()
         if (count == null) {
-            RequestBuffer.request {
-                message.channel.sendMessage("That's not a valid number.")
-            }
+            message.channel.sendMessage("That's not a valid number.").queue()
+
+            return;
+        } else if (count <= 1) {
+            message.channel.sendMessage("You have to delete more than one message.")
             return;
         }
         val deletionCount = count + 1
@@ -90,31 +89,35 @@ class PruneCommand : Command {
 
         val title = "Bulk deletion"
 
-        val messageHistory = message.channel.getMessageHistory(deletionCount)
-        try {
+        message.channel.getHistoryBefore(message, deletionCount).queue({ messageHistory ->
+            try {
 
-            messageHistory.bulkDelete()
-        } catch (e: MissingPermissionsException) {
-            RequestBuffer.request {
-                message.channel.sendMessage("I do not have the appropriate permissions to delete messages. Unfortunately, due to a bug in the API I use, the \"manage messages\" permission needs to be explcitly declared.")
+                (message.channel as TextChannel).deleteMessages(messageHistory.retrievedHistory)
+            } catch (e: Exception) {
+                message.channel.sendMessage("Something bad happened when attempting to bulk delete. The exception is: " + e.message).queue()
+
+                return@queue;
             }
-            return;
-        }
-        message.reply("deleted ${messageHistory.size - 1} messages. \uD83D\uDC3A")
-                ?.scheduleDeletion(10000);
-        val deletedCount = messageHistory.size - 1
+            message.getChannel().sendMessage("deleted ${messageHistory.size() - 1} messages. \uD83D\uDC3A").queue { it ->
+                it.scheduleDeletion(10000)
+            }
 
-        val description = """**Message count:** $deletedCount
+            val deletedCount = messageHistory.size() - 1
+
+            val description = """**Message count:** $deletedCount
             **Channel:** ${message.channel}
-            **Deleter:** ${message.author.name}#${message.author.discriminator} (UID ${message.author.longID})
+            **Deleter:** ${message.author.name}#${message.author.discriminator} (UID ${message.author.idLong})
             **Reason:** $reason
         """.trimIndent()
-        val embed = EmbedBuilder()
-                .withTitle(title)
-                .withColor(message.author.getColorForGuild(message.guild))
-                .withDescription(description)
-                .build()
-        guild.audit(embed)
+            val embed = EmbedBuilder()
+                    .setTitle(title)
+                    .setColor(message.member.color)
+                    .setDescription(description)
+                    .build()
+            guild.audit(embed)
+        }, { err ->
+            message.channel.sendMessage("Failed to bulk delete messages: " + err.message);
+        });
     }
 
 

@@ -31,18 +31,18 @@ import io.github.lunarwatcher.java.haileybot.data.DecayableList;
 import io.github.lunarwatcher.java.haileybot.data.RegexConstants;
 import io.github.lunarwatcher.java.haileybot.data.SizeLimitedList;
 import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
+import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.MessageEmbed;
+import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.requests.restaction.AuditableRestAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sx.blah.discord.api.internal.json.objects.EmbedObject;
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
-import sx.blah.discord.handle.impl.events.guild.member.UserJoinEvent;
-import sx.blah.discord.handle.impl.events.guild.member.UserLeaveEvent;
-import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.handle.obj.IUser;
-import sx.blah.discord.util.EmbedBuilder;
-import sx.blah.discord.util.RequestBuffer;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -80,7 +80,7 @@ public class ModGuild {
     private HaileyBot bot;
 
     private DecayableList<AutoBannedUser> recentBans = new DecayableList<>(30000);
-    private SizeLimitedList<IMessage> recentMessages = new SizeLimitedList<>(30);
+    private SizeLimitedList<Message> recentMessages = new SizeLimitedList<>(30);
 
     private StringBuilder messageBuffer = new StringBuilder();
     private long lastMessage = 0;
@@ -90,36 +90,38 @@ public class ModGuild {
         this.guild = guild;
     }
 
-    public void banAndLog(IUser user, AutoBanReasons reason) {
-        this.recentBans.add(new AutoBannedUser(user, reason));
+    public void banAndLog(final Member member, AutoBanReasons reason) {
+        this.recentBans.add(new AutoBannedUser(member, reason));
 
-        boolean logging = true;
+        final boolean logging;
         if (auditChannel == -1) {
             logger.warn("WARNING: Audit channel is null. Logging disabled.");
             logging = false;
-        }
+        } else logging = true;
 
         try {
-            RequestBuffer.request(() -> user.getClient().getGuildByID(guild).banUser(user, 7));
+            AuditableRestAction<Void> result = member.getGuild().getController().ban(member.getUser(), 7);
+            result.queue((v) -> {
+                        if (logging) {
+                            member.getJDA().getGuildById(guild)
+                                    .getTextChannelById(auditChannel)
+                                    .sendMessage(new EmbedBuilder().setColor(Color.ORANGE)
+                                            .setTitle("User banned")
+                                            .setDescription("UID: " + member.getUser().getIdLong() + ". Banned by auto-mod: " + reason.getReason())
+                                            .build())
+                                    .queue();
+                        }
+                    },
+                    (throwable -> {
+                        audit("I failed to ban a user: " + throwable.getMessage());
+                    }));
 
-            if (logging) {
-                RequestBuffer.request(() -> {
-                    user.getClient().getGuildByID(guild)
-                            .getChannelByID(auditChannel)
-                            .sendMessage(new EmbedBuilder().withColor(Color.ORANGE)
-                                    .withTitle("User banned")
-                                    .withDesc("UID: " + user.getLongID() + ". Banned by auto-mod: " + reason.getReason())
-                                    .build());
-                });
-            }
         } catch (Exception e) {
-            logger.warn("Failed to ban user " + user.getLongID());
+            logger.warn("Failed to ban user " + member.getUser().getId());
             if (logging) {
-                RequestBuffer.request(() -> {
-                    user.getClient().getGuildByID(guild)
-                            .getChannelByID(auditChannel)
-                            .sendMessage("***WARNING***: Banning user " + user.getLongID() + " failed. Check my perms");
-                });
+                member.getJDA().getGuildById(guild)
+                        .getTextChannelById(auditChannel)
+                        .sendMessage("***WARNING***: Banning user " + member.getUser().getIdLong() + " failed. Check my perms").queue();
             }
         }
 
@@ -133,18 +135,18 @@ public class ModGuild {
         return guild;
     }
 
-    public void userJoined(UserJoinEvent event) {
+    public void userJoined(GuildMemberJoinEvent event) {
         if (inviteSpamProtection) {
             if (RegexConstants.INVITE_SPAM.matcher(event.getUser().getName()).find()) {
-                banAndLog(event.getUser(), AutoBanReasons.INVITE_USERNAME);
+                banAndLog(event.getMember(), AutoBanReasons.INVITE_USERNAME);
                 nukeMessages();
                 return;
             } else if (RegexConstants.GENERAL_SPAM.matcher(event.getUser().getName()).find()) {
-                banAndLog(event.getUser(), AutoBanReasons.SPAM_USERNAME);
+                banAndLog(event.getMember(), AutoBanReasons.SPAM_USERNAME);
                 nukeMessages();
                 return;
             } else if (RegexConstants.UNCAUGHT_SPAM.matcher(event.getUser().getName()).find()) {
-                banAndLog(event.getUser(), AutoBanReasons.UNHANDLED_SPAM);
+                banAndLog(event.getMember(), AutoBanReasons.UNHANDLED_SPAM);
                 nukeMessages();
                 return;
             }
@@ -154,15 +156,15 @@ public class ModGuild {
                 return;
 
             if (joinMessage == null && welcomeChannel > 0) {
-                event.getGuild().getChannelByID(welcomeChannel)
-                        .sendMessage(ExtensionsKt.messageFormat(DEFAULT_JOIN_MESSAGE, event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getGuild().getName()));
+                event.getGuild().getTextChannelById(welcomeChannel)
+                        .sendMessage(ExtensionsKt.messageFormat(DEFAULT_JOIN_MESSAGE, event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getGuild().getName())).queue();
             } else if (joinMessage != null && welcomeChannel > 0) {
-                event.getGuild().getChannelByID(welcomeChannel)
+                event.getGuild().getTextChannelById(welcomeChannel)
                         .sendMessage(ExtensionsKt.messageFormat(joinMessage,
                                 event.getUser().getName() + "#" + event.getUser().getDiscriminator(),
                                 event.getGuild().getName(),
-                                Integer.toString(event.getGuild().getUsers().size()),
-                                getNumberWithNth(event.getGuild().getUsers().size())));
+                                Integer.toString(event.getGuild().getMembers().size()),
+                                getNumberWithNth(event.getGuild().getMembers().size())));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -171,20 +173,20 @@ public class ModGuild {
         }
 
         if (joinDM != null) {
-            event.getUser().getOrCreatePMChannel()
-                    .sendMessage("Welcome to " + event.getGuild().getName() + "! One of the server owners/admins has set a welcome message for joining users.\n\n\n" +
-                            ExtensionsKt.messageFormat(joinDM,
-                                    event.getUser().getName() + "#" + event.getUser().getDiscriminator(),
-                                    event.getGuild().getName(),
-                                    Integer.toString(event.getGuild().getUsers().size())));
+            event.getUser().openPrivateChannel()
+                    .queue((channel) -> {
+                        channel.sendMessage("Welcome to " + event.getGuild().getName() + "! One of the server owners/admins has set a welcome message for joining users.\n\n\n" +
+                                ExtensionsKt.messageFormat(joinDM,
+                                        event.getUser().getName() + "#" + event.getUser().getDiscriminator(),
+                                        event.getGuild().getName(),
+                                        Integer.toString(event.getGuild().getMembers().size())))
+                                .queue();
+                    });
         }
     }
 
-    public void userLeft(UserLeaveEvent message) {
-        if (recentBans.stream().anyMatch(
-                it -> it.getBannedUser() == message.getUser()
-                        || it.getBannedUser().equals(message.getUser())
-        )) {
+    public void userLeft(GuildMemberLeaveEvent message) {
+        if (recentBans.stream().anyMatch(it -> it.getBannedUser() == message.getMember())) {
             return;
         }
 
@@ -192,11 +194,11 @@ public class ModGuild {
             if (message.getUser().isBot())
                 return;
             if (leaveMessage == null && userLeaveChannel > 0) {
-                message.getGuild().getChannelByID(userLeaveChannel)
-                        .sendMessage(ExtensionsKt.messageFormat(DEFAULT_LEAVE_MESSAGE, message.getUser().getName() + "#" + message.getUser().getDiscriminator()));
+                message.getGuild().getTextChannelById(userLeaveChannel)
+                        .sendMessage(ExtensionsKt.messageFormat(DEFAULT_LEAVE_MESSAGE, message.getUser().getName() + "#" + message.getUser().getDiscriminator())).queue();
             } else if (leaveMessage != null && userLeaveChannel > 0) {
-                message.getGuild().getChannelByID(userLeaveChannel)
-                        .sendMessage(ExtensionsKt.messageFormat(leaveMessage, message.getUser().getName() + "#" + message.getUser().getDiscriminator()));
+                message.getGuild().getTextChannelById(userLeaveChannel)
+                        .sendMessage(ExtensionsKt.messageFormat(leaveMessage, message.getUser().getName() + "#" + message.getUser().getDiscriminator())).queue();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -216,25 +218,27 @@ public class ModGuild {
     private synchronized void nukeMessages() {
         if (recentBans.hasAny() && recentMessages.hasAny()) {
             logger.debug("{}, {}", recentBans, recentMessages);
-            Map<IMessage, String> deletedMessages = new HashMap<>();
+            Map<Message, String> deletedMessages = new HashMap<>();
             for (AutoBannedUser autoBannedUser : recentBans) {
-                IUser user = autoBannedUser.getBannedUser();
-                for (IMessage message : recentMessages) {
-                    if (message.isDeleted())
-                        continue;
+                Member member = autoBannedUser.getBannedUser();
+                for (Message message : recentMessages) {
 
 
-                    if (Pattern.compile("(?i)" + user.getName().toLowerCase()).matcher(message.getContent()).find()
-                            || Pattern.compile("(?i)<@!?" + user.getStringID() + ">").matcher(message.getContent()).find()) {
+                    if (Pattern.compile("(?i)" + member.getUser().getName().toLowerCase()).matcher(message.getContentRaw()).find()
+                            || Pattern.compile("(?i)<@!?" + member.getUser().getName() + ">").matcher(message.getContentRaw()).find()) {
                         try {
 
                             if (!deletedMessages.containsKey(message) && auditChannel > 0)
                                 deletedMessages.put(message, autoBannedUser.getStringReason());
-                            message.delete();
+                            AuditableRestAction<Void> result = message.delete();
+                            result.queue(null, (throwable) -> {
+                                CrashHandler.error(throwable);
+                                audit("Failed to delete message " + message.getId() + ": " + throwable.getMessage());
+                            });
                         } catch (Exception e) {
                             logger.warn("Failed to delete message.");
                             CrashHandler.error(e);
-                            audit("Failed to delete message " + message.getStringID());
+                            audit("Failed to delete message " + message.getId());
                         }
                     }
                 }
@@ -242,12 +246,12 @@ public class ModGuild {
             }
             if (deletedMessages.size() != 0) {
 
-                for (Map.Entry<IMessage, String> entry : deletedMessages.entrySet()) {
-                    IMessage m = entry.getKey();
+                for (Map.Entry<Message, String> entry : deletedMessages.entrySet()) {
+                    Message m = entry.getKey();
                     String reason = entry.getValue();
 
                     messageBuffer.append("Deleted message ")
-                            .append(m.getStringID())
+                            .append(m.getId())
                             .append(" from ")
                             .append(m.getAuthor().getName()).append("#").append(m.getAuthor().getDiscriminator())
                             .append(" (Poster is a ")
@@ -272,9 +276,9 @@ public class ModGuild {
         if (messageBuffer.length() == 0 || System.currentTimeMillis() - lastMessage < FLUSH_TIMEOUT)
             return;
         audit(new EmbedBuilder()
-                .withTitle("Auto-mod message deleter")
-                .withColor(Color.RED)
-                .withDesc(messageBuffer.toString()).build());
+                .setTitle("Auto-mod message deleter")
+                .setColor(Color.RED)
+                .setDescription(messageBuffer.toString()).build());
         messageBuffer = new StringBuilder();
     }
 
@@ -282,22 +286,22 @@ public class ModGuild {
         if (auditChannel > 0) {
             try {
                 bot.getClient()
-                        .getGuildByID(guild)
-                        .getChannelByID(auditChannel)
-                        .sendMessage(data);
+                        .getGuildById(guild)
+                        .getTextChannelById(auditChannel)
+                        .sendMessage(data).queue();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public void audit(EmbedObject embed) {
+    public void audit(MessageEmbed embed) {
         if (auditChannel > 0) {
             try {
                 bot.getClient()
-                        .getGuildByID(guild)
-                        .getChannelByID(auditChannel)
-                        .sendMessage(embed);
+                        .getGuildById(guild)
+                        .getTextChannelById(auditChannel)
+                        .sendMessage(embed).queue();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -478,14 +482,15 @@ public class ModGuild {
         return bot;
     }
 
-    public long getWelcomeChannel(){
+    public long getWelcomeChannel() {
         return welcomeChannel;
     }
 
-    public long getUserLeaveChannel(){
+    public long getUserLeaveChannel() {
         return userLeaveChannel;
     }
-    public long getAuditChannel(){
+
+    public long getAuditChannel() {
         return auditChannel;
     }
 }

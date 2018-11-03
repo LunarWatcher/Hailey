@@ -28,12 +28,11 @@ package io.github.lunarwatcher.java.haileybot.commands.roles.self;
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;
 import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
-import org.jetbrains.annotations.NotNull;
+import net.dv8tion.jda.core.Permission;
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.PrivateChannel;
+import net.dv8tion.jda.core.entities.Role;
 import org.jetbrains.annotations.Nullable;
-import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.handle.obj.IPrivateChannel;
-import sx.blah.discord.handle.obj.IRole;
-import sx.blah.discord.handle.obj.Permissions;
 
 import java.util.List;
 
@@ -60,38 +59,38 @@ public class AddAssignableRoleCommand implements Command {
     }
 
     @Override
-    public void onMessage(HaileyBot bot, @NotNull IMessage message, String rawMessage, String commandName) {
-        if (message.getChannel() instanceof IPrivateChannel) {
-            message.getChannel().sendMessage("This is a DM channel. No mod tools available.");
+    public void onMessage(HaileyBot bot, Message message, String rawMessage, String commandName) {
+        if (message.getChannel() instanceof PrivateChannel) {
+            message.getChannel().sendMessage("This is a DM channel. No mod tools available.").queue();
             return;
         }
         if (!ExtensionsKt.canUserRunAdminCommand(message, bot)) {
-            message.getChannel().sendMessage("You can't do that.");
+            message.getChannel().sendMessage("You can't do that.").queue();
             return;
         }
 
         if (rawMessage.isEmpty()) {
-            message.getChannel().sendMessage("Which role should be self-assignable?");
+            message.getChannel().sendMessage("Which role should be self-assignable?").queue();
             return;
         }
 
-        if (message.getClient().getOurUser().getPermissionsForGuild(message.getGuild()).stream().noneMatch((it) -> it == Permissions.MANAGE_ROLES || it == Permissions.ADMINISTRATOR)) {
-            message.getChannel().sendMessage("WARNING: I don't have the \"manage roles\" or the \"administrator\" permission (I need one of them to assign roles).");
+        if (message.getGuild().getMember(message.getJDA().getSelfUser()).getPermissions().stream().noneMatch((it) -> it == Permission.MANAGE_ROLES || it == Permission.ADMINISTRATOR)) {
+            message.getChannel().sendMessage("WARNING: I don't have the \"manage roles\" or the \"administrator\" permission (I need one of them to assign roles).").queue();
 
         }
 
-        List<IRole> roles = message.getGuild().getRoles();
-        for (IRole role : roles) {
+        List<Role> roles = message.getGuild().getRoles();
+        for (Role role : roles) {
             if (role.getName().equals(rawMessage)) {
-                boolean result = bot.getAssigner().addRole(message.getGuild().getLongID(), role);
+                boolean result = bot.getAssigner().addRole(message.getGuild().getIdLong(), role);
                 if (result)
-                    message.getChannel().sendMessage("Successfully registered the role `" + rawMessage + "` as self-assignable.");
+                    message.getChannel().sendMessage("Successfully registered the role `" + rawMessage + "` as self-assignable.").queue();
                 else
-                    message.getChannel().sendMessage("Failed to register the role `" + rawMessage + "` as self-assignable.");
+                    message.getChannel().sendMessage("Failed to register the role `" + rawMessage + "` as self-assignable.").queue();
                 return;
             }
         }
-        message.getChannel().sendMessage("I couldn't find that role. Note that roles are case-sensitive.");
+        message.getChannel().sendMessage("I couldn't find that role. Note that roles are case-sensitive.").queue();
 
     }
 }

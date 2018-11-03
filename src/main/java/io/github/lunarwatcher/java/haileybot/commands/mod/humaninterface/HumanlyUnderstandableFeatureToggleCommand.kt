@@ -31,10 +31,9 @@ import io.github.lunarwatcher.java.haileybot.commands.Moderator.*
 import io.github.lunarwatcher.java.haileybot.commands.mod.ModFeatureToggle
 import io.github.lunarwatcher.java.haileybot.data.Constants
 import io.github.lunarwatcher.java.haileybot.utils.canUserRunAdminCommand
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.PrivateChannel
 import org.jetbrains.annotations.NotNull
-import sx.blah.discord.handle.obj.IMessage
-import sx.blah.discord.handle.obj.IPrivateChannel
-import sx.blah.discord.util.RequestBuffer
 
 const val messageRemoval = "Messages can be removed by writing `null`. This will also remove channels" +
         " where applicable.";
@@ -48,22 +47,18 @@ abstract class HumanlyUnderstandableFeatureToggleCommand(private val cmdName: St
     override fun getDescription(): String? = cmdDescription
     override fun getHelp(): String? = cmdHelp
 
-    override fun onMessage(bot: HaileyBot, message: @NotNull IMessage, rawMessage: String, commandName: String) {
-        if (message.channel is IPrivateChannel) {
-            RequestBuffer.request {
-                message.channel.sendMessage("This is a DM channel. No mod tools available.")
-            };
+    override fun onMessage(bot: HaileyBot, message: @NotNull Message, rawMessage: String, commandName: String) {
+        if (message.channel is PrivateChannel) {
+            message.channel.sendMessage("This is a DM channel. No mod tools available.").queue();
             return;
         }
         if (!message.canUserRunAdminCommand(bot)) {
-            message.reply("You need to be a bot admin or have the administrator permission to do that.")
+            message.getChannel().sendMessage("You need to be a bot admin or have the administrator permission to do that.").queue();
             return
         }
 
         if (!bot.moderator.isGuildEnabled(message.guild)) {
-            RequestBuffer.request {
-                message.channel.sendMessage("Guild moderation not enabled. Please run `${Constants.TRIGGER}enableMod` to enable it.")
-            }
+            message.channel.sendMessage("Guild moderation not enabled. Please run `${Constants.TRIGGER}enableMod` to enable it.").queue()
             return
         }
 
@@ -77,9 +72,7 @@ abstract class HumanlyUnderstandableFeatureToggleCommand(private val cmdName: St
         }
         val splitBySpace = rawMessage.split(" ", limit = features.size);
         if (splitBySpace.size != features.size) {
-            RequestBuffer.request {
-                message.channel.sendMessage("You seem to be missing one or more arguments. See the help command for more information on required arguments")
-            }
+            message.channel.sendMessage("You seem to be missing one or more arguments. See the help command for more information on required arguments").queue()
             return;
         }
         for (i in 0 until features.size) {

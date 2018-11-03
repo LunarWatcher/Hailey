@@ -29,9 +29,8 @@ import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;
 import io.github.lunarwatcher.java.haileybot.data.Config;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
-import org.jetbrains.annotations.NotNull;
-import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.util.EmbedBuilder;
+import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.entities.Message;
 
 import java.awt.*;
 import java.util.List;
@@ -59,26 +58,25 @@ public class AboutCommand implements Command {
     }
 
     @Override
-    public void onMessage(HaileyBot bot, @NotNull IMessage message, String rawMessage, String commandName) {
+    public void onMessage(HaileyBot bot, Message message, String rawMessage, String commandName) {
         Config props = bot.getConfig();
         message.getChannel()
                 .sendMessage(
                         new EmbedBuilder()
-                                .withTitle("About me")
-                                .withColor(new Color(0, .3f, 1f))
-                                .appendField("General", "**Owner:** " + props.getOwner() + "\n" +
+                                .setTitle("About me")
+                                .setColor(new Color(0, .3f, 1f))
+                                .addField("General", "**Owner:** " + props.getOwner() + "\n" +
                                                 "**Creator:** " + Config.CREATOR + "\n" +
                                                 "**Source code:** [GitHub](" + props.getGithub() + ")\n" +
                                                 "**Version:** " + Constants.VERSION + "\n" +
                                                 "**Prefix:** " + Constants.TRIGGER + "\n",
                                         false)
-                                .appendField("Technical details", "**Shards:** " + bot.getClient().getShardCount() + "\n" +
-                                                "**Current shard index:** " + message.getShard().getInfo()[0] + "\n" +
-                                                "**Joined this guild:** " + Constants.dateFormatter.format(message.getGuild().getJoinTimeForUser(message.getClient().getOurUser())) + "\n" +
-                                                "**Users affected** " + message.getClient().getGuilds().stream().mapToInt((it) -> it.getUsers().size()).sum() + "\n",
+                                .addField("Technical details", "**Shards:** " + bot.getClient().getShardInfo().getShardTotal() + "\n" +
+                                                "**Joined this guild:** " + Constants.dateFormatter.format(message.getGuild().getMember(bot.getBotUser()).getJoinDate()) + "\n" +
+                                                "**Users affected** " + message.getJDA().getGuilds().stream().mapToInt((it) -> it.getMembers().size()).sum() + "\n",
                                         true)
                                 .build()
-                );
+                ).queue();
 
     }
 }
