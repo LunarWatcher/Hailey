@@ -118,7 +118,7 @@ class DebugBotIssuesCommand : Command {
                         .nl()
 
                 if (!valid) {
-                    modGuild.set(AUDIT_FEATURE, -1);
+                    modGuild.set(AUDIT_FEATURE, -1L);
                 }
             }
         }
@@ -133,7 +133,7 @@ class DebugBotIssuesCommand : Command {
                 stringBuilder.append("It is ${if (valid) "valid" else "not valid. I will remove this channel"}")
                         .nl()
                 if (!valid) {
-                    modGuild.set(WELCOME_LOGGING, -1);
+                    modGuild.set(WELCOME_LOGGING, -1L);
                 }
             }
         }
@@ -147,7 +147,7 @@ class DebugBotIssuesCommand : Command {
                 stringBuilder.append("It is ${if (valid) "valid" else "not valid. I will remove this channel"}")
                         .nl()
                 if (!valid) {
-                    modGuild.set(LEAVE_LOGGING, -1);
+                    modGuild.set(LEAVE_LOGGING, -1L);
                 }
             }
         }
