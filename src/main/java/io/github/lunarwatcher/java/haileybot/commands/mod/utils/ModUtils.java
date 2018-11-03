@@ -104,6 +104,7 @@ public class ModUtils {
         String reason = rawMessage.replaceAll("<@!?\\d+>", "").trim();
         if (reason.length() == 0 || reason.replace(" ", "").length() == 0)
             reason = "No reason.";
+        final String finalReason = reason;
 
         if (mentions.size() == 0) {
             try {
@@ -117,32 +118,37 @@ public class ModUtils {
                     unknownUsageMessage(message);
                     return;
                 }
-                User user = message.getJDA().getUserById(uid);
-                if (user == null) {
-                    unknownUsageMessage(message);
-                    return;
-                }
+                message.getJDA().retrieveUserById(uid).queue(user -> {
+                    if (user == null) {
+                        unknownUsageMessage(message);
+                        return;
+                    }
 
-                if (user.getIdLong() == message.getJDA().getSelfUser().getIdLong()) {
-                    message.getChannel().sendMessage("I can't ban/kick myself. If you really want me to leave, please remove me manually.").queue();
-                    return;
-                } else if (user.getIdLong() == message.getAuthor().getIdLong()) {
+                    if (user.getIdLong() == message.getJDA().getSelfUser().getIdLong()) {
+                        message.getChannel().sendMessage("I can't ban/kick myself. If you really want me to leave, please remove me manually.").queue();
+                        return;
+                    } else if (user.getIdLong() == message.getAuthor().getIdLong()) {
 
-                    message.getChannel().sendMessage("You can't ban/kick yourself.").queue();
+                        message.getChannel().sendMessage("You can't ban/kick yourself.").queue();
 
-                    return;
-                }
-                String[] cache = reason.split(" ", 2);
-                if (cache.length != 2)
-                    reason = "No reason.";
-                else {
-                    if (cache[1].replace(" ", "").isEmpty()) reason = "No reason.";
-                    else reason = cache[1];
+                        return;
+                    }
+                    String mutableReason = finalReason;
+                    String[] cache = mutableReason.split(" ", 2);
+                    if (cache.length != 2)
+                        mutableReason = "No reason.";
+                    else {
+                        if (cache[1].replace(" ", "").isEmpty()) mutableReason = "No reason.";
+                        else mutableReason = cache[1];
 
-                }
-                Member member = message.getGuild().getMember(user);
-                boolean result = safeAccept(handleUser, new InternalDataForwarder(user, member, reason), message);
-                handleResult(result, message);
+                    }
+                    Member member = message.getGuild().getMember(user);
+                    boolean result = safeAccept(handleUser, new InternalDataForwarder(user, member, mutableReason), message);
+                    handleResult(result, message);
+                }, err -> {
+                    message.getChannel().sendMessage("Failed to retrieve the user: " + err.getMessage()).queue();
+                });
+
             } catch (Exception e) {
                 unknownUsageMessage(message);
             }

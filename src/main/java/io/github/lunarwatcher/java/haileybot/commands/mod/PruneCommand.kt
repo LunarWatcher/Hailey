@@ -92,29 +92,33 @@ class PruneCommand : Command {
         message.channel.getHistoryBefore(message, deletionCount).queue({ messageHistory ->
             try {
 
-                (message.channel as TextChannel).deleteMessages(messageHistory.retrievedHistory)
+                (message.channel as TextChannel).deleteMessages(messageHistory.retrievedHistory).queue({ _ ->
+                    message.channel.sendMessage("<@${message.author.idLong}>, deleted ${messageHistory.size() - 1} messages. \uD83D\uDC3A").queue { msg ->
+                        msg.scheduleDeletion(10000)
+                    }
+
+                    val deletedCount = messageHistory.size() - 1
+
+                    val description = """**Message count:** $deletedCount
+            **Channel:** ${message.channel}
+            **Deleter:** ${message.author.name}#${message.author.discriminator} (UID ${message.author.idLong})
+            **Reason:** $reason
+        """.trimIndent()
+                    val embed = EmbedBuilder()
+                            .setTitle(title)
+                            .setColor(message.member.color)
+                            .setDescription(description)
+                            .build()
+                    guild.audit(embed)
+                }, {
+                    message.channel.sendMessage("<@${message.author.idLong}>, I could not delete the messages; an internal error occured: ${it.message}")
+                })
             } catch (e: Exception) {
                 message.channel.sendMessage("Something bad happened when attempting to bulk delete. The exception is: " + e.message).queue()
 
                 return@queue;
             }
-            message.getChannel().sendMessage("deleted ${messageHistory.size() - 1} messages. \uD83D\uDC3A").queue { it ->
-                it.scheduleDeletion(10000)
-            }
 
-            val deletedCount = messageHistory.size() - 1
-
-            val description = """**Message count:** $deletedCount
-            **Channel:** ${message.channel}
-            **Deleter:** ${message.author.name}#${message.author.discriminator} (UID ${message.author.idLong})
-            **Reason:** $reason
-        """.trimIndent()
-            val embed = EmbedBuilder()
-                    .setTitle(title)
-                    .setColor(message.member.color)
-                    .setDescription(description)
-                    .build()
-            guild.audit(embed)
         }, { err ->
             message.channel.sendMessage("Failed to bulk delete messages: " + err.message);
         });

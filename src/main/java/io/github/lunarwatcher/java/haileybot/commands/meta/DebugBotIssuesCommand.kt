@@ -69,7 +69,10 @@ class DebugBotIssuesCommand : Command {
         val moderator = bot.moderator
         val watcher = bot.matcher
         val database = bot.database
+
         val botUser = bot.botUser
+        val botMember = message.guild.getMember(botUser);
+
         val modGuild = bot.moderator.getGuild(message.guild)
         val builder = EmbedBuilder()
                 .setColor(Color.MAGENTA)
@@ -78,7 +81,7 @@ class DebugBotIssuesCommand : Command {
                 .appendDescription("Running under " + botUser.name + "#" + botUser.discriminator + "\n")
 
         builder.addField(MessageEmbed.Field("Permissions for this guild",
-                message.guild.getMember(botUser).getPermissions().joinToString(", ") { it.toString().toLowerCase().replace("_", " ") },
+                message.guild.getMember(botUser).permissions.joinToString(", ") { it.toString().toLowerCase().replace("_", " ") },
                 true))
         builder.addField(MessageEmbed.Field("Moderator", """
             There are currently ${moderator.size()} mod guilds.
@@ -86,10 +89,11 @@ class DebugBotIssuesCommand : Command {
             ${if (moderator.getGuild(message.guild) != null) "Enabled features can be seen using the `serverInfo` command" else ""}
         """.trimIndent(), true))
 
-        val usableChannels = message.guild.channels.filter {
-            it.getPermissionOverride(message.guild.getMember(botUser)).let { perms ->
-                perms.allowed.contains(Permission.MESSAGE_READ) && perms.allowed.contains(Permission.MESSAGE_WRITE)
-            }
+        val hasReadWrite = botMember.hasPermission(Permission.MESSAGE_READ) && botMember.hasPermission(Permission.MESSAGE_WRITE)
+
+        val usableChannels =  message.guild.channels.filter {
+            val override = it.getPermissionOverride(botMember)
+            override?.allowed?.containsAll(readWrite) ?: hasReadWrite
         }
 
         var stringBuilder = StringBuilder();
@@ -159,7 +163,14 @@ class DebugBotIssuesCommand : Command {
             it.scheduleDeletion(TIMEOUT)
         }
         if (dumpChannels) {
+
             val unusableChannels = message.guild.channels.filter { it !in usableChannels }
+            if(unusableChannels.isEmpty()){
+                message.channel.sendMessage("There are no unusable channels :D").queue {
+                    it.scheduleDeletion(TIMEOUT)
+                }
+                return;
+            }
             stringBuilder = StringBuilder()
             stringBuilder.append("```\nUnusable channels:\n")
             for (channel in unusableChannels) {
@@ -177,5 +188,9 @@ class DebugBotIssuesCommand : Command {
 
     companion object {
         const val TIMEOUT: Long = 60L * 20L * 1000L;
+        val readWrite = listOf(
+                Permission.MESSAGE_READ,
+                Permission.MESSAGE_WRITE
+        )
     }
 }

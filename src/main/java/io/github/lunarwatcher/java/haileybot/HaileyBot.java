@@ -38,6 +38,7 @@ import io.github.lunarwatcher.java.haileybot.data.Database;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.SelfUser;
 import net.dv8tion.jda.core.events.DisconnectEvent;
@@ -51,6 +52,8 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent;
 import net.dv8tion.jda.core.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.events.message.MessageUpdateEvent;
+import net.dv8tion.jda.core.events.message.priv.PrivateMessageReceivedEvent;
+import net.dv8tion.jda.core.events.message.priv.PrivateMessageUpdateEvent;
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent;
 import net.dv8tion.jda.core.hooks.EventListener;
 import org.slf4j.Logger;
@@ -140,25 +143,15 @@ public class HaileyBot implements EventListener {
 
         registerShutdownHook();
         registerTasks();
+
+        for(Guild guild : client.getGuilds()){
+            handleGuild(guild);
+        }
     }
 
 
     public void onGuildCreateEvent(GuildJoinEvent event) {
-        logger.info("Joined guild: {}. Owner: {}",
-                event.getGuild().getName(),
-                event.getGuild().getOwner().getUser().getName() + "#" + event.getGuild().getOwner().getUser().getDiscriminator());
-
-        if (blacklistStorage.isBlacklisted(event.getGuild())) {
-            logger.warn("Joined blacklisted guild! Leaving...");
-            logger.warn("Dumping info. Guild: {} (UID {}), owned by {} (UID {}).",
-                    event.getGuild().getName(),
-                    event.getGuild().getId(),
-                    event.getGuild().getOwner().getUser().getName(),
-                    event.getGuild().getOwner().getUser().getId());
-            event.getGuild().leave()
-                    .queue(null, CrashHandler::error);
-
-        }
+        handleGuild(event.getGuild());
 
     }
 
@@ -372,6 +365,34 @@ public class HaileyBot implements EventListener {
             this.onMessageEditedEvent((MessageUpdateEvent) event);
         } else if (event instanceof GuildJoinEvent) {
             this.onGuildCreateEvent((GuildJoinEvent) event);
+        } else if(event instanceof MessageReceivedEvent){
+            this.onMessageReceivedEvent((MessageReceivedEvent) event);
+        } else if(event instanceof MessageDeleteEvent){
+            this.onMessageDeletedEvent((MessageDeleteEvent) event);
+        } else if(event instanceof PrivateMessageReceivedEvent){
+            PrivateMessageReceivedEvent pEvent = (PrivateMessageReceivedEvent) event;
+            this.onMessageReceivedEvent(new MessageReceivedEvent(pEvent.getJDA(), pEvent.getResponseNumber(), pEvent.getMessage()));
+        } else if(event instanceof PrivateMessageUpdateEvent){
+            PrivateMessageUpdateEvent pEvent = (PrivateMessageUpdateEvent) event;
+            this.onMessageEditedEvent(new MessageUpdateEvent(pEvent.getJDA(), pEvent.getResponseNumber(), pEvent.getMessage()));
+        }
+    }
+
+    public void handleGuild(Guild guild){
+        logger.info("Joined guild: {}. Owner: {}",
+                guild.getName(),
+                guild.getOwner().getUser().getName() + "#" + guild.getOwner().getUser().getDiscriminator());
+
+        if (blacklistStorage.isBlacklisted(guild)) {
+            logger.warn("Joined blacklisted guild! Leaving...");
+            logger.warn("Dumping info. Guild: {} (UID {}), owned by {} (UID {}).",
+                    guild.getName(),
+                    guild.getId(),
+                    guild.getOwner().getUser().getName(),
+                    guild.getOwner().getUser().getId());
+            guild.leave()
+                    .queue(null, CrashHandler::error);
+
         }
     }
 

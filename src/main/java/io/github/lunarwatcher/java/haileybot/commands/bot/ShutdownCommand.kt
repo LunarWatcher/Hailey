@@ -48,7 +48,7 @@ class ShutdownCommand : Command {
             return
         }
         bot.save();
-        message.channel.sendMessage("Goodbye cruel world!").queue()
+        message.channel.sendMessage("Goodbye cruel world!").complete()
         //TODO confirm that this is the appropriate way to shut down JDA. Couldn't find any logout methods, so I'm assuming it is.
         System.exit(0)
     }
