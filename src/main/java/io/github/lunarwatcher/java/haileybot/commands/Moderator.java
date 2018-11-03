@@ -26,6 +26,7 @@
 package io.github.lunarwatcher.java.haileybot.commands;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
+import io.github.lunarwatcher.java.haileybot.data.Database;
 import io.github.lunarwatcher.java.haileybot.mod.ModGuild;
 import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
 import net.dv8tion.jda.core.EmbedBuilder;
@@ -46,8 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unchecked")
@@ -270,5 +270,9 @@ public class Moderator {
 
     public int size() {
         return enabledGuilds.size();
+    }
+
+    public Collection<ModGuild> getModGuilds() {
+        return enabledGuilds.values();
     }
 }

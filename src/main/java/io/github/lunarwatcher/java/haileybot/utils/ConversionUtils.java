@@ -115,6 +115,8 @@ public class ConversionUtils {
 
     public static @NotNull String getGame(Member user) {
         Game game = user.getGame();
+        if(game == null)
+            return "None.";
         Game.GameType activity = game.getType();
 
         if (activity != null) {

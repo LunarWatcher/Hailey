@@ -35,6 +35,7 @@ import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
 import io.github.lunarwatcher.java.haileybot.data.Config;
 import io.github.lunarwatcher.java.haileybot.data.Constants;
 import io.github.lunarwatcher.java.haileybot.data.Database;
+import io.github.lunarwatcher.java.haileybot.status.PresenceManager;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
@@ -87,7 +88,6 @@ public class HaileyBot implements EventListener {
     }
 
     ScheduledFuture<?> autoSaver;
-    private boolean running;
     private JDA client;
     private Database database;
     private Commands commands;
@@ -96,6 +96,8 @@ public class HaileyBot implements EventListener {
     private RoleAssignmentManager assigner;
     private BlacklistStorage blacklistStorage;
     private Config config;
+    private PresenceManager presenceManager;
+
     private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     public HaileyBot() {
@@ -113,9 +115,12 @@ public class HaileyBot implements EventListener {
             Properties config = new Properties();
             config.load(new FileInputStream("config.properties"));
             this.config = new Config(config);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
         final String token = config.getToken();
         try {
             client = new JDABuilder(token)
@@ -124,6 +129,7 @@ public class HaileyBot implements EventListener {
         } catch (LoginException e) {
             throw new RuntimeException(e);
         }
+
 
     }
 
@@ -134,6 +140,9 @@ public class HaileyBot implements EventListener {
         commands = new Commands(this);
         moderator = new Moderator(this);
         assigner = new RoleAssignmentManager(this);
+
+        presenceManager = new PresenceManager(this);
+        presenceManager.onReady();
 
         logger.info("Bot ID: {}", client.getSelfUser().getIdLong());
 
@@ -153,11 +162,13 @@ public class HaileyBot implements EventListener {
     public void onGuildCreateEvent(GuildJoinEvent event) {
         handleGuild(event.getGuild());
 
+        presenceManager.refresh();
     }
 
     public void onGuildLeaveEvent(GuildLeaveEvent event) {
         matcher.clearWatchesForGuild(event.getGuild().getIdLong());
 
+        presenceManager.refresh();
     }
 
     public void onRoleDeleteEvent(RoleDeleteEvent event) {
@@ -282,15 +293,19 @@ public class HaileyBot implements EventListener {
     }
 
     public void save() {
-        if (moderator != null)
-            moderator.save();
-        if (matcher != null)
-            matcher.save();
-        if (assigner != null)
-            assigner.save();
+        try {
+            if (moderator != null)
+                moderator.save();
+            if (matcher != null)
+                matcher.save();
+            if (assigner != null)
+                assigner.save();
 
 
-        database.commit();
+            database.commit();
+        }catch(Throwable e){
+            CrashHandler.error(e);
+        }
     }
 
 
@@ -334,16 +349,16 @@ public class HaileyBot implements EventListener {
         return config;
     }
 
+    public ScheduledExecutorService getExecutor() {
+        return executor;
+    }
+
     private void registerShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new ControlHook());
     }
 
     private void registerTasks() {
         executor.scheduleAtFixedRate(this::refreshLogsInGuilds, 30000, 30000, TimeUnit.MILLISECONDS);
-        executor.scheduleAtFixedRate(this::updatePresence, PRESENCE_UPDATE_TIME, PRESENCE_UPDATE_TIME, TimeUnit.MILLISECONDS);
-    }
-
-    public void updatePresence() {
 
     }
 
@@ -375,6 +390,8 @@ public class HaileyBot implements EventListener {
         } else if(event instanceof PrivateMessageUpdateEvent){
             PrivateMessageUpdateEvent pEvent = (PrivateMessageUpdateEvent) event;
             this.onMessageEditedEvent(new MessageUpdateEvent(pEvent.getJDA(), pEvent.getResponseNumber(), pEvent.getMessage()));
+        } else if(event instanceof GuildLeaveEvent){
+            this.onGuildLeaveEvent((GuildLeaveEvent) event);
         }
     }
 
@@ -403,6 +420,11 @@ public class HaileyBot implements EventListener {
 
         public void run() {
             save();
+            try {
+                executor.shutdownNow();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
     }
 
