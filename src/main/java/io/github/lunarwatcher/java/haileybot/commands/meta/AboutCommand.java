@@ -71,7 +71,7 @@ public class AboutCommand implements Command {
                                                 "**Version:** " + Constants.VERSION + "\n" +
                                                 "**Prefix:** " + Constants.TRIGGER + "\n",
                                         false)
-                                .addField("Technical details", 
+                                .addField("Technical details",
                                                 "**Joined this guild:** " + Constants.dateFormatter.format(message.getGuild().getMember(bot.getBotUser()).getJoinDate()) + "\n" +
                                                 "**Users affected** " + message.getJDA().getGuilds().stream().mapToInt((it) -> it.getMembers().size()).sum() + "\n",
                                         true)

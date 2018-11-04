@@ -74,16 +74,20 @@ public class CrashHandler {
             lastBugged = System.currentTimeMillis();
             // TODO better system?
             for (long uid : bot.getBotAdmins()) {
-                User user = bot.getClient().getUserById(uid);
-                if (user != null) {
-                    try {
-                        user.openPrivateChannel().queue((channel) -> channel.sendMessage("Something bad happened :c").queue(null, localErr -> {
-                            CrashHandler.error(localErr, false);
-                        }));
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
+                bot.getClient().retrieveUserById(uid).queue(user -> {
+                    if (user != null) {
+                        try {
+                            user.openPrivateChannel().queue((channel) -> channel.sendMessage("Something bad happened :c").queue(null, localErr -> {
+                                CrashHandler.error(localErr, false);
+                            }));
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    } else {
+                        logger.warn ("Failed to send an error DM to {}: I could not find them.", uid);
                     }
-                }
+                }, retrieveError -> logger.warn("Failed to find that user: {}", retrieveError.getMessage()));
+
             }
         }
 
