@@ -25,6 +25,7 @@
 
 package io.github.lunarwatcher.java.haileybot.status;
 
+import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Game;
 import org.jetbrains.annotations.NotNull;
@@ -55,9 +56,10 @@ public class PresenceContent {
         return type;
     }
 
-    public String getMessage(JDA client) {
+    public String getMessage(HaileyBot bot, JDA client) {
         return message.replace("$guilds", String.valueOf(client.getGuilds().size()))
-                .replace("$members", String.valueOf(client.getGuilds().stream().mapToInt(it -> it.getMembers().size()).sum()));
+                .replace("$members", String.valueOf(client.getGuilds().stream().mapToInt(it -> it.getMembers().size()).sum()))
+                .replace("$modguild", String.valueOf(bot.getModerator().getModGuilds().size()));
     }
 
     public String getUrl() {

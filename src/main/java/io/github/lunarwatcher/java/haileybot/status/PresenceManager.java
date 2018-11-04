@@ -64,10 +64,10 @@ public class PresenceManager {
     private void configurePresence(){
         presences.add(new PresenceContent(GameType.WATCHING, "$guilds snowy guilds <3 | " + Constants.TRIGGER + "help", null));
         presences.add(new PresenceContent(GameType.DEFAULT, "with the pack", null));
-        presences.add(new PresenceContent(GameType.STREAMING, "the source", "https://github.com/LunarWatcher/Hailey/"));
-        presences.add(new PresenceContent(GameType.LISTENING, "to the ocean", null));
+        presences.add(new PresenceContent(GameType.DEFAULT, "with the source code", null));
+        presences.add(new PresenceContent(GameType.LISTENING, "the ocean", null));
         presences.add(new PresenceContent(GameType.WATCHING, "the never-ending feed at $guilds guilds | " + Constants.TRIGGER + "help", null));
-        presences.add(new PresenceContent(GameType.WATCHING, "for spammers | Protecting " + bot.getModerator().getModGuilds().size() + " guilds.", null));
+        presences.add(new PresenceContent(GameType.WATCHING, "for spammers | Protecting $modguilds guilds.", null));
         presences.add(new PresenceContent(GameType.DEFAULT, "with my tail in $guilds guilds \uD83D\uDC9B", null));
         presences.add(new PresenceContent(GameType.DEFAULT, "in the snow", null));
 
@@ -125,7 +125,7 @@ public class PresenceManager {
     }
 
     private void setPresence(){
-        String message = activePresence.getMessage(client);
+        String message = activePresence.getMessage(bot, client);
         GameType type = activePresence.getType();
         String url = activePresence.getUrl();
         if(client.getPresence().getGame() != null) {
