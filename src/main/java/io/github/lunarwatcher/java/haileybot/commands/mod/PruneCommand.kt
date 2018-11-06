@@ -99,7 +99,7 @@ class PruneCommand : Command {
                     val deletedCount = messageHistory.size()
 
                     val description = """**Message count:** $deletedCount
-            **Channel:** ${message.channel}
+            **Channel:** <#${message.channel.id}>
             **Deleter:** ${message.author.name}#${message.author.discriminator} (UID ${message.author.idLong})
             **Reason:** $reason
         """.trimIndent()
