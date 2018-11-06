@@ -60,7 +60,7 @@ fun Message.scheduleDeletion(time: Long) {
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
-        this.delete()
+        this.delete().queue()
     }.start()
 }
 

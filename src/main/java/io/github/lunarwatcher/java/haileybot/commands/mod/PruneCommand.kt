@@ -83,13 +83,12 @@ class PruneCommand : Command {
             message.channel.sendMessage("You have to delete more than one message.").queue()
             return;
         }
-        val deletionCount = count + 1
 
         val reason = if (data.size == 2) data[1] else "None"
 
         val title = "Bulk deletion"
 
-        message.channel.getHistoryBefore(message, deletionCount).queue({ messageHistory ->
+        message.channel.getHistoryBefore(message, count).queue({ messageHistory ->
             try {
 
                 (message.channel as TextChannel).deleteMessages(messageHistory.retrievedHistory).queue({ _ ->
@@ -97,13 +96,14 @@ class PruneCommand : Command {
                         msg.scheduleDeletion(10000)
                     }
 
-                    val deletedCount = messageHistory.size() - 1
+                    val deletedCount = messageHistory.size()
 
                     val description = """**Message count:** $deletedCount
             **Channel:** ${message.channel}
             **Deleter:** ${message.author.name}#${message.author.discriminator} (UID ${message.author.idLong})
             **Reason:** $reason
         """.trimIndent()
+                    message.delete().queue();
                     val embed = EmbedBuilder()
                             .setTitle(title)
                             .setColor(message.member.color)
