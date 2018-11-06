@@ -92,17 +92,16 @@ class PruneCommand : Command {
             try {
 
                 (message.channel as TextChannel).deleteMessages(messageHistory.retrievedHistory).queue({ _ ->
-                    message.channel.sendMessage("<@${message.author.idLong}>, deleted ${messageHistory.size() - 1} messages. \uD83D\uDC3A").queue { msg ->
+                    message.channel.sendMessage("<@${message.author.idLong}>, deleted ${messageHistory.size()} messages. \uD83D\uDC3A").queue { msg ->
                         msg.scheduleDeletion(10000)
                     }
 
                     val deletedCount = messageHistory.size()
 
                     val description = """**Message count:** $deletedCount
-            **Channel:** <#${message.channel.id}>
-            **Deleter:** ${message.author.name}#${message.author.discriminator} (UID ${message.author.idLong})
-            **Reason:** $reason
-        """.trimIndent()
+                                **Channel:** <#${message.channel.id}>
+                                **Deleter:** ${message.author.name}#${message.author.discriminator} (UID ${message.author.idLong})
+                                **Reason:** $reason""".trimIndent()
                     message.delete().queue();
                     val embed = EmbedBuilder()
                             .setTitle(title)
