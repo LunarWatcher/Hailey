@@ -63,7 +63,7 @@ class UserInfoCommand : Command {
         val formattedCreationDate = dateFormatter.format(member.joinDate)
         val isUserBot: Boolean = member.user.isBot
         val presence = ConversionUtils.convertStatusToString(member.onlineStatus);
-        val roles = member.roles.filter { !it.isPublicRole }.sortedBy { it.position }.map { it.name }
+        val roles = member.roles.filter { !it.isPublicRole }.sortedByDescending { it.position }.map { it.name }
         val stringRoles = roles.joinToString(", ");
 
         val activity = ConversionUtils.getGame(member)
@@ -76,7 +76,7 @@ class UserInfoCommand : Command {
         val uidEmbed = MessageEmbed.Field("User ID", member.user.id, true)
         val nicknameEmbed = MessageEmbed.Field("Server nickname", nick, true)
         val botStatusEmbed = MessageEmbed.Field("Bot", if (isUserBot) "Yes" else "No", true)
-        val accountCreationEmbed = MessageEmbed.Field("Creation date", formattedCreationDate, false)
+        val accountCreationEmbed = MessageEmbed.Field("Creation date", "$formattedCreationDate (dd-mm-yyyy)", false)
         val presenceEmbed = MessageEmbed.Field("Presence", presence, false)
         val activityEmbed = MessageEmbed.Field("Activity", activity, false)
         val roleEmbed = MessageEmbed.Field("Roles (${roles.size})", if (stringRoles.length > 1200) "(Too many to display :c)" else stringRoles, false)

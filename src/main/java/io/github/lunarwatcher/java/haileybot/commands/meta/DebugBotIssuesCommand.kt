@@ -52,7 +52,7 @@ class DebugBotIssuesCommand : Command {
     }
 
     override fun getHelp(): String? {
-        return null
+        return "Usage is straight-forward: run the command. Append the `--with-invalid-channels` flag to also dump inaccessible channels."
     }
 
     override fun getDescription(): String? {
@@ -107,7 +107,7 @@ class DebugBotIssuesCommand : Command {
                 .append("In addition, the database currently has ${database.size()} items in it. ").nl().nl()
         modGuild?.auditChannel?.let {channelId ->
             if (channelId >= 0) {
-                stringBuilder.append("Checking the audit channel (<#$channelId>) for validity. ")
+                stringBuilder.append("Checking the audit channel (<#$channelId>) for validity.... ")
                 val channel: Channel? = bot.client.getTextChannelById(channelId)
 
                 val valid = channel != null && (channel.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->

@@ -121,7 +121,16 @@ public class ConversionUtils {
         Game.GameType activity = game.getType();
 
         if (activity != null) {
-            String type = activity.name().toLowerCase();
+            String type;
+            switch(activity){
+                case DEFAULT:
+                    type = "playing";
+                    break;
+                default:
+                    type = activity.name().toLowerCase();
+                    break;
+
+            }
             String what = game.getName();
             String url = game.getUrl();
 

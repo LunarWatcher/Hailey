@@ -72,7 +72,7 @@ class ServerInfoCommand : Command {
 
         val content = "**Owner:** ${guild.owner.user.name}#${guild.owner.user.discriminator} (${guild.owner.user.idLong})\n" +
                 "**Server created at:** ${dateFormatter.format(guild.creationTime)}\n" +
-                "**Members:** ${users.size} ($members members, $bots bots)\n" + "\n" +
+                "**Users:** ${users.size} ($members members, $bots bots)\n" + "\n" +
                 "**Meta:** ID ${guild.idLong}"
 
 
