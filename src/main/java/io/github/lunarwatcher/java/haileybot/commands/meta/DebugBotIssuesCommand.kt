@@ -124,7 +124,7 @@ class DebugBotIssuesCommand : Command {
         }
         modGuild?.welcomeChannel?.let {channelId->
             if (channelId >= 0) {
-                stringBuilder.append("Checking the greeting channel (<#$channelId>) for validity. ");
+                stringBuilder.append("Checking the greeting channel (<#$channelId>) for validity.... ");
                 val channel: Channel? = bot.client.getTextChannelById(channelId)
                 val valid = channel != null && (channel.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->
                     perms.allowed.contains(Permission.MESSAGE_READ) && perms.allowed.contains(Permission.MESSAGE_WRITE)
@@ -139,7 +139,7 @@ class DebugBotIssuesCommand : Command {
         }
         modGuild?.userLeaveChannel?.let {channelId ->
             if (channelId >= 0) {
-                stringBuilder.append("Checking the user leave channel (<#$channelId>) for validity. ");
+                stringBuilder.append("Checking the user leave channel (<#$channelId>) for validity.... ");
                 val channel: Channel? = bot.client.getTextChannelById(channelId)
                 val valid = channel != null && (channel.getPermissionOverride(message.guild.getMember(botUser))?.let { perms ->
                     perms.allowed.contains(Permission.MESSAGE_READ) && perms.allowed.contains(Permission.MESSAGE_WRITE)
