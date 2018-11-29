@@ -27,21 +27,17 @@ package io.github.lunarwatcher.java.haileybot.commands;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
-import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.ISnowflake;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RoleAssignmentManager {
@@ -51,8 +47,8 @@ public class RoleAssignmentManager {
     private static final String KEY_AUTO = "auto-assign";
 
     private HaileyBot bot;
-    private Map<Long, List<Role>> assignableRoles;
-    private Map<Long, List<Role>> autoRoles;
+    private Map<Long, List<Long>> assignableRoles;
+    private Map<Long, List<Long>> autoRoles;
 
     public RoleAssignmentManager(HaileyBot bot) {
         this.bot = bot;
@@ -71,13 +67,11 @@ public class RoleAssignmentManager {
 
     }
 
-    private Map<Long, List<Role>> parseRoles(String key) {
+    private Map<Long, List<Long>> parseRoles(String key) {
         logger.info("Now loading {}", key);
         Map<String, Object> rawData = bot.getDatabase().getMap(key);
-        JDA client = bot.getClient();
         if (rawData != null) {
-            Map<Long, List<Role>> mappedRoles = new HashMap<>();
-            outer:
+            Map<Long, List<Long>> mappedRoles = new HashMap<>();
             for (Map.Entry<String, Object> entry : rawData.entrySet()) {
                 try {
                     long guild = Long.parseLong(entry.getKey());
@@ -88,20 +82,7 @@ public class RoleAssignmentManager {
 
 
                     for (Long roleId : roles) {
-                        Guild iGuild = client.getGuildById(guild);
-                        if (iGuild == null) {
-                            continue outer;
-                        }
-                        List<Role> rolesWithId = iGuild.getRoles().stream()
-                                .filter(role -> role.getIdLong() == roleId)
-                                .collect(Collectors.toList());
-                        if (rolesWithId.size() == 0) {
-                            logger.warn("Failed to find role with ID " + roleId + " at guild " + guild);
-                            continue;
-                        } else {
-                            mappedRoles.get(guild)
-                                    .addAll(rolesWithId);
-                        }
+                       mappedRoles.get(guild).add(roleId);
                     }
 
                 } catch (ClassCastException | NumberFormatException e) {
@@ -118,43 +99,38 @@ public class RoleAssignmentManager {
         saveSet(KEY_SELF, assignableRoles);
     }
 
-    private void saveSet(String key, Map<Long, List<Role>> raw) {
-        Map<Long, List<Long>> formattedRoles = new HashMap<>();
-        raw.forEach((k, v) -> {
-            formattedRoles.computeIfAbsent(k, s -> new ArrayList<>());
-            formattedRoles.get(k).addAll(v.stream().map(ISnowflake::getIdLong).collect(Collectors.toList()));
-        });
-        bot.getDatabase().put(key, formattedRoles);
+    private void saveSet(String key, Map<Long, List<Long>> raw) {
+        bot.getDatabase().put(key, raw);
     }
 
     public boolean addRole(long guild, Role role) {
-        if (assignableRoles.get(guild) != null && assignableRoles.get(guild).contains(role))
+        if (assignableRoles.get(guild) != null && assignableRoles.get(guild).contains(role.getIdLong()))
             return false;
         assignableRoles.computeIfAbsent(guild, k -> new ArrayList<>());
-        assignableRoles.get(guild).add(role);
+        assignableRoles.get(guild).add(role.getIdLong());
         return true;
     }
 
     public boolean removeRole(long guild, Role role) {
-        if (assignableRoles.get(guild) == null || !assignableRoles.get(guild).contains(role))
+        if (assignableRoles.get(guild) == null || !assignableRoles.get(guild).contains(role.getIdLong()))
             return false;
-        assignableRoles.get(guild).remove(role);
+        assignableRoles.get(guild).remove(role.getIdLong());
         return true;
     }
 
 
     public boolean addAutoRole(long guild, Role role) {
-        if (autoRoles.get(guild) != null && autoRoles.get(guild).contains(role))
+        if (autoRoles.get(guild) != null && autoRoles.get(guild).contains(role.getIdLong()))
             return false;
         autoRoles.computeIfAbsent(guild, k -> new ArrayList<>());
-        autoRoles.get(guild).add(role);
+        autoRoles.get(guild).add(role.getIdLong());
         return true;
     }
 
     public boolean removeAutoRole(long guild, Role role) {
-        if (autoRoles.get(guild) == null || !autoRoles.get(guild).contains(role))
+        if (autoRoles.get(guild) == null || !autoRoles.get(guild).contains(role.getIdLong()))
             return false;
-        autoRoles.get(guild).remove(role);
+        autoRoles.get(guild).remove(role.getIdLong());
         return true;
     }
 
@@ -169,26 +145,33 @@ public class RoleAssignmentManager {
             return;
         }
 
-        List<Role> rolesForGuild = getRolesForGuild(message.getGuild().getIdLong());
+        List<Long> rolesForGuild = getRolesForGuild(message.getGuild().getIdLong());
         if (rolesForGuild == null) {
             message.getChannel().sendMessage("Something went wrong with `getRolesForGuild`").queue();
             return;
         }
+        List<Role> guildRoles = message.getGuild().getRoles();
 
-        if (rolesForGuild.stream().noneMatch(r -> r.getName().equals(role))) {
-            message.getChannel().sendMessage("The role `" + role + "` isn't self-assignable").queue();
+        if (guildRoles.stream().noneMatch(r -> r.getName().equals(role))) {
+            message.getChannel().sendMessage("The role `" + role + "` doesn't exist.").queue();
             return;
         }
 
         try {
-            Role r = message.getGuild().getRolesByName(role, false).get(0);
-            if (r == null) {
-                message.getChannel().sendMessage("I couldn't find that role. It might've been removed from the guild").queue();
-
+            Optional<Role> r = message.getGuild().getRolesByName(role, false).stream()
+                    .filter(r1 -> assignableRoles.get(message.getGuild().getIdLong()).contains(r1.getIdLong()))
+                    .findFirst();
+            if(!r.isPresent()){
+                message.getChannel().sendMessage("This role isn't self-assignable. If this is wrong, remember; roles are case-sensitive.").queue();
+                return;
+            }
+            Role roleToAdd = r.get();
+            if(message.getMember().getRoles().contains(roleToAdd)){
+                message.getChannel().sendMessage("You already have that role.").queue();
                 return;
             }
             message.getGuild().getController()
-                    .addRolesToMember(message.getMember(), r)
+                    .addRolesToMember(message.getMember(), roleToAdd)
                     .queue();
             message.getChannel().sendMessage("Added the `" + role + "` role to " + message.getAuthor().getName() + "#" + message.getAuthor().getDiscriminator()).queue();
         } catch (IndexOutOfBoundsException e) {
@@ -209,27 +192,39 @@ public class RoleAssignmentManager {
             return;
         }
 
-        List<Role> rolesForGuild = getRolesForGuild(message.getGuild().getIdLong());
+        List<Long> rolesForGuild = getRolesForGuild(message.getGuild().getIdLong());
         if (rolesForGuild == null) {
             message.getChannel().sendMessage("Something went wrong with `getRolesForGuild`").queue();
             return;
         }
 
-        if (rolesForGuild.stream().noneMatch(r -> r.getName().equals(role))) {
-            message.getChannel().sendMessage("The role `" + role + "` isn't self-(un)assignable").queue();
+        List<Role> guildRoles = message.getGuild().getRoles();
+        if (guildRoles.stream().noneMatch(r -> r.getName().equals(role))) {
+            message.getChannel().sendMessage("The role `" + role + "` doesn't exist.").queue();
             return;
         }
 
-        if (message.getMember().getRoles().stream().anyMatch(r -> r.getName().equalsIgnoreCase(role)))
 
-            try {
-                message.getGuild().getController().removeRolesFromMember(message.getMember(),
-                        message.getGuild().getRolesByName(role, false).get(0))
-                        .queue();
-                message.getChannel().sendMessage("Removed the role \"`" + role + "`\" from " + message.getAuthor().getName() + "#" + message.getAuthor().getDiscriminator()).queue();
-            } catch (IndexOutOfBoundsException e) {
-                message.getChannel().sendMessage("the role seems to not exist.").queue();
+
+        try {
+            Optional<Role> r = message.getGuild().getRolesByName(role, false).stream()
+                    .filter(r1 -> assignableRoles.get(message.getGuild().getIdLong()).contains(r1.getIdLong()))
+                    .findFirst();
+            if(!r.isPresent()){
+                message.getChannel().sendMessage("This role isn't self-unassignable. If this is wrong, remember; roles are case-sensitive.").queue();
+                return;
             }
+            Role removableRole = r.get();
+            if (message.getMember().getRoles().stream().noneMatch(r1 -> r1.getIdLong() == removableRole.getIdLong())){
+                message.getChannel().sendMessage("Can't remove what you don't have now, can I? :>").queue();
+                return;
+            }
+
+            message.getGuild().getController().removeRolesFromMember(message.getMember(), removableRole).queue();
+            message.getChannel().sendMessage("Removed the role \"`" + role + "`\" from " + message.getAuthor().getName() + "#" + message.getAuthor().getDiscriminator()).queue();
+        } catch (IndexOutOfBoundsException e) {
+            message.getChannel().sendMessage("the role seems to not exist.").queue();
+        }
 
     }
 
@@ -237,35 +232,47 @@ public class RoleAssignmentManager {
         long guild = event.getGuild().getIdLong();
         logger.info("{}", autoRoles);
         if (autoRoles.containsKey(guild)) {
-            List<Role> roles = autoRoles.get(guild);
+            List<Long> roles = autoRoles.get(guild);
 
             if (roles != null
                     && !roles.isEmpty()) {
+
+                List<Role> discordRoles =  getRolesFromId(roles);
+                if(discordRoles.size() == 0){
+                    logger.error("discordRoles.size == 0, but roles.size != 0. Found " + roles.size() + ": " + roles);
+                    return;
+                }
                 event.getGuild().getController()
-                        .addRolesToMember(event.getMember(), roles)
+                        .addRolesToMember(event.getMember(), discordRoles)
                         .queue();
             }
         }
     }
 
     @Nullable
-    public List<Role> getRolesForGuild(long guild) {
+    public List<Long> getRolesForGuild(long guild) {
         return assignableRoles.get(guild);
     }
 
     @Nullable
-    public List<Role> getRolesForGuild(Guild guild) {
+    public List<Long> getRolesForGuild(Guild guild) {
         return getRolesForGuild(guild.getIdLong());
     }
 
     @Nullable
-    public List<Role> getAutoRolesForGuild(long guild) {
+    public List<Long> getAutoRolesForGuild(long guild) {
         return autoRoles.get(guild);
     }
 
     @Nullable
-    public List<Role> getAutoRolesForGuild(Guild guild) {
+    public List<Long> getAutoRolesForGuild(Guild guild) {
         return getAutoRolesForGuild(guild.getIdLong());
     }
 
+    @NotNull
+    public List<Role> getRolesFromId(@NotNull List<Long> roles){
+        if(roles.size() == 0)
+            return new ArrayList<>();
+        return roles.stream().map(id -> bot.getClient().getRoleById(id)).collect(Collectors.toList());
+    }
 }

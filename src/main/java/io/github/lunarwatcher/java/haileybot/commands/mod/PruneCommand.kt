@@ -91,7 +91,7 @@ class PruneCommand : Command {
         message.channel.getHistoryBefore(message, count).queue({ messageHistory ->
             try {
 
-                (message.channel as TextChannel).deleteMessages(messageHistory.retrievedHistory).queue({ _ ->
+                (message.channel as TextChannel).deleteMessages(messageHistory.retrievedHistory).queue({
                     message.channel.sendMessage("<@${message.author.idLong}>, deleted ${messageHistory.size()} messages. \uD83D\uDC3A").queue { msg ->
                         msg.scheduleDeletion(10000)
                     }

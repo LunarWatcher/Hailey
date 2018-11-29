@@ -46,7 +46,7 @@ class ListRolesCommand : Command {
             message.channel.sendMessage("This is a DM channel. No roles are available.").queue();
             return;
         }
-        val selfAssignable = bot.assigner.getRolesForGuild(message.guild.idLong)?.map { it.name }
+        val selfAssignable = bot.assigner.getRolesForGuild(message.guild.idLong)?.let { bot.assigner.getRolesFromId(it).map { it2 -> it2.name } }
         if (selfAssignable == null || selfAssignable.isEmpty()) {
             message.channel.sendMessage(
                     EmbedBuilder()

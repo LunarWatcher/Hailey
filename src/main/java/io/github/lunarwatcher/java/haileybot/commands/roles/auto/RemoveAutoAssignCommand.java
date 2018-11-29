@@ -45,7 +45,6 @@ public class RemoveAutoAssignCommand implements Command {
         aliases.add("autoassign");
     }
 
-
     @Override
     public String getName() {
         return "removeAutoAssignable";
@@ -58,7 +57,7 @@ public class RemoveAutoAssignCommand implements Command {
 
     @Override
     public @Nullable String getHelp() {
-        return "Removes an auto-assignable role.";
+        return "Removes an auto-assigned role.";
     }
 
     @Override
@@ -86,11 +85,12 @@ public class RemoveAutoAssignCommand implements Command {
             message.getChannel().sendMessage("WARNING: I don't have the \"manage roles\" or the \"administrator\" permission (I need one of them to assign roles).").queue();
         }
 
-        List<Role> roles = bot.getAssigner().getRolesForGuild(message.getGuild().getIdLong());
-        if (roles == null) {
+        List<Long> roleIds = bot.getAssigner().getRolesForGuild(message.getGuild().getIdLong());
+        if (roleIds == null || roleIds.size() == 0) {
             message.getChannel().sendMessage("No auto-assignable roles are registered.").queue();
             return;
         }
+        List<Role> roles = bot.getAssigner().getRolesFromId(roleIds);
         for (Role role : roles) {
             if (role.getName().equals(rawMessage)) {
                 boolean result = bot.getAssigner().removeAutoRole(message.getGuild().getIdLong(), role);

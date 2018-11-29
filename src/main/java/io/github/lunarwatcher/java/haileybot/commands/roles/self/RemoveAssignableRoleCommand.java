@@ -77,11 +77,13 @@ public class RemoveAssignableRoleCommand implements Command {
             message.getChannel().sendMessage("WARNING: I don't have the \"manage roles\" or the \"administrator\" permission (I need one of them to assign roles).").queue();
         }
 
-        List<Role> roles = bot.getAssigner().getRolesForGuild(message.getGuild().getIdLong());
-        if (roles == null) {
+        List<Long> roleIds = bot.getAssigner().getRolesForGuild(message.getGuild().getIdLong());
+        if (roleIds == null || roleIds.size() == 0) {
             message.getChannel().sendMessage("No self-assignable roles are registered.").queue();
             return;
         }
+        List<Role> roles = bot.getAssigner().getRolesFromId(roleIds);
+
         for (Role role : roles) {
             if (role.getName().equals(rawMessage)) {
                 boolean result = bot.getAssigner().removeRole(message.getGuild().getIdLong(), role);

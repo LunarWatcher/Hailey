@@ -25,6 +25,9 @@
 
 package io.github.lunarwatcher.java.haileybot.mod;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Handles the internal reasons for banning. This is an emum to save memory where possible.
  */
@@ -35,7 +38,7 @@ public enum AutoBanReasons {
 
     private final String reason;
 
-    AutoBanReasons(String reason) {
+    AutoBanReasons(@NotNull String reason) {
         this.reason = reason;
     }
 

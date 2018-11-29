@@ -77,12 +77,20 @@ class ServerInfoCommand : Command {
 
 
         val roleInfo = bot.assigner
-                .getRolesForGuild(message.guild.idLong)
-                ?.joinToString(", ") { it.name } ?: "No self-assignable roles"
+                .getRolesForGuild(message.guild.idLong)?.let {
+                    if(it.size == 0)
+                        "No self-assignable roles."
+                    else
+                        bot.assigner.getRolesFromId(it).joinToString(", ") { r -> r.name }
+                } ?: "No self-assignable roles"
 
         val autoInfo = bot.assigner
-                .getAutoRolesForGuild(message.guild)
-                ?.joinToString(", ") { it.name } ?: "No auto-assign roles"
+                .getAutoRolesForGuild(message.guild)?.let {
+                    if(it.size == 0)
+                        "No auto-assigned roles."
+                    else
+                        bot.assigner.getRolesFromId(it).joinToString(", ") { r -> r.name }
+                } ?: "No auto-assigned roles"
 
         val selfAssignable = bot.assigner.getRolesForGuild(message.guild)?.size ?: 0
         val autoAssignable = bot.assigner.getAutoRolesForGuild(message.guild)?.size ?: 0
@@ -91,11 +99,11 @@ class ServerInfoCommand : Command {
                 .setTitle("Server info for **${guild.name}**")
                 .setColor(getRandomColor())
                 .setAuthor("Hailey", null, guild.iconUrl)
-                .addField(MessageEmbed.Field("Self- and auto-assignable roles",
+                .addField(MessageEmbed.Field("Self-assignable and auto-assigned roles",
                         "There are $selfAssignable self-assignable roles, and $autoAssignable roles that get automatically assigned.\n" +
                                 (if (roleInfo.length > 600)
                                     "Too many roles to display. Use `${Constants.TRIGGER}roles` to see self-assignable roles."
-                                else "Self-assignable: $roleInfo") + "\nAuto-assignable: " +
+                                else "Self-assignable: $roleInfo") + "\nAuto-assigned: " +
                                 (if (autoInfo.length > 600) "Too many roles to display."
                                 else autoInfo),
                         true))

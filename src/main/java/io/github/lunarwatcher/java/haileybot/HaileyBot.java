@@ -40,7 +40,6 @@ import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.SelfUser;
 import net.dv8tion.jda.core.events.DisconnectEvent;
 import net.dv8tion.jda.core.events.Event;
@@ -53,8 +52,6 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent;
 import net.dv8tion.jda.core.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.events.message.MessageUpdateEvent;
-import net.dv8tion.jda.core.events.message.priv.PrivateMessageReceivedEvent;
-import net.dv8tion.jda.core.events.message.priv.PrivateMessageUpdateEvent;
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent;
 import net.dv8tion.jda.core.hooks.EventListener;
 import org.slf4j.Logger;
@@ -174,8 +171,8 @@ public class HaileyBot implements EventListener {
 
     public void onRoleDeleteEvent(RoleDeleteEvent event) {
         try {
-            List<Role> selfAssignable = assigner.getRolesForGuild(event.getGuild().getIdLong());
-            if (selfAssignable != null && selfAssignable.stream().anyMatch(r -> r.getIdLong() == event.getRole().getIdLong())) {
+            List<Long> selfAssignable = assigner.getRolesForGuild(event.getGuild().getIdLong());
+            if (selfAssignable != null && selfAssignable.stream().anyMatch(r -> r == event.getRole().getIdLong())) {
                 assigner.removeRole(event.getGuild().getIdLong(), event.getRole());
                 if (moderator.isGuildEnabled(event.getGuild())) {
                     //noinspection ConstantConditions
@@ -184,12 +181,12 @@ public class HaileyBot implements EventListener {
 
             }
 
-            List<Role> autoAssignable = assigner.getRolesForGuild(event.getGuild().getIdLong());
-            if (autoAssignable != null && autoAssignable.stream().anyMatch(r -> r.getIdLong() == event.getRole().getIdLong())) {
+            List<Long> autoAssignable = assigner.getRolesForGuild(event.getGuild().getIdLong());
+            if (autoAssignable != null && autoAssignable.stream().anyMatch(r -> r == event.getRole().getIdLong())) {
                 assigner.removeAutoRole(event.getGuild().getIdLong(), event.getRole());
                 if (moderator.isGuildEnabled(event.getGuild())) {
                     //noinspection ConstantConditions
-                    moderator.getGuild(event.getGuild().getIdLong()).audit("An auto-assignable role was deleted. Removed from auto-assign: " + event.getRole().getName());
+                    moderator.getGuild(event.getGuild().getIdLong()).audit("An auto-assigned role was deleted. Removed from auto-assign: " + event.getRole().getName());
                 }
 
             }

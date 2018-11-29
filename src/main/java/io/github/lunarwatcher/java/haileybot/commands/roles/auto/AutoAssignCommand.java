@@ -77,7 +77,7 @@ public class AutoAssignCommand implements Command {
         }
 
         if (rawMessage.isEmpty()) {
-            message.getChannel().sendMessage("Which role should be auto-assignable?").queue();
+            message.getChannel().sendMessage("Which role should be auto-assigned?").queue();
             return;
         }
 

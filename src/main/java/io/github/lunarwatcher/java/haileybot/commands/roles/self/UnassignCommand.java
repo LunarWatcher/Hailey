@@ -65,8 +65,8 @@ public class UnassignCommand implements Command {
             message.getChannel().sendMessage("This is a DM channel. No mod tools available.").queue();
             return;
         }
-        List<Role> roles = bot.getAssigner().getRolesForGuild(message.getGuild().getIdLong());
-        if (roles == null || roles.size() == 0) {
+        List<Long> roleIds = bot.getAssigner().getRolesForGuild(message.getGuild().getIdLong());
+        if (roleIds == null || roleIds.size() == 0) {
             message.getChannel().sendMessage("There are no self-(un)assignable roles.").queue();
             return;
         }
