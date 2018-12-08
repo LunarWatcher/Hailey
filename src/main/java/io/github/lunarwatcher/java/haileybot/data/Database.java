@@ -25,15 +25,16 @@
 
 package io.github.lunarwatcher.java.haileybot.data;
 
+import com.sun.nio.file.ExtendedCopyOption;
+import io.github.lunarwatcher.java.haileybot.CrashHandler;
 import io.github.lunarwatcher.java.haileybot.utils.JacksonParser;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,21 +106,37 @@ public class Database {
         if (!changed) {
             return;
         }
-
-        StandardOpenOption[] options;
-        if (Files.exists(file)) {
-            options = new StandardOpenOption[]{StandardOpenOption.TRUNCATE_EXISTING};
-        } else {
-            options = new StandardOpenOption[]{};
-        }
+        // Backs up the previous version of the database, if one exists.
+        // This is skipped if this is the first version of the database, or the file itself doesn't exist.
+        copyOld();
 
         try {
+            BufferedWriter writer;
+            if (Files.exists(file)) writer = Files.newBufferedWriter(file, StandardOpenOption.TRUNCATE_EXISTING);
+            else writer = Files.newBufferedWriter(file);
+
             JacksonParser.getJsonParser()
-                    .saveData(cache, Files.newBufferedWriter(file, options), false);
+                    .saveData(cache, writer, false);
         } catch (IOException e) {
             e.printStackTrace();
         }
         changed = false;
+    }
+
+    private void copyOld(){
+        try {
+            if(!Files.exists(file)){
+                logger.debug("No existing database found; skipping backup");
+                return;
+            }
+            Path target = Paths.get(file.toString() + ".bak");
+            if(Files.exists(target)) Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
+            else Files.copy(file, target);
+            logger.debug("Successfully backed up the previous version of the database.");
+        } catch (IOException e) {
+            logger.warn("Failed to save database backup!");
+            CrashHandler.error(e);
+        }
     }
 
 

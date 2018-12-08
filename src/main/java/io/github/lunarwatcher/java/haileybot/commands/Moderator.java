@@ -33,10 +33,7 @@ import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.audit.ActionType;
 import net.dv8tion.jda.core.audit.AuditLogEntry;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.MessageEmbed;
-import net.dv8tion.jda.core.entities.PrivateChannel;
-import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.guild.GuildBanEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent;
@@ -49,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public class Moderator {
@@ -274,5 +272,10 @@ public class Moderator {
 
     public Collection<ModGuild> getModGuilds() {
         return enabledGuilds.values();
+    }
+
+    public void withJoinedGuilds(List<Guild> guilds) {
+        List<Long> ids = guilds.stream().map (ISnowflake::getIdLong).collect(Collectors.toList());
+        enabledGuilds.entrySet().removeIf (entry -> !ids.contains(entry.getKey()));
     }
 }

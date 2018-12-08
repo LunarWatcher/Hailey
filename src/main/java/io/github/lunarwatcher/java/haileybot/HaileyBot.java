@@ -153,6 +153,8 @@ public class HaileyBot implements EventListener {
         for(Guild guild : client.getGuilds()){
             handleGuild(guild);
         }
+
+        moderator.withJoinedGuilds(client.getGuilds());
     }
 
 

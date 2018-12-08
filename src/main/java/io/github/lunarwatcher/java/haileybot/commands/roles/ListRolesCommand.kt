@@ -28,9 +28,7 @@ package io.github.lunarwatcher.java.haileybot.commands.roles
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import net.dv8tion.jda.core.EmbedBuilder
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.MessageEmbed
-import net.dv8tion.jda.core.entities.PrivateChannel
+import net.dv8tion.jda.core.entities.*
 import org.jetbrains.annotations.NotNull
 
 class ListRolesCommand : Command {
@@ -51,69 +49,60 @@ class ListRolesCommand : Command {
             message.channel.sendMessage(
                     EmbedBuilder()
                             .setTitle("Assignable roles for " + message.guild.name)
-                            .apply {
-                                fields.add(MessageEmbed.Field("Self-assignable roles", "No self-assignable roles", true))
-                                //addField(MessageEmbed.Field("Server roles (not necessarily assignable)", serverRolesString, true))
-                            }
+                            .addField(MessageEmbed.Field("Self-assignable roles", "No self-assignable roles", true))
                             .setColor(message.member.color)
                             .build()
             ).queue()
             return;
         }
 
-        message.author.openPrivateChannel().queue({
-            var current = ""
-            var currentEmbed = EmbedBuilder()
-                    .setColor(message.member.color)
+        var current = ""
+        var currentEmbed = EmbedBuilder()
+                .setColor(message.member.color)
 
-            for (i in 0 until selfAssignable.size) {
-                val role = selfAssignable[i];
+        for (i in 0 until selfAssignable.size) {
+            val role = selfAssignable[i];
 
-                val appendix = role + if (i != selfAssignable.size - 1) {
-                    ", "
-                } else "."
-                if (appendix.length + current.length >= 1000) {
-                    val field = MessageEmbed.Field("Roles", current, false)
+            val appendix = role + if (i != selfAssignable.size - 1) {
+                ", "
+            } else "."
+            if (appendix.length + current.length >= 1000) {
+                val field = MessageEmbed.Field("Roles", current, false)
 
-                    val currentChars = currentEmbed.length()
-                    if (currentChars + current.length >= 6000) {
-                        it.sendMessage(currentEmbed.build()).queue()
+                val currentChars = currentEmbed.length()
+                if (currentChars + current.length >= 6000) {
+                    message.channel.sendMessage(currentEmbed.build()).queue()
 
-                        currentEmbed = EmbedBuilder()
-                                .setColor(message.member.color)
-                    }
+                    currentEmbed = EmbedBuilder()
+                            .setColor(message.member.color)
+                }
+                currentEmbed.addField(field)
+                current = "";
+            }
+            current += appendix
+        }
+
+
+        if (current != "") {
+            if (currentEmbed.length() != 0) {
+                val field = MessageEmbed.Field("Roles", current, false)
+
+                val currentChars = currentEmbed.length()
+                if (currentChars + current.length >= 6000) {
+                    message.channel.sendMessage(currentEmbed.build()).queue()
+
+                } else {
                     currentEmbed.addField(field)
-                    current = "";
+                    message.channel.sendMessage(currentEmbed.build()).queue();
+                    return;
                 }
-                current += appendix
-            }
+            }else
+                sendEmbed(message, current, message.channel);
+        }
 
-
-            if (current != "") {
-                if (currentEmbed.length() != 0) {
-                    val field = MessageEmbed.Field("Roles", current, false)
-
-                    val currentChars = currentEmbed.length()
-                    if (currentChars + current.length >= 6000) {
-                        it.sendMessage(currentEmbed.build()).queue()
-
-                    } else {
-                        currentEmbed.addField(field)
-                        it.sendMessage(currentEmbed.build()).queue();
-                        return@queue;
-                    }
-                }
-
-                sendEmbed(message, current, it);
-            }
-
-        }, {
-            message.channel.sendMessage("An error occured when attempting to get the DM channel: ${it.message} I might not be able to DM you.").queue()
-
-        })
     }
 
-    private fun sendEmbed(message: Message, content: String, channel: PrivateChannel) {
+    private fun sendEmbed(message: Message, content: String, channel: MessageChannel) {
         if (content.isEmpty() || content.isBlank())
             return;
 

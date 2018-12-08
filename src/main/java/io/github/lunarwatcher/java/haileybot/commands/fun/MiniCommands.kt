@@ -78,7 +78,7 @@ abstract class ActionCommand(val replies: List<String>, val emojis: List<String>
             onEmptyMessage.invoke(message)
             return;
         }
-        message.channel.sendMessage("**${message.member.effectiveName}** " + replies.randomItem()?.messageFormat(result, message.member.effectiveName + " ${emojis.randomItem()
+        message.channel.sendMessage("**${message.member?.effectiveName ?: message.author.name}** " + replies.randomItem()?.messageFormat(result, message.member?.effectiveName ?: message.author.name + " ${emojis.randomItem()
                 ?: ""}")).queue()
 
 
@@ -86,36 +86,8 @@ abstract class ActionCommand(val replies: List<String>, val emojis: List<String>
 
 }
 
-class ShootCommand : ActionCommand(replies, listOf(), { message ->
-    message.channel.sendMessage(self.messageFormat(message.member.effectiveName)).queue {
-        it.addReaction("\uD83C\uDDF7").queue();
-    }
-}) {
-    override fun getName(): String = "shoot"
-    override fun getAliases(): MutableList<String>? = null;
-    override fun getHelp(): String? = "Shoots someone!!"
-    override fun getDescription(): String? = help
-
-    companion object {
-
-        const val self = "**{0}** shot themselves! Press **R** to pay respects."
-        val replies = listOf(
-                "shoots **{0}**. Any last words?",
-                "emptied a mag in **{0}**'s head.",
-                "shoots **{0}** down at noon.",
-                "killed **{0}** by sending automated gun drones after them.",
-                "bust a cap in **{0}**.",
-                "sniped **{0}**. ***HEADSHOT!***",
-                "tried to shoot **{0}**, but realized they're out of bullets.",
-                "tries to shoot **{0}**. PLOT TWIST!! **{0}** turns around and shoots **{1}**",
-                "shoots at **{0}**, but misses!"
-
-        )
-    }
-}
-
 class HugCommand : ActionCommand(replies, listOf(), { message ->
-    message.channel.sendMessage(self.messageFormat(message.member.effectiveName)).queue()
+    message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue()
 
 }) {
     override fun getName(): String = "hug"
@@ -137,7 +109,7 @@ class HugCommand : ActionCommand(replies, listOf(), { message ->
     }
 }
 
-class LickCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member.effectiveName)).queue() }) {
+class LickCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
     override fun getName(): String = "lick"
     override fun getHelp(): String? = "Licks someone :tongue:"
     override fun getDescription(): String? = help;
@@ -153,7 +125,7 @@ class LickCommand : ActionCommand(replies, listOf(), { message -> message.channe
     }
 }
 
-class KissCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member.effectiveName)).queue() }) {
+class KissCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
     override fun getName(): String = "kiss";
     override fun getAliases(): MutableList<String>? = null
     override fun getHelp(): String? = "Kisses someone :kissing_heart:"
@@ -169,7 +141,7 @@ class KissCommand : ActionCommand(replies, listOf(), { message -> message.channe
     }
 }
 
-class BoopCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member.effectiveName)).queue() }) {
+class BoopCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
     override fun getName(): String = "boop";
     override fun getAliases(): MutableList<String>? = null
     override fun getHelp(): String? = "BOOP!"
@@ -186,7 +158,7 @@ class BoopCommand : ActionCommand(replies, listOf(), { message -> message.channe
     }
 }
 
-class PatCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member.effectiveName)).queue() }) {
+class PatCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
     override fun getName(): String = "pat"
     override fun getAliases(): List<String>? = null
     override fun getHelp(): String? = null;
@@ -204,7 +176,7 @@ class PatCommand : ActionCommand(replies, listOf(), { message -> message.channel
 
 }
 
-class PetCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member.effectiveName)).queue() }) {
+class PetCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
     override fun getName(): String = "pet"
     override fun getAliases(): List<String>? = null
     override fun getHelp(): String? = null;
@@ -222,7 +194,7 @@ class PetCommand : ActionCommand(replies, listOf(), { message -> message.channel
 }
 
 
-class TickleCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member.effectiveName)).queue() }) {
+class TickleCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
     override fun getName(): String = "tickle"
     override fun getAliases(): List<String>? = null
     override fun getHelp(): String? = null;
@@ -237,4 +209,33 @@ class TickleCommand : ActionCommand(replies, listOf(), { message -> message.chan
         )
     }
 
+}
+
+// Remove?
+class ShootCommand : ActionCommand(replies, listOf(), { message ->
+    message.channel.sendMessage(self.messageFormat(message.member.effectiveName)).queue {
+        it.addReaction("\uD83C\uDDF7").queue();
+    }
+}) {
+    override fun getName(): String = "shoot"
+    override fun getAliases(): MutableList<String>? = null;
+    override fun getHelp(): String? = "Shoots someone!!"
+    override fun getDescription(): String? = help
+
+    companion object {
+
+        const val self = "**{0}** shot themselves! R.I.P. Press **R** to pay respects."
+        val replies = listOf(
+                "shoots **{0}**. Any last words?",
+                "emptied a mag in **{0}**'s head.",
+                "shoots **{0}** down at noon.",
+                "killed **{0}** by sending automated gun drones after them.",
+                "bust a cap in **{0}**.",
+                "sniped **{0}**. ***HEADSHOT!***",
+                "tried to shoot **{0}**, but realized they're out of bullets.",
+                "tries to shoot **{0}**. PLOT TWIST!! **{0}** turns around and shoots **{1}**",
+                "shoots at **{0}**, but misses!"
+
+        )
+    }
 }

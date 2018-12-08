@@ -60,7 +60,7 @@ public class ModGuild {
     private static final long FLUSH_TIMEOUT = 30000;
 
     // General
-    private long guild;
+    private long guildId;
 
     // Enabled/disabled features
     private boolean inviteSpamProtection;
@@ -85,9 +85,9 @@ public class ModGuild {
     private StringBuilder messageBuffer = new StringBuilder();
     private long lastMessage = 0;
 
-    public ModGuild(HaileyBot bot, long guild) {
+    public ModGuild(HaileyBot bot, long guildId) {
         this.bot = bot;
-        this.guild = guild;
+        this.guildId = guildId;
     }
 
     public void banAndLog(final Member member, AutoBanReasons reason) {
@@ -103,7 +103,7 @@ public class ModGuild {
             AuditableRestAction<Void> result = member.getGuild().getController().ban(member.getUser(), 7);
             result.queue((v) -> {
                         if (logging) {
-                            member.getJDA().getGuildById(guild)
+                            member.getJDA().getGuildById(guildId)
                                     .getTextChannelById(auditChannel)
                                     .sendMessage(new EmbedBuilder().setColor(Color.ORANGE)
                                             .setTitle("User banned")
@@ -119,7 +119,7 @@ public class ModGuild {
         } catch (Exception e) {
             logger.warn("Failed to ban user " + member.getUser().getId());
             if (logging) {
-                member.getJDA().getGuildById(guild)
+                member.getJDA().getGuildById(guildId)
                         .getTextChannelById(auditChannel)
                         .sendMessage("***WARNING***: Banning user " + member.getUser().getIdLong() + " failed. Check my perms").queue();
             }
@@ -131,8 +131,8 @@ public class ModGuild {
         return auditChannel;
     }
 
-    public long getGuild() {
-        return guild;
+    public long getGuildId() {
+        return guildId;
     }
 
     public void userJoined(GuildMemberJoinEvent event) {
@@ -287,7 +287,7 @@ public class ModGuild {
         if (auditChannel > 0) {
             try {
                 bot.getClient()
-                        .getGuildById(guild)
+                        .getGuildById(guildId)
                         .getTextChannelById(auditChannel)
                         .sendMessage(data).queue();
             } catch (Exception e) {
@@ -300,7 +300,7 @@ public class ModGuild {
         if (auditChannel > 0) {
             try {
                 bot.getClient()
-                        .getGuildById(guild)
+                        .getGuildById(guildId)
                         .getTextChannelById(auditChannel)
                         .sendMessage(embed).queue();
             } catch (Exception e) {
