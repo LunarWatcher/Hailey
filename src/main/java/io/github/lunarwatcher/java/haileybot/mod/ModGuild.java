@@ -526,7 +526,8 @@ public class ModGuild {
 
     private void hardHandleUserInfraction(Member member, Message message, String name, AutoBanReasons newAccountBanReason, AutoBanReasons oldAccountBanReason, boolean banOldAccountsOnInfraction) {
         User user = member.getUser();
-        if (user.getCreationTime().toEpochSecond() - OffsetDateTime.now().toEpochSecond() < TimeUnit.DAYS.toMillis(1)) {
+        long accountTime = OffsetDateTime.now().toEpochSecond() * 1000 - user.getCreationTime().toEpochSecond() * 1000;
+        if (accountTime < TimeUnit.DAYS.toMillis(1)) {
                 /*
                 A server with over 10k members had 0 references to the string literal `sex dating`; These are the blatant spam regexes,
                 and are highly unlikely to produce any false positives, especially for accounts that're under a day old.
