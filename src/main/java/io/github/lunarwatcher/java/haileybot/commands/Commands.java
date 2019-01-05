@@ -105,6 +105,8 @@ public class Commands {
         moderationCommands.add(new ModerationCommand("kick", null, "Kicks a user", null, Permission.KICK_MEMBERS, ModUtils::kickHandler));
         moderationCommands.add(new ListWatches());
 
+        moderationCommands.add(new SetBlatantSpamNuker(modFeatureToggle));
+
         // Fun commands
 
         funCommands.add(new AliveCommand());

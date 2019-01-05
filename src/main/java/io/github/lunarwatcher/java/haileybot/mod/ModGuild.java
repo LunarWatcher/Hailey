@@ -235,8 +235,10 @@ public class ModGuild {
             // There is likely going to be future checks after this (although there currently are none), which means
             // a `return blacklists` here would break the other checks (prevent execution)
             //noinspection RedundantIfStatement
-            if (blacklists)
+            if (blacklists) {
+                logger.info("Blacklist triggered in {} for message: \"{}\"", event.getGuild().getName(), event.getMessage().getContentDisplay());
                 return true;
+            }
         }
 
         return false;
