@@ -95,6 +95,7 @@ proguard/
 # Project specific
 config.properties
 database.json
+database.json.bak
 
 # Protect Gradle
 !gradle-wrapper.jar
