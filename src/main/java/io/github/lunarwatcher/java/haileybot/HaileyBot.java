@@ -408,12 +408,16 @@ public class HaileyBot implements EventListener {
         }
     }
 
+    private static volatile boolean controlHookHandled = false;
     public class ControlHook extends Thread {
+
         public ControlHook() {
-            super("ShutdownHook:HaileyBot.java)");
+            super("ShutdownHook:HaileyBot.java");
         }
 
         public void run() {
+            if(controlHookHandled) return;
+            controlHookHandled = true;
             save();
             try {
                 executor.shutdownNow();
