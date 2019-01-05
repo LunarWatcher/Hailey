@@ -23,7 +23,7 @@ dependencies {
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 
     // discord
-    implementation ("net.dv8tion:JDA:3.8.1_439") {
+    implementation("net.dv8tion:JDA:3.8.1_439") {
         exclude module: 'opus-java'
     }
 
@@ -36,7 +36,7 @@ dependencies {
     // Utils
     implementation 'org.apache.commons:commons-lang3:3.8.1'
     implementation 'org.jetbrains:annotations:16.0.2'
-    
+
     // Logging
     implementation "org.slf4j:slf4j-api:$slf4jVersion@jar"
     implementation "ch.qos.logback:logback-classic:$logbackVersion"

@@ -82,7 +82,7 @@ public class RoleAssignmentManager {
 
 
                     for (Long roleId : roles) {
-                       mappedRoles.get(guild).add(roleId);
+                        mappedRoles.get(guild).add(roleId);
                     }
 
                 } catch (ClassCastException | NumberFormatException e) {
@@ -161,12 +161,12 @@ public class RoleAssignmentManager {
             Optional<Role> r = message.getGuild().getRolesByName(role, false).stream()
                     .filter(r1 -> assignableRoles.get(message.getGuild().getIdLong()).contains(r1.getIdLong()))
                     .findFirst();
-            if(!r.isPresent()){
+            if (!r.isPresent()) {
                 message.getChannel().sendMessage("This role isn't self-assignable. If this is wrong, remember; roles are case-sensitive.").queue();
                 return;
             }
             Role roleToAdd = r.get();
-            if(message.getMember().getRoles().contains(roleToAdd)){
+            if (message.getMember().getRoles().contains(roleToAdd)) {
                 message.getChannel().sendMessage("You already have that role.").queue();
                 return;
             }
@@ -205,17 +205,16 @@ public class RoleAssignmentManager {
         }
 
 
-
         try {
             Optional<Role> r = message.getGuild().getRolesByName(role, false).stream()
                     .filter(r1 -> assignableRoles.get(message.getGuild().getIdLong()).contains(r1.getIdLong()))
                     .findFirst();
-            if(!r.isPresent()){
+            if (!r.isPresent()) {
                 message.getChannel().sendMessage("This role isn't self-unassignable. If this is wrong, remember; roles are case-sensitive.").queue();
                 return;
             }
             Role removableRole = r.get();
-            if (message.getMember().getRoles().stream().noneMatch(r1 -> r1.getIdLong() == removableRole.getIdLong())){
+            if (message.getMember().getRoles().stream().noneMatch(r1 -> r1.getIdLong() == removableRole.getIdLong())) {
                 message.getChannel().sendMessage("Can't remove what you don't have now, can I? :>").queue();
                 return;
             }
@@ -237,8 +236,8 @@ public class RoleAssignmentManager {
             if (roles != null
                     && !roles.isEmpty()) {
 
-                List<Role> discordRoles =  getRolesFromId(roles);
-                if(discordRoles.size() == 0){
+                List<Role> discordRoles = getRolesFromId(roles);
+                if (discordRoles.size() == 0) {
                     logger.error("discordRoles.size == 0, but roles.size != 0. Found " + roles.size() + ": " + roles);
                     return;
                 }
@@ -270,8 +269,8 @@ public class RoleAssignmentManager {
     }
 
     @NotNull
-    public List<Role> getRolesFromId(@NotNull List<Long> roles){
-        if(roles.size() == 0)
+    public List<Role> getRolesFromId(@NotNull List<Long> roles) {
+        if (roles.size() == 0)
             return new ArrayList<>();
         return roles.stream().map(id -> bot.getClient().getRoleById(id)).collect(Collectors.toList());
     }

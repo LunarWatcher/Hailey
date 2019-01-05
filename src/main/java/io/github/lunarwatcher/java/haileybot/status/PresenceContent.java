@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
  * members are the amount of <i>unique</i> members. This means, if there are 100 members over 2 servers,
  * the method will display 100 members, even if all the members are in both the servers.
  * This, internally, leads to more instances of the Member class, which is counted when replacing the members.
- *
  */
 public class PresenceContent {
     private final @NotNull Game.GameType type;
@@ -66,7 +65,7 @@ public class PresenceContent {
         return url;
     }
 
-    public boolean hasUrl(){
+    public boolean hasUrl() {
         return url != null;
     }
 }

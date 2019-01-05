@@ -241,7 +241,7 @@ public class ModUtils {
             audit(message.getGuild(), createEmbedLog("Kick", data, message.getAuthor()));
             message.getChannel().sendMessage("Successfully kicked them. :wolf:").queue(msg -> ExtensionsKt.scheduleDeletion(msg, 10000));
             message.delete().queue();
-        }, err -> message.getChannel().sendMessage("<@" + message.getAuthor().getIdLong() + ">, I could not kick them: " + err.getMessage()).queue() );
+        }, err -> message.getChannel().sendMessage("<@" + message.getAuthor().getIdLong() + ">, I could not kick them: " + err.getMessage()).queue());
 
     }
 
@@ -250,7 +250,7 @@ public class ModUtils {
      * for unbanning is only posted in chat by the bot.
      */
     public static void unbanHandler(InternalDataForwarder data, Message message) {
-        message.getGuild().getController().unban(data.user).queue(v0id ->{
+        message.getGuild().getController().unban(data.user).queue(v0id -> {
                     audit(message.getGuild(), createEmbedLog("Unban", data, message.getAuthor()));
                     message.getChannel().sendMessage("Successfully unbanned them. :gay_pride_flag:").queue(msg -> ExtensionsKt.scheduleDeletion(msg, 10000));
                     message.delete().queue();

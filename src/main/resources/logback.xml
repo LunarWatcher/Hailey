@@ -1,7 +1,7 @@
 <configuration scan="true">
 
-    <logger name="io.github.lunarwatcher.java.haileybot" level="DEBUG"/>
-    <logger name="sx.blah.discord" level="INFO"/>
+    <logger name="io.github.lunarwatcher.java.haileybot" level="DEBUG" />
+    <logger name="sx.blah.discord" level="INFO" />
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %highlight([%-5level]) %logger{25} - %msg%n</pattern>
@@ -22,7 +22,7 @@
     </appender>
 
     <root level="debug">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE"/>
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
     </root>
 </configuration>

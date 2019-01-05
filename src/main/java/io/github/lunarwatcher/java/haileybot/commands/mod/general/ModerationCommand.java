@@ -28,7 +28,6 @@ package io.github.lunarwatcher.java.haileybot.commands.mod.general;
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
 import io.github.lunarwatcher.java.haileybot.commands.Command;
 import io.github.lunarwatcher.java.haileybot.commands.mod.utils.ModUtils;
-import io.github.lunarwatcher.java.haileybot.utils.Factory2;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Message;
 import org.jetbrains.annotations.NotNull;

@@ -74,4 +74,38 @@ public class RegexConstants {
                     + ")"
                     // @formatter:on
             );
+
+    /**
+     * Contains regex constants for chat-based spam. Mainly targets keywords and domains.
+     */
+    public static class AdvertSpam {
+        public static final Pattern DATING_SPAM = Pattern.compile("(?i)" +
+                "sex\\W*dating"
+        );
+
+        /**
+         * List of blacklisted websites. Messages containing these will be nuked. Primarily internal; use WEBSITE_BLACKLIST
+         * instead.
+         */
+        private static final String[] blacklistedWebsites = {
+                "amazingsexdating.com"
+        };
+
+        public static final Pattern WEBSITE_BLACKLIST;
+
+        static {
+            StringBuilder builder = new StringBuilder();
+            builder.append("(?i)");
+            builder.append("(?:https?)?\\W*(?:www\\d*)?(");
+            for (int i = 0; i < blacklistedWebsites.length; i++) {
+                String blacklistedWebsite = blacklistedWebsites[i];
+                builder.append(blacklistedWebsite.replace(".", "\\W*"));
+                //noinspection ConstantConditions
+                if (i != blacklistedWebsites.length - 1)
+                    builder.append("|");
+            }
+            builder.append(")");
+            WEBSITE_BLACKLIST = Pattern.compile(builder.toString());
+        }
+    }
 }

@@ -78,7 +78,7 @@ class ServerInfoCommand : Command {
 
         val roleInfo = bot.assigner
                 .getRolesForGuild(message.guild.idLong)?.let {
-                    if(it.size == 0)
+                    if (it.size == 0)
                         "No self-assignable roles."
                     else
                         bot.assigner.getRolesFromId(it).joinToString(", ") { r -> r.name }
@@ -86,7 +86,7 @@ class ServerInfoCommand : Command {
 
         val autoInfo = bot.assigner
                 .getAutoRolesForGuild(message.guild)?.let {
-                    if(it.size == 0)
+                    if (it.size == 0)
                         "No auto-assigned roles."
                     else
                         bot.assigner.getRolesFromId(it).joinToString(", ") { r -> r.name }

@@ -30,7 +30,6 @@ import io.github.lunarwatcher.java.haileybot.commands.Command;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.PrivateChannel;
-import net.dv8tion.jda.core.entities.Role;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;

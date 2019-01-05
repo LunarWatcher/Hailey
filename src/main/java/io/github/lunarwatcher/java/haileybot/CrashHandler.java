@@ -26,7 +26,6 @@
 package io.github.lunarwatcher.java.haileybot;
 
 import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
-import net.dv8tion.jda.core.entities.User;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +83,7 @@ public class CrashHandler {
                             ex.printStackTrace();
                         }
                     } else {
-                        logger.warn ("Failed to send an error DM to {}: I could not find them.", uid);
+                        logger.warn("Failed to send an error DM to {}: I could not find them.", uid);
                     }
                 }, retrieveError -> logger.warn("Failed to find that user: {}", retrieveError.getMessage()));
 

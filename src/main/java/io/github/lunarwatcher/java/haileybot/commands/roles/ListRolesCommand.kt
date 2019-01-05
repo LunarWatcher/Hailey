@@ -28,7 +28,10 @@ package io.github.lunarwatcher.java.haileybot.commands.roles
 import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import net.dv8tion.jda.core.EmbedBuilder
-import net.dv8tion.jda.core.entities.*
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.MessageChannel
+import net.dv8tion.jda.core.entities.MessageEmbed
+import net.dv8tion.jda.core.entities.PrivateChannel
 import org.jetbrains.annotations.NotNull
 
 class ListRolesCommand : Command {
@@ -96,7 +99,7 @@ class ListRolesCommand : Command {
                     message.channel.sendMessage(currentEmbed.build()).queue();
                     return;
                 }
-            }else
+            } else
                 sendEmbed(message, current, message.channel);
         }
 

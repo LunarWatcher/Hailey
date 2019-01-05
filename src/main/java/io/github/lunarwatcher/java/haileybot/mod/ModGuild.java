@@ -32,9 +32,11 @@ import io.github.lunarwatcher.java.haileybot.data.RegexConstants;
 import io.github.lunarwatcher.java.haileybot.data.SizeLimitedList;
 import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
 import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageEmbed;
+import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
@@ -45,8 +47,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static io.github.lunarwatcher.java.haileybot.commands.Moderator.*;
@@ -65,6 +70,15 @@ public class ModGuild {
     // Enabled/disabled features
     private boolean inviteSpamProtection;
     private boolean banMonitoring;
+    /**
+     * AKA "There's virtually no chance this is spam". Deletes the message, warns the user, and puts them on a strike-based
+     * system. This might be heavy memory-wise if the bot grows; using a cache-based solution might be better for this.
+     */
+    private boolean blatantSpamMonitoring;
+    /**
+     * Unimplemented: Detects possible spam (but that isn't guaranteed to be), and notifies staff.
+     */
+    private boolean potentialSpamMonitoring;
 
     // Metadata
     private long auditChannel = -1;
@@ -208,12 +222,24 @@ public class ModGuild {
         }
     }
 
-    public void messageReceived(MessageReceivedEvent event) {
+    public boolean messageReceived(MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) {
             recentMessages.add(event.getMessage());
         }
+
         nukeMessages();
         processCache();
+        if (blatantSpamMonitoring) {
+            boolean blacklists = watchBlacklists(event);
+            // The redundant if-statement warning has been suppressed in order to avoid conversions of a FP.
+            // There is likely going to be future checks after this (although there currently are none), which means
+            // a `return blacklists` here would break the other checks (prevent execution)
+            //noinspection RedundantIfStatement
+            if (blacklists)
+                return true;
+        }
+
+        return false;
     }
 
     private synchronized void nukeMessages() {
@@ -313,6 +339,7 @@ public class ModGuild {
         Map<String, Object> data = new HashMap<>();
         data.put(INVITE_FEATURE, inviteSpamProtection);
         data.put(BAN_MONITORING_FEATURE, banMonitoring);
+        data.put(BLATANT_SPAM_NUKER, blatantSpamMonitoring);
         if (auditChannel > 0)
             data.put(AUDIT_FEATURE, auditChannel);
 
@@ -336,6 +363,7 @@ public class ModGuild {
         Map<String, Object> data = new HashMap<>();
         data.put("Invite spam protection", formatBoolean(inviteSpamProtection));
         data.put("Ban monitoring", formatBoolean(banMonitoring));
+        data.put("Blatant spam nuker", formatBoolean(blatantSpamMonitoring));
 
         data.put("Audit channel", formatChannel(auditChannel));
         data.put("Welcome channel", formatChannel(welcomeChannel));
@@ -374,6 +402,8 @@ public class ModGuild {
                         .replaceAll("(?i)<server>", "{1}")
                         .replaceAll("(?i)<members>", "{2}")
                         .replaceAll("(?i)<nthmember>", "{3}");
+            else if (entry.getKey().equalsIgnoreCase(BLATANT_SPAM_NUKER))
+                blatantSpamMonitoring = (boolean) entry.getValue();
             else
                 logger.warn("Unknown key: " + entry.getKey() + ". Value: " + entry.getValue());
 
@@ -397,6 +427,14 @@ public class ModGuild {
                 }
                 assertType(data, Boolean.class);
                 banMonitoring = (boolean) data;
+                break;
+            case BLATANT_SPAM_NUKER:
+                if (data == null) {
+                    blatantSpamMonitoring = false;
+                    return;
+                }
+                assertType(data, Boolean.class);
+                blatantSpamMonitoring = (boolean) data;
                 break;
             case AUDIT_FEATURE:
                 if (data == null) {
@@ -454,8 +492,87 @@ public class ModGuild {
                         .replaceAll("(?i)<members>", "{2}")
                         .replaceAll("(?i)<nthmember>", "{3}");
                 break;
+
             default:
                 throw new RuntimeException("");
+        }
+    }
+
+    public boolean watchBlacklists(MessageReceivedEvent event) {
+        String content = event.getMessage().toString();
+
+        /*
+        Let's start with a new riser; dating spam.
+         */
+        if (RegexConstants.AdvertSpam.DATING_SPAM.matcher(content).find()) {
+            Member member = event.getMember();
+            hardHandleUserInfraction(member, event.getMessage(), "Dating spam", AutoBanReasons.DATING_SPAM_NEW_ACCOUNT, null, false);
+            return true;
+        }
+
+        /*
+        Moving on, we have blacklisted domains.
+         */
+        if (RegexConstants.AdvertSpam.WEBSITE_BLACKLIST.matcher(content).find()) {
+            Member member = event.getMember();
+            hardHandleUserInfraction(member, event.getMessage(), "Blacklisted URL", AutoBanReasons.BLACKLISTED_URL, AutoBanReasons.BLACKLISTED_URL, true);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void hardHandleUserInfraction(Member member, Message message, String name, AutoBanReasons newAccountBanReason, AutoBanReasons oldAccountBanReason, boolean banOldAccountsOnInfraction) {
+        User user = member.getUser();
+        if (user.getCreationTime().toEpochSecond() - OffsetDateTime.now().toEpochSecond() < TimeUnit.DAYS.toMillis(1)) {
+                /*
+                A server with over 10k members had 0 references to the string literal `sex dating`; These are the blatant spam regexes,
+                and are highly unlikely to produce any false positives, especially for accounts that're under a day old.
+                Since this is virtually guaranteed to be spam, let's nuke 'em and move on.
+                 */
+            banAndLog(member, AutoBanReasons.DATING_SPAM_NEW_ACCOUNT);
+        } else {
+            /*
+            Otherwise, stuff gets a bit more complicated.
+            */
+            List<Permission> permissions = member.getPermissions();
+            if (permissions.stream().anyMatch(it -> it == Permission.ADMINISTRATOR || it == Permission.BAN_MEMBERS || it == Permission.MANAGE_CHANNEL
+                    || it == Permission.KICK_MEMBERS || it == Permission.MANAGE_PERMISSIONS || it == Permission.MANAGE_SERVER)) {
+                    /*
+                    Let's try not banning moderators, admins, or server owners. Most bots are never above admins anyway, so let's save time
+                    and API calls, and not try.
+                    this is added as an attempt to allow moderator-team discussions about these (probably the only place where some of the hits
+                    show up in a legitimate conversation), without trying to ban them for it.
+                     */
+                return;
+            }
+            if (banOldAccountsOnInfraction) {
+                /*
+                 Okay; this is so horrible and/or blantantly obvious spam not even old accounts are safe.
+                 Bring in the ban hammer!
+                 */
+                banAndLog(member, oldAccountBanReason == null ? AutoBanReasons.UNSPECIFIED : oldAccountBanReason);
+                return;
+            }
+            /*
+            Moving on; let's delete the msesage.
+            But first, let's report the incident, just in case.
+             */
+
+            String content = message.getContentDisplay();
+
+
+            EmbedBuilder builder = new EmbedBuilder()
+                    .setTitle("Message auto-deleted")
+                    .setDescription("**Message content:**\n")
+                    .setAuthor(message.getAuthor().getName() + "#" + message.getAuthor().getDiscriminator(), null, message.getAuthor().getAvatarUrl())
+                    .setColor(Color.RED)
+                    .appendDescription(content)
+                    .appendDescription("\n\n")
+                    .addField("Description", "Regex matching \"" + name + "\" was triggered. The following actions have been taken:\n" +
+                            "* Message deletion (+ logging)", false);
+            audit(builder.build());
+            message.delete().queue();
         }
     }
 

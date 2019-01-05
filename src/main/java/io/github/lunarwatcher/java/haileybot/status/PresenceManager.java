@@ -61,7 +61,7 @@ public class PresenceManager {
         configurePresence();
     }
 
-    private void configurePresence(){
+    private void configurePresence() {
         presences.add(new PresenceContent(GameType.WATCHING, "$guilds snowy guilds <3 | " + Constants.TRIGGER + "help", null));
         presences.add(new PresenceContent(GameType.DEFAULT, "with the pack", null));
         presences.add(new PresenceContent(GameType.DEFAULT, "with the source code", null));
@@ -74,8 +74,8 @@ public class PresenceManager {
         logger.info("Loaded PresenceManager: {} messages ready.");
     }
 
-    public void onReady(){
-        if(presences.size() == 0){
+    public void onReady() {
+        if (presences.size() == 0) {
             logger.warn("No presences!!");
             return;
         }
@@ -95,14 +95,14 @@ public class PresenceManager {
             lastSet = System.currentTimeMillis();
             this.activePresence = presence;
             setPresence();
-        }catch(Throwable e){
+        } catch (Throwable e) {
             CrashHandler.error(e);
         }
     }
 
-    public void refresh(){
+    public void refresh() {
 
-        if(activePresence == null)
+        if (activePresence == null)
             return;
         long now = System.currentTimeMillis();
         //because of the way this method is called, there needs to be limits.
@@ -110,13 +110,13 @@ public class PresenceManager {
         // First of all, if there's 2 minutes or less 'til we update anyways, don't.
         // This is just a waste of resources, since it is really close to updating.
         // The limit is randomly set; this is mainly to avoid too frequent updates.
-        if(now - lastSet > DELAY_MILLIS - 120000)
+        if (now - lastSet > DELAY_MILLIS - 120000)
             return;
 
         // Finally, we check the time since the last update. If it's been more than 20 seconds, we should be fine to
         // update again. This is to avoid issues with mass-sending of the guild creation event, which can happen
         // as a result of downtime.
-        if(now - lastUpdated > 20000)
+        if (now - lastUpdated > 20000)
             return;
 
         logger.info("Refreshing presence");
@@ -124,11 +124,11 @@ public class PresenceManager {
         setPresence();
     }
 
-    private void setPresence(){
+    private void setPresence() {
         String message = activePresence.getMessage(bot, client);
         GameType type = activePresence.getType();
         String url = activePresence.getUrl();
-        if(client.getPresence().getGame() != null) {
+        if (client.getPresence().getGame() != null) {
             if (message.toLowerCase().equalsIgnoreCase(client.getPresence().getGame().getName())) {
                 logger.warn("Ignoring update. Found duplicated content: \"{}\" currently set vs \"{}\" requested.", client.getPresence().getGame().getName(), message);
                 return;

@@ -116,13 +116,13 @@ public class ConversionUtils {
 
     public static @NotNull String getGame(Member user) {
         Game game = user.getGame();
-        if(game == null)
+        if (game == null)
             return "None.";
         Game.GameType activity = game.getType();
 
         if (activity != null) {
             String type;
-            switch(activity){
+            switch (activity) {
                 case DEFAULT:
                     type = "playing";
                     break;
@@ -175,7 +175,7 @@ public class ConversionUtils {
 
     @NotNull
     public static String parseRegionName(@NotNull Region region) {
-        switch(region){
+        switch (region) {
             case AMSTERDAM:
             case BRAZIL:
             case JAPAN:
@@ -197,23 +197,24 @@ public class ConversionUtils {
         }
     }
 
-    public static String title(String raw, int offset){
+    public static String title(String raw, int offset) {
         return title(raw, " ", offset);
     }
-    public static String title(String raw, String delimiter, int offset){
-        if(delimiter == null)
+
+    public static String title(String raw, String delimiter, int offset) {
+        if (delimiter == null)
             delimiter = " ";
-        if(offset >= raw.length())
+        if (offset >= raw.length())
             throw new IllegalArgumentException();
 
         String[] pieces = raw.split(delimiter);
         StringBuilder result = new StringBuilder();
-        for(int i = offset; i < pieces.length; i++){
+        for (int i = offset; i < pieces.length; i++) {
             String active = pieces[i];
             char first = Character.toUpperCase(active.charAt(0));
             String rest = active.substring(1).toLowerCase();
             result.append(first + rest);
-            if(i != pieces.length - 1)
+            if (i != pieces.length - 1)
                 result.append(" ");
         }
         return result.toString();

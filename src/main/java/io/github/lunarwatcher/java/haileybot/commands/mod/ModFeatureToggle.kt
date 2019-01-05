@@ -23,6 +23,8 @@
  *
  */
 
+@file:Suppress("CascadeIf")
+
 package io.github.lunarwatcher.java.haileybot.commands.mod
 
 import io.github.lunarwatcher.java.haileybot.CrashHandler
@@ -106,6 +108,12 @@ class ModFeatureToggle : Command {
             BAN_MONITORING_FEATURE -> try {
                 val toggle = boolean(guild, BAN_MONITORING_FEATURE, mode);
                 message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " ban monitoring.").queue();
+            } catch (e: ClassCastException) {
+                message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled).").queue();
+            }
+            BLATANT_SPAM_NUKER -> try {
+                val toggle = boolean(guild, BLATANT_SPAM_NUKER, mode);
+                message.channel.sendMessage((if (toggle) "Enabled" else "Disabled") + " spam nuking.").queue();
             } catch (e: ClassCastException) {
                 message.channel.sendMessage("Failed to convert the mode to type `boolean`. Please only use `true` (enabled) or `false` (disabled).").queue();
             }

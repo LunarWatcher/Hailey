@@ -29,8 +29,6 @@ import io.github.lunarwatcher.java.haileybot.HaileyBot
 import io.github.lunarwatcher.java.haileybot.commands.Command
 import io.github.lunarwatcher.java.haileybot.utils.messageFormat
 import io.github.lunarwatcher.java.haileybot.utils.randomItem
-import net.dv8tion.jda.client.managers.EmoteManager
-import net.dv8tion.jda.core.entities.Emote
 import net.dv8tion.jda.core.entities.Message
 import org.jetbrains.annotations.NotNull
 
@@ -78,8 +76,10 @@ abstract class ActionCommand(val replies: List<String>, val emojis: List<String>
             onEmptyMessage.invoke(message)
             return;
         }
-        message.channel.sendMessage("**${message.member?.effectiveName ?: message.author.name}** " + replies.randomItem()?.messageFormat(result, message.member?.effectiveName ?: message.author.name + " ${emojis.randomItem()
-                ?: ""}")).queue()
+        message.channel.sendMessage("**${message.member?.effectiveName
+                ?: message.author.name}** " + replies.randomItem()?.messageFormat(result, message.member?.effectiveName
+                ?: message.author.name+" ${emojis.randomItem()
+                        ?: ""}")).queue()
 
 
     }
@@ -109,7 +109,9 @@ class HugCommand : ActionCommand(replies, listOf(), { message ->
     }
 }
 
-class LickCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
+class LickCommand : ActionCommand(replies, listOf(), { message ->
+    message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue()
+}) {
     override fun getName(): String = "lick"
     override fun getHelp(): String? = "Licks someone :tongue:"
     override fun getDescription(): String? = help;
@@ -125,7 +127,9 @@ class LickCommand : ActionCommand(replies, listOf(), { message -> message.channe
     }
 }
 
-class KissCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
+class KissCommand : ActionCommand(replies, listOf(), { message ->
+    message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue()
+}) {
     override fun getName(): String = "kiss";
     override fun getAliases(): MutableList<String>? = null
     override fun getHelp(): String? = "Kisses someone :kissing_heart:"
@@ -141,7 +145,9 @@ class KissCommand : ActionCommand(replies, listOf(), { message -> message.channe
     }
 }
 
-class BoopCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
+class BoopCommand : ActionCommand(replies, listOf(), { message ->
+    message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue()
+}) {
     override fun getName(): String = "boop";
     override fun getAliases(): MutableList<String>? = null
     override fun getHelp(): String? = "BOOP!"
@@ -158,7 +164,9 @@ class BoopCommand : ActionCommand(replies, listOf(), { message -> message.channe
     }
 }
 
-class PatCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
+class PatCommand : ActionCommand(replies, listOf(), { message ->
+    message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue()
+}) {
     override fun getName(): String = "pat"
     override fun getAliases(): List<String>? = null
     override fun getHelp(): String? = null;
@@ -176,7 +184,9 @@ class PatCommand : ActionCommand(replies, listOf(), { message -> message.channel
 
 }
 
-class PetCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
+class PetCommand : ActionCommand(replies, listOf(), { message ->
+    message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue()
+}) {
     override fun getName(): String = "pet"
     override fun getAliases(): List<String>? = null
     override fun getHelp(): String? = null;
@@ -194,7 +204,9 @@ class PetCommand : ActionCommand(replies, listOf(), { message -> message.channel
 }
 
 
-class TickleCommand : ActionCommand(replies, listOf(), { message -> message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue() }) {
+class TickleCommand : ActionCommand(replies, listOf(), { message ->
+    message.channel.sendMessage(self.messageFormat(message.member?.effectiveName ?: message.author.name)).queue()
+}) {
     override fun getName(): String = "tickle"
     override fun getAliases(): List<String>? = null
     override fun getHelp(): String? = null;

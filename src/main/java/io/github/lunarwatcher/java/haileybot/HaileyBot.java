@@ -150,7 +150,7 @@ public class HaileyBot implements EventListener {
         registerShutdownHook();
         registerTasks();
 
-        for(Guild guild : client.getGuilds()){
+        for (Guild guild : client.getGuilds()) {
             handleGuild(guild);
         }
 
@@ -266,6 +266,7 @@ public class HaileyBot implements EventListener {
 
             boolean ctn = moderator.messageReceived(event);
 
+
             if (ctn)
                 return;
 
@@ -303,7 +304,7 @@ public class HaileyBot implements EventListener {
 
 
             database.commit();
-        }catch(Throwable e){
+        } catch (Throwable e) {
             CrashHandler.error(e);
         }
     }
@@ -380,16 +381,16 @@ public class HaileyBot implements EventListener {
             this.onMessageEditedEvent((MessageUpdateEvent) event);
         } else if (event instanceof GuildJoinEvent) {
             this.onGuildCreateEvent((GuildJoinEvent) event);
-        } else if(event instanceof MessageReceivedEvent){
+        } else if (event instanceof MessageReceivedEvent) {
             this.onMessageReceivedEvent((MessageReceivedEvent) event);
-        } else if(event instanceof MessageDeleteEvent){
+        } else if (event instanceof MessageDeleteEvent) {
             this.onMessageDeletedEvent((MessageDeleteEvent) event);
-        } else if(event instanceof GuildLeaveEvent){
+        } else if (event instanceof GuildLeaveEvent) {
             this.onGuildLeaveEvent((GuildLeaveEvent) event);
         }
     }
 
-    public void handleGuild(Guild guild){
+    public void handleGuild(Guild guild) {
         logger.info("Joined guild: {}. Owner: {}",
                 guild.getName(),
                 guild.getOwner().getUser().getName() + "#" + guild.getOwner().getUser().getDiscriminator());
@@ -416,7 +417,7 @@ public class HaileyBot implements EventListener {
             save();
             try {
                 executor.shutdownNow();
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

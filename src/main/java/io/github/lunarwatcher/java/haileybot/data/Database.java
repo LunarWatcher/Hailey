@@ -25,7 +25,6 @@
 
 package io.github.lunarwatcher.java.haileybot.data;
 
-import com.sun.nio.file.ExtendedCopyOption;
 import io.github.lunarwatcher.java.haileybot.CrashHandler;
 import io.github.lunarwatcher.java.haileybot.utils.JacksonParser;
 import org.jetbrains.annotations.NotNull;
@@ -123,14 +122,14 @@ public class Database {
         changed = false;
     }
 
-    private void copyOld(){
+    private void copyOld() {
         try {
-            if(!Files.exists(file)){
+            if (!Files.exists(file)) {
                 logger.debug("No existing database found; skipping backup");
                 return;
             }
             Path target = Paths.get(file.toString() + ".bak");
-            if(Files.exists(target)) Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
+            if (Files.exists(target)) Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
             else Files.copy(file, target);
             logger.debug("Successfully backed up the previous version of the database.");
         } catch (IOException e) {

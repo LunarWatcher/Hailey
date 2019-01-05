@@ -26,7 +26,6 @@
 package io.github.lunarwatcher.java.haileybot.commands;
 
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
-import io.github.lunarwatcher.java.haileybot.data.Database;
 import io.github.lunarwatcher.java.haileybot.mod.ModGuild;
 import io.github.lunarwatcher.java.haileybot.utils.ExtensionsKt;
 import net.dv8tion.jda.core.EmbedBuilder;
@@ -44,7 +43,10 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -60,6 +62,8 @@ public class Moderator {
     public static final String JOIN_DM = "join_dm";
     public static final String DELETION_WATCHER = "deletion_watcher";
     public static final String BAN_MONITORING_FEATURE = "ban_monitoring";
+    public static final String BLATANT_SPAM_NUKER = "spam_nuker";
+
     private static final Logger logger = LoggerFactory.getLogger(Moderator.class);
     private static final String features = combine(INVITE_FEATURE, WELCOME_LOGGING, AUDIT_FEATURE, LEAVE_LOGGING,
             JOIN_MESSAGE, LEAVE_MESSAGE, JOIN_DM, DELETION_WATCHER, BAN_MONITORING_FEATURE);
@@ -164,8 +168,7 @@ public class Moderator {
         logger.info("Message received in {} (UID {}), channel {} . Author: {} (UID {}): \"{}\"",
                 event.getGuild().getName(), event.getGuild().getIdLong(), event.getChannel().getName(),
                 event.getAuthor().getName(), event.getAuthor().getIdLong(), event.getMessage().getContentRaw());
-        guild.messageReceived(event);
-        return false;
+        return guild.messageReceived(event);
     }
 
     public void messageEdited(MessageUpdateEvent event) {
@@ -240,6 +243,9 @@ public class Moderator {
                                     User user = entry.getUser();
 
                                     long bannerUid = user == null ? -1 : user.getIdLong();
+                                    if (bannerUid == bot.getBotUser().getIdLong()) {
+                                        continue;
+                                    }
                                     String banner = getUsername(entry.getUser());
                                     String reason = entry.getReason();
                                     if (reason == null)
@@ -275,7 +281,7 @@ public class Moderator {
     }
 
     public void withJoinedGuilds(List<Guild> guilds) {
-        List<Long> ids = guilds.stream().map (ISnowflake::getIdLong).collect(Collectors.toList());
-        enabledGuilds.entrySet().removeIf (entry -> !ids.contains(entry.getKey()));
+        List<Long> ids = guilds.stream().map(ISnowflake::getIdLong).collect(Collectors.toList());
+        enabledGuilds.entrySet().removeIf(entry -> !ids.contains(entry.getKey()));
     }
 }

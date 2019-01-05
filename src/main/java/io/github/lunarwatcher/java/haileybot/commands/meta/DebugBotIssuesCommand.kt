@@ -91,7 +91,7 @@ class DebugBotIssuesCommand : Command {
 
         val hasReadWrite = botMember.hasPermission(Permission.MESSAGE_READ) && botMember.hasPermission(Permission.MESSAGE_WRITE)
 
-        val usableChannels =  message.guild.channels.filter {
+        val usableChannels = message.guild.channels.filter {
             val override = it.getPermissionOverride(botMember)
             override?.allowed?.containsAll(readWrite) ?: hasReadWrite
         }
@@ -105,7 +105,7 @@ class DebugBotIssuesCommand : Command {
                 .append("Ignoring permissions in voice channels; no voice features are currently used.").nl()
                 .append("For this guild, there's a combined number of ${watcher.getWatchesInGuild(message.guild).size} watches for this guild.").nl()
                 .append("In addition, the database currently has ${database.size()} items in it. ").nl().nl()
-        modGuild?.auditChannel?.let {channelId ->
+        modGuild?.auditChannel?.let { channelId ->
             if (channelId >= 0) {
                 stringBuilder.append("Checking the audit channel (<#$channelId>) for validity.... ")
                 val channel: Channel? = bot.client.getTextChannelById(channelId)
@@ -122,7 +122,7 @@ class DebugBotIssuesCommand : Command {
                 }
             }
         }
-        modGuild?.welcomeChannel?.let {channelId->
+        modGuild?.welcomeChannel?.let { channelId ->
             if (channelId >= 0) {
                 stringBuilder.append("Checking the greeting channel (<#$channelId>) for validity.... ");
                 val channel: Channel? = bot.client.getTextChannelById(channelId)
@@ -137,7 +137,7 @@ class DebugBotIssuesCommand : Command {
                 }
             }
         }
-        modGuild?.userLeaveChannel?.let {channelId ->
+        modGuild?.userLeaveChannel?.let { channelId ->
             if (channelId >= 0) {
                 stringBuilder.append("Checking the user leave channel (<#$channelId>) for validity.... ");
                 val channel: Channel? = bot.client.getTextChannelById(channelId)
@@ -159,7 +159,7 @@ class DebugBotIssuesCommand : Command {
         if (dumpChannels) {
 
             val unusableChannels = message.guild.channels.filter { it !in usableChannels }
-            if(unusableChannels.isEmpty()){
+            if (unusableChannels.isEmpty()) {
                 message.channel.sendMessage("There are no unusable channels :D").queue {
                     it.scheduleDeletion(TIMEOUT)
                 }

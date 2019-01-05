@@ -118,3 +118,8 @@ class SetBanMonitoringFeature(toggleCommand: ModFeatureToggle)
     : HumanlyUnderstandableFeatureToggleCommand("setBanMonitoring", "Enables/disables ban monitoring. Requires a boolean input",
         "Takes one argument: `[boolean]` (without brackets. `enabled`/`disabled` is also accepted)",
         listOf(), toggleCommand, BAN_MONITORING_FEATURE)
+
+class SetBlatantSpamNuker(toggleCommand: ModFeatureToggle)
+    : HumanlyUnderstandableFeatureToggleCommand("setSpamNuker", "Enables/disables the spam nuker. This targets spam that's likely to never show up " +
+        "in a regular conversation.", "Takes one argument: `[boolean]` (without brackets). `enabled`/`disabled` is also accepted.",
+        listOf(), toggleCommand, BLATANT_SPAM_NUKER);
