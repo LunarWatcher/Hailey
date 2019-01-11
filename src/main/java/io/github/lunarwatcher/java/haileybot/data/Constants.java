@@ -29,12 +29,17 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public final class Constants {
-    public static final String VERSION = "0.90.3 \"Bugged\"";
+    public static final String VERSION = "1.0.0 \"Expandable Base\"";
     public static final String TRIGGER = "h!";
     public static final boolean ALLOW_MENTION_TRIGGER = true;
     public static final String DATE_FORMAT = "dd-MM-yyyy @ HH:mm:ss";
     public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT)
             .withZone(ZoneId.systemDefault());
+
+    // Whitelisted bots. These only cover bigger bots or bots that aren't malicious.
+    public static final long[] whitelistedBots = {
+            242730576195354624L, 422833689072893964L, 235088799074484224L
+    };
 
     private Constants() {
     }

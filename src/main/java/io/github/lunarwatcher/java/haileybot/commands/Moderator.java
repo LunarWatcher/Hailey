@@ -244,7 +244,7 @@ public class Moderator {
 
                                     long bannerUid = user == null ? -1 : user.getIdLong();
                                     if (bannerUid == bot.getBotUser().getIdLong()) {
-                                        continue;
+                                        return;
                                     }
                                     String banner = getUsername(entry.getUser());
                                     String reason = entry.getReason();

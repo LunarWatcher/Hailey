@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public enum AutoBanReasons {
     INVITE_USERNAME("Invite in username"),
     SPAM_USERNAME("Spam in username"),
-    DATING_SPAM_NEW_ACCOUNT("A 1 day old account posted spam -- insta-nuke"),
+    DATING_SPAM_NEW_ACCOUNT("An account that joined the server under a day ago posted dating spam -- insta-nuking the account"),
     UNSPECIFIED("A severe enough issue to warrant auto-ban, but that hasn't been properly described in enums yet."),
     BLACKLISTED_URL("A URL never seen outside spam."),
     UNHANDLED_SPAM("Spam in username not caught by the other categories");

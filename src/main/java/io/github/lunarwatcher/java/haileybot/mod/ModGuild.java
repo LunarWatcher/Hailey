@@ -27,6 +27,7 @@ package io.github.lunarwatcher.java.haileybot.mod;
 
 import io.github.lunarwatcher.java.haileybot.CrashHandler;
 import io.github.lunarwatcher.java.haileybot.HaileyBot;
+import io.github.lunarwatcher.java.haileybot.data.Constants;
 import io.github.lunarwatcher.java.haileybot.data.DecayableList;
 import io.github.lunarwatcher.java.haileybot.data.RegexConstants;
 import io.github.lunarwatcher.java.haileybot.data.SizeLimitedList;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,6 +124,7 @@ public class ModGuild {
                                     .sendMessage(new EmbedBuilder().setColor(Color.ORANGE)
                                             .setTitle("User banned")
                                             .setDescription("UID: " + member.getUser().getIdLong() + ". Banned by auto-mod: " + reason.getReason())
+                                            .appendDescription("\nUsername: " + member.getUser().getName() + "#" + member.getUser().getDiscriminator())
                                             .build())
                                     .queue();
                         }
@@ -250,6 +253,7 @@ public class ModGuild {
             Map<Message, String> deletedMessages = new HashMap<>();
             for (AutoBannedUser autoBannedUser : recentBans) {
                 Member member = autoBannedUser.getBannedUser();
+                
                 for (Message message : recentMessages) {
 
 
@@ -287,7 +291,7 @@ public class ModGuild {
                             .append(m.getAuthor().isBot() ? "bot" : "user")
                             .append(")\n")
                             .append("Occured while banning users for \"")
-                            .append(reason).append("\"\n");
+                            .append(reason).append("\"\n\n\n\n");
 
                 }
 
@@ -526,57 +530,84 @@ public class ModGuild {
 
     private void hardHandleUserInfraction(Member member, Message message, String name, AutoBanReasons newAccountBanReason, AutoBanReasons oldAccountBanReason, boolean banOldAccountsOnInfraction) {
         User user = member.getUser();
-        long accountTime = OffsetDateTime.now().toEpochSecond() * 1000 - user.getCreationTime().toEpochSecond() * 1000;
-        if (accountTime < TimeUnit.DAYS.toMillis(1)) {
-                /*
-                A server with over 10k members had 0 references to the string literal `sex dating`; These are the blatant spam regexes,
-                and are highly unlikely to produce any false positives, especially for accounts that're under a day old.
-                Since this is virtually guaranteed to be spam, let's nuke 'em and move on.
-                 */
-            banAndLog(member, AutoBanReasons.DATING_SPAM_NEW_ACCOUNT);
-        } else {
-            /*
-            Otherwise, stuff gets a bit more complicated.
-            */
-            List<Permission> permissions = member.getPermissions();
-            if (permissions.stream().anyMatch(it -> it == Permission.ADMINISTRATOR || it == Permission.BAN_MEMBERS || it == Permission.MANAGE_CHANNEL
-                    || it == Permission.KICK_MEMBERS || it == Permission.MANAGE_PERMISSIONS || it == Permission.MANAGE_SERVER)) {
+
+        // First off, let's skip whitelisted bots. There's no need to check these.
+        if(Arrays.stream(Constants.whitelistedBots).anyMatch((it) -> user.getIdLong() == it)){
+            logger.info("Whitelisted bot ignored.");
+            return;
+        }
+
+        // We need to start with permissions; this is because the creation time is from joining the server, **not** the account creation date.
+        // In order to avoid issues, especially with bots and new servers, the permissions need to be checked quickly.
+        // Also, when it comes to bots, there's no guarantee they'll be on the whitelist. The whitelist is pretty much only the bots I know
+        // of that aren't malicious. Bots, although especially moderation bots, are likely to post these. An example of this:
+        // a bot with a deletion watcher posts the content of a deleted message that got deleted because of the spam watching regex.
+
+        List<Permission> permissions = member.getPermissions();
+        if (permissions.stream().anyMatch(it -> it == Permission.ADMINISTRATOR || it == Permission.BAN_MEMBERS || it == Permission.MANAGE_CHANNEL
+                || it == Permission.KICK_MEMBERS || it == Permission.MANAGE_PERMISSIONS || it == Permission.MANAGE_SERVER)) {
                     /*
                     Let's try not banning moderators, admins, or server owners. Most bots are never above admins anyway, so let's save time
                     and API calls, and not try.
                     this is added as an attempt to allow moderator-team discussions about these (probably the only place where some of the hits
                     show up in a legitimate conversation), without trying to ban them for it.
                      */
-                return;
-            }
+            return;
+        }
+
+        long accountTime = OffsetDateTime.now().toEpochSecond() * 1000 - user.getCreationTime().toEpochSecond() * 1000;
+        // Special note: the date this uses is the date it joined, not the date the account was created.
+        // This seems to be an unfortunate limitation of the API.
+        // The obvious spam bots (the one the regex can catch) will likely post spam as soon as they join.
+        // Because of that, there's no need to watch it for an entire day.
+        // This only applies for the hard insta-ban though. If the bots are i.e. modified to post right after
+        // the duration ends, the message will still be deleted.
+        if (accountTime < TimeUnit.HOURS.toMillis(6)) {
+            /*
+            A server with over 10k members had 0 references to the string literal `sex dating`; These are the blatant spam regexes,
+            and are highly unlikely to produce any false positives, especially for accounts that joined under 6 hours ago
+            Since this is virtually guaranteed to be spam, let's nuke 'em and move on.
+             */
+            nukeSpamMessage(name, message);
+            banAndLog(member, AutoBanReasons.DATING_SPAM_NEW_ACCOUNT);
+        } else {
+            /*
+            Otherwise, stuff gets a bit more complicated.
+            */
             if (banOldAccountsOnInfraction) {
                 /*
                  Okay; this is so horrible and/or blantantly obvious spam not even old accounts are safe.
                  Bring in the ban hammer!
                  */
+                nukeSpamMessage(name, message);
                 banAndLog(member, oldAccountBanReason == null ? AutoBanReasons.UNSPECIFIED : oldAccountBanReason);
                 return;
             }
             /*
             Moving on; let's delete the msesage.
             But first, let's report the incident, just in case.
+
+            This also protects against bots that intentionally avoid the insta-ban period, but that still gets caught by the regex
              */
 
-            String content = message.getContentDisplay();
-
-
-            EmbedBuilder builder = new EmbedBuilder()
-                    .setTitle("Message auto-deleted")
-                    .setDescription("**Message content:**\n")
-                    .setAuthor(message.getAuthor().getName() + "#" + message.getAuthor().getDiscriminator(), null, message.getAuthor().getAvatarUrl())
-                    .setColor(Color.RED)
-                    .appendDescription(content)
-                    .appendDescription("\n\n")
-                    .addField("Description", "Regex matching \"" + name + "\" was triggered. The following actions have been taken:\n" +
-                            "* Message deletion (+ logging)", false);
-            audit(builder.build());
-            message.delete().queue();
+            nukeSpamMessage(name, message);
         }
+    }
+
+    private void nukeSpamMessage(String name, Message message) {
+        String content = message.getContentDisplay();
+
+        EmbedBuilder builder = new EmbedBuilder()
+                .setTitle("Message auto-deleted")
+                .setDescription("**Message content:**\n")
+                .setAuthor(message.getAuthor().getName() + "#" + message.getAuthor().getDiscriminator(), null, message.getAuthor().getAvatarUrl())
+                .setColor(Color.RED)
+                .appendDescription(content)
+                .appendDescription("\n\n")
+                .addField("Description", "Regex matching \"" + name + "\" was triggered. The following actions have been taken:\n" +
+                        "* Message deletion (+ logging)", false);
+        audit(builder.build());
+        message.delete().queue();
     }
 
     private String formatChannel(long channel) {
