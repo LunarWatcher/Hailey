@@ -95,7 +95,6 @@ public class Database {
         cache.put(key, value);
         changed = true;
 
-        commit();
     }
 
     /**

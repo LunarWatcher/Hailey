@@ -301,8 +301,6 @@ public class HaileyBot implements EventListener {
                 matcher.save();
             if (assigner != null)
                 assigner.save();
-
-
             database.commit();
         } catch (Throwable e) {
             CrashHandler.error(e);
