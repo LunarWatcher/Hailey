@@ -58,7 +58,7 @@ public class PresenceContent {
     public String getMessage(HaileyBot bot, JDA client) {
         return message.replace("$guilds", String.valueOf(client.getGuilds().size()))
                 .replace("$members", String.valueOf(client.getGuilds().stream().mapToInt(it -> it.getMembers().size()).sum()))
-                .replace("$modguild", String.valueOf(bot.getModerator().getModGuilds().size()));
+                .replace("$modguilds", String.valueOf(bot.getModerator().getModGuilds().size()));
     }
 
     public String getUrl() {

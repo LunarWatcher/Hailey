@@ -253,7 +253,7 @@ public class ModGuild {
             Map<Message, String> deletedMessages = new HashMap<>();
             for (AutoBannedUser autoBannedUser : recentBans) {
                 Member member = autoBannedUser.getBannedUser();
-                
+
                 for (Message message : recentMessages) {
 
 
