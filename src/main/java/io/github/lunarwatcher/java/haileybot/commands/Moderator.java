@@ -165,9 +165,6 @@ public class Moderator {
         ModGuild guild = enabledGuilds.get(event.getGuild().getIdLong());
         if (guild == null)
             return false;
-        logger.info("Message received in {} (UID {}), channel {} . Author: {} (UID {}): \"{}\"",
-                event.getGuild().getName(), event.getGuild().getIdLong(), event.getChannel().getName(),
-                event.getAuthor().getName(), event.getAuthor().getIdLong(), event.getMessage().getContentRaw());
         return guild.messageReceived(event);
     }
 
